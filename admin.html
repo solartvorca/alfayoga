@@ -297,14 +297,8 @@
         <!-- Задания дней -->
         <div id="days-tab" class="tab-content">
             <div class="admin-section">
-                <div class="section-title">➕ Добавить задание на день</div>
+                <div class="section-title">➕ Добавить/редактировать задание на день</div>
                 <form onsubmit="addDayAssignment(event)" class="form-grid">
-                    <div class="form-group">
-                        <label>Марафон</label>
-                        <select id="marathonSelect" required onchange="loadDaysForMarathon(this.value)">
-                            <option value="">Выбери марафон...</option>
-                        </select>
-                    </div>
                     <div class="form-group">
                         <label>День</label>
                         <input type="number" id="dayNum" min="1" max="100" required>
@@ -319,16 +313,17 @@
                     </div>
                     <div class="form-group">
                         <label>URL видео (опционально)</label>
-                        <input type="url" id="dayVideo" placeholder="https://...">
+                        <input type="url" id="dayVideo" placeholder="https://vkvideo.ru/video-...">
                     </div>
-                    <button type="submit" class="btn">Добавить задание</button>
+                    <button type="submit" class="btn">Сохранить задание</button>
                 </form>
             </div>
 
             <div class="admin-section">
-                <div class="section-title">✏️ Редактировать задания</div>
+                <div class="section-title">📅 Все дни марафона</div>
+                <button class="btn" onclick="loadAllDays()" style="margin-bottom: 15px;">🔄 Загрузить все дни</button>
                 <div id="daysList">
-                    <p style="text-align: center; color: #888;">Выберите марафон для просмотра дней</p>
+                    <p style="text-align: center; color: #888;">Нажми "Загрузить все дни" для просмотра</p>
                 </div>
             </div>
         </div>
@@ -508,7 +503,7 @@
             if (tabName === "marathons") {
                 loadMarathons();
             } else if (tabName === "days") {
-                loadMarathonsForSelect();
+                loadAllDays();
             } else if (tabName === "users") {
                 loadUsers();
             } else if (tabName === "author") {
@@ -713,52 +708,40 @@
             }
         }
 
-        // Добавить задание на день
+        // Добавить или обновить задание на день
         async function addDayAssignment(e) {
             e.preventDefault();
-            const marathonId = document.getElementById("marathonSelect").value;
             const dayNum = parseInt(document.getElementById("dayNum").value);
             const title = document.getElementById("dayTitle").value;
             const content = document.getElementById("dayContent").value;
             const videoUrl = document.getElementById("dayVideo").value;
 
-            if (!marathonId) {
-                alert("Выбери марафон!");
-                return;
-            }
-
             try {
-                await db.collection("marathons").doc(marathonId)
-                    .collection("days").doc(dayNum.toString()).set({
-                        title,
-                        content,
-                        videoUrl: videoUrl || null,
-                        dayNumber: dayNum,
-                        createdAt: new Date()
-                    });
+                await db.collection("lunar-yoga-tsarevich").doc(dayNum.toString()).set({
+                    title,
+                    content,
+                    videoUrl: videoUrl || null,
+                    dayNumber: dayNum,
+                    createdAt: new Date()
+                }, { merge: true });
 
-                alert("Задание добавлено!");
+                alert("Задание сохранено!");
                 document.querySelector("#days-tab form").reset();
-                loadDaysForMarathon(marathonId);
+                loadAllDays();
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }
         }
 
-        // Загрузить дни для марафона
-        async function loadDaysForMarathon(marathonId) {
-            if (!marathonId) {
-                document.getElementById("daysList").innerHTML = '<p style="text-align: center; color: #888;">Выберите марафон</p>';
-                return;
-            }
-
+        // Загрузить все дни марафона
+        async function loadAllDays() {
             try {
-                const snapshot = await db.collection("marathons").doc(marathonId)
-                    .collection("days").orderBy("dayNumber").get();
+                const snapshot = await db.collection("lunar-yoga-tsarevich")
+                    .orderBy("dayNumber").get();
                 const list = document.getElementById("daysList");
 
                 if (snapshot.empty) {
-                    list.innerHTML = '<p style="text-align: center; color: #888;">Нет заданий для этого марафона</p>';
+                    list.innerHTML = '<p style="text-align: center; color: #888;">Нет дней в марафоне</p>';
                     return;
                 }
 
@@ -767,65 +750,71 @@
                     return `
                         <div class="marathon-item">
                             <div class="marathon-header">
-                                <div class="marathon-name">День ${day.dayNumber}: ${day.title}</div>
+                                <div class="marathon-name">🌙 День ${day.dayNumber}: ${day.title}</div>
                             </div>
-                            <p style="font-size: 12px; color: #888; margin-bottom: 10px; line-height: 1.5;">${day.content.substring(0, 100)}...</p>
-                            ${day.videoUrl ? `<p style="font-size: 11px; color: #a18cd1; margin-bottom: 10px;">📹 Видео: ${day.videoUrl.substring(0, 50)}...</p>` : ''}
+                            <p style="font-size: 12px; color: #c8d0db; margin-bottom: 10px; line-height: 1.5;">${day.content.substring(0, 120)}...</p>
+                            ${day.videoUrl ? `<p style="font-size: 11px; color: #ffd700; margin-bottom: 10px;">📹 ${day.videoUrl}</p>` : '<p style="font-size: 11px; color: #888;">❌ Видео не добавлено</p>'}
                             <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-small" onclick="editDay('${marathonId}', '${doc.id}')">✏️ Редактировать</button>
-                                <button class="btn btn-danger btn-small" onclick="deleteDay('${marathonId}', '${doc.id}')">🗑️ Удалить</button>
+                                <button class="btn btn-small" onclick="editDayQuick(${day.dayNumber})">✏️ Редактировать</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteDay(${day.dayNumber})">🗑️ Удалить</button>
                             </div>
                         </div>
                     `;
                 }).join("");
             } catch (error) {
                 console.error("Ошибка при загрузке дней:", error);
-                document.getElementById("daysList").innerHTML = '<p style="text-align: center; color: #ff6464;">Ошибка загрузки</p>';
+                document.getElementById("daysList").innerHTML = '<p style="text-align: center; color: #ff6464;">Ошибка загрузки: ' + error.message + '</p>';
             }
         }
 
-        // Редактировать день
-        async function editDay(marathonId, dayId) {
+        // Быстрое редактирование дня
+        async function editDayQuick(dayNumber) {
             try {
-                const doc = await db.collection("marathons").doc(marathonId)
-                    .collection("days").doc(dayId).get();
+                const doc = await db.collection("lunar-yoga-tsarevich").doc(dayNumber.toString()).get();
+                if (!doc.exists) {
+                    alert("День не найден");
+                    return;
+                }
+
                 const day = doc.data();
 
-                const newTitle = prompt("Название:", day.title);
-                if (newTitle === null) return;
+                // Заполнить форму текущими данными
+                document.getElementById("dayNum").value = day.dayNumber;
+                document.getElementById("dayTitle").value = day.title;
+                document.getElementById("dayContent").value = day.content;
+                document.getElementById("dayVideo").value = day.videoUrl || "";
 
-                const newContent = prompt("Содержание:", day.content);
-                if (newContent === null) return;
-
-                const newVideoUrl = prompt("URL видео (или пусто для удаления):", day.videoUrl || "");
-
-                await db.collection("marathons").doc(marathonId)
-                    .collection("days").doc(dayId).update({
-                        title: newTitle,
-                        content: newContent,
-                        videoUrl: newVideoUrl || null
-                    });
-
-                alert("Задание обновлено!");
-                loadDaysForMarathon(marathonId);
+                // Прокрутить к форме
+                document.querySelector("#days-tab form").scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }
         }
 
         // Удалить день
-        async function deleteDay(marathonId, dayId) {
-            if (!confirm("Удалить это задание?")) return;
+        async function deleteDay(dayNumber) {
+            if (!confirm(`Удалить день ${dayNumber}?`)) return;
 
             try {
-                await db.collection("marathons").doc(marathonId)
-                    .collection("days").doc(dayId).delete();
-                alert("Задание удалено!");
-                loadDaysForMarathon(marathonId);
+                await db.collection("lunar-yoga-tsarevich").doc(dayNumber.toString()).delete();
+                alert("День удален!");
+                loadAllDays();
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }
         }
+
+        // Загрузить дни при открытии таба
+        document.addEventListener('DOMContentLoaded', function() {
+            // Переопределить функцию switchTab для загрузки дней
+            const originalSwitchTab = window.switchTab;
+            window.switchTab = function(tabName, btn) {
+                originalSwitchTab(tabName, btn);
+                if (tabName === "days") {
+                    loadAllDays();
+                }
+            };
+        });
 
         // Загрузить участников
         async function loadUsers() {
