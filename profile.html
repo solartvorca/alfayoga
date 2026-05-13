@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .profile-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: #a18cd1;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            color: #ffd700;
+        }
+
+        .profile-card {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-nick {
+            font-size: 24px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 10px;
+        }
+
+        .profile-email {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .rays-display {
+            font-size: 48px;
+            margin: 20px 0;
+        }
+
+        .rays-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 20px;
+        }
+
+        .transfer-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .transaction-item {
+            background: rgba(180, 100, 255, 0.1);
+            border-left: 3px solid rgba(180, 100, 255, 0.5);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .transaction-item.sent {
+            border-left-color: rgba(255, 100, 100, 0.5);
+        }
+
+        .transaction-item.received {
+            border-left-color: rgba(0, 208, 132, 0.5);
+        }
+
+        .transaction-type {
+            color: #a18cd1;
+            font-weight: 600;
+        }
+
+        .transaction-type.sent {
+            color: #ff6464;
+        }
+
+        .transaction-type.received {
+            color: #00d084;
+        }
+
+        .transaction-time {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+
+        .textarea-field {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .textarea-field:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+        }
+
+        .add-link-btn {
+            background: rgba(180, 100, 255, 0.2);
+            border: 1px solid rgba(180, 100, 255, 0.5);
+            color: #a18cd1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .add-link-btn:hover {
+            background: rgba(180, 100, 255, 0.3);
+        }
+
+        .links-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .link-item {
+            background: rgba(180, 100, 255, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .remove-link-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: none;
+            color: #ff6464;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .remove-link-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .profile-completion-badge {
+            display: inline-block;
+            background: rgba(0, 208, 132, 0.2);
+            border: 1px solid rgba(0, 208, 132, 0.5);
+            color: #00d084;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <!-- Навигация -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="index.html">🌙 Будильник</a>
+                <a href="marathon.html">📖 Марафон</a>
+                <a href="profile.html">👤 Профиль</a>
+                <a href="wishes.html">✨ Желания</a>
+                <a href="habits.html">📋 Привычки</a>
+                <a href="notifications.html">🔔 Уведомления</a>
+                <a href="admin.html" id="adminLink" style="display: none;">⚙️ Администратор</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+
+        <!-- Профиль -->
+        <div class="profile-card">
+            <div class="profile-nick" id="profileNick">Загрузка...</div>
+            <div class="profile-email" id="profileEmail"></div>
+            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+                <div style="text-align: center;">
+                    <div class="rays-display">🔥 <span id="raysCount">0</span></div>
+                    <div class="rays-label">ЛУЧИКОВ</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="rays-display">✨ <span id="dustCount">0</span></div>
+                    <div class="rays-label">ЗОЛОТОЙ ПЫЛЬЦЫ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Творческий профиль -->
+        <div class="section">
+            <div class="section-title">✨ Мой профиль</div>
+            <form class="transfer-form" id="creativeProfileForm" onsubmit="saveCreativeProfile(event)">
+                <div class="form-group">
+                    <label>О себе и своем творчестве</label>
+                    <textarea class="textarea-field" id="bioField" placeholder="Расскажите о себе, своем творчестве, интересах..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Мои услуги</label>
+                    <textarea class="textarea-field" id="servicesField" placeholder="Описание услуг, которые вы предлагаете..."></textarea>
+                </div>
+                <div style="margin-top: 15px;">
+                    <label style="font-size: 12px; color: #888; text-transform: uppercase; display: block; margin-bottom: 10px;">Ссылки на социальные сети и сайты</label>
+                    <div class="links-list" id="linksList"></div>
+                    <button type="button" class="add-link-btn" onclick="addLinkField()">+ Добавить ссылку</button>
+                </div>
+                <button type="submit" class="btn" style="margin-top: 15px;">Сохранить профиль</button>
+            </form>
+            <div id="profileCompletionStatus"></div>
+        </div>
+
+        <!-- Передача лучиков -->
+        <div class="section">
+            <div class="section-title">🎁 Передать лучик</div>
+            <form class="transfer-form" onsubmit="transferRays(event)">
+                <div class="form-group">
+                    <label>Email или ник участника</label>
+                    <input type="text" id="recipientInput" placeholder="email@example.com или ник" required>
+                </div>
+                <div class="form-group">
+                    <label>Количество лучиков</label>
+                    <input type="number" id="raysAmount" min="1" value="1" required>
+                </div>
+                <button type="submit" class="btn">Передать</button>
+            </form>
+        </div>
+
+        <!-- История транзакций -->
+        <div class="section">
+            <div class="section-title">📜 История лучиков</div>
+            <div class="transaction-list" id="transactionsList">
+                <div class="empty-state">Нет транзакций</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        let creativeProfileLinks = [];
+
+        async function loadProfile() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            document.getElementById("profileNick").textContent = user.nick;
+            document.getElementById("profileEmail").textContent = user.email;
+            document.getElementById("raysCount").textContent = user.rays || 0;
+            document.getElementById("dustCount").textContent = user.dustAmount || 0;
+
+            if (user.isAdmin === true || user.email === "wuallar@gmail.com") {
+                document.getElementById("adminLink").style.display = "block";
+            }
+
+            loadCreativeProfile();
+            loadTransactions();
+        }
+
+        async function loadCreativeProfile() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                const profile = userDoc.data().creativeProfile || {};
+
+                document.getElementById("bioField").value = profile.bio || "";
+                document.getElementById("servicesField").value = profile.services || "";
+                creativeProfileLinks = profile.links || [];
+
+                renderLinks();
+                checkProfileCompletion();
+            } catch (error) {
+                console.error("Ошибка загрузки профиля:", error);
+            }
+        }
+
+        function renderLinks() {
+            const list = document.getElementById("linksList");
+            list.innerHTML = creativeProfileLinks.map((link, i) => `
+                <div class="link-item">
+                    <span>${link}</span>
+                    <button type="button" class="remove-link-btn" onclick="removeLinkField(${i})">Удалить</button>
+                </div>
+            `).join("");
+        }
+
+        function addLinkField() {
+            const url = prompt("Введите ссылку:");
+            if (url && url.trim()) {
+                creativeProfileLinks.push(url.trim());
+                renderLinks();
+            }
+        }
+
+        function removeLinkField(index) {
+            creativeProfileLinks.splice(index, 1);
+            renderLinks();
+        }
+
+        async function saveCreativeProfile(e) {
+            e.preventDefault();
+            const user = window.currentUser;
+            if (!user) return;
+
+            const bio = document.getElementById("bioField").value.trim();
+            const services = document.getElementById("servicesField").value.trim();
+
+            if (!bio && !services && creativeProfileLinks.length === 0) {
+                alert("Заполните хотя бы одно поле!");
+                return;
+            }
+
+            try {
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                const hasProfile = userDoc.data().creativeProfile && userDoc.data().creativeProfile.submittedAt;
+
+                const profileData = {
+                    creativeProfile: {
+                        bio,
+                        services,
+                        links: creativeProfileLinks,
+                        submittedAt: new Date(),
+                        raysEarned: !hasProfile ? 3 : 0
+                    }
+                };
+
+                // Если это первая отправка профиля, добавить 3 лучика
+                if (!hasProfile) {
+                    profileData.rays = firebase.firestore.FieldValue.increment(3);
+                }
+
+                await db.collection("users").doc(user.uid).update(profileData);
+
+                alert(hasProfile ? "Профиль обновлен!" : "Профиль сохранен! +3 лучика");
+                checkProfileCompletion();
+
+                // Обновить отображение лучиков
+                const updatedUser = await db.collection("users").doc(user.uid).get();
+                window.currentUser.rays = updatedUser.data().rays;
+                document.getElementById("raysCount").textContent = window.currentUser.rays;
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        function checkProfileCompletion() {
+            const bio = document.getElementById("bioField").value.trim();
+            const services = document.getElementById("servicesField").value.trim();
+            const hasLinks = creativeProfileLinks.length > 0;
+
+            const statusDiv = document.getElementById("profileCompletionStatus");
+            if (bio || services || hasLinks) {
+                statusDiv.innerHTML = '<div class="profile-completion-badge">✓ Профиль заполнен</div>';
+            } else {
+                statusDiv.innerHTML = '';
+            }
+        }
+
+        async function transferRays(e) {
+            e.preventDefault();
+            const recipient = document.getElementById("recipientInput").value;
+            const amount = parseInt(document.getElementById("raysAmount").value);
+            const user = window.currentUser;
+
+            if (amount > user.rays) {
+                alert("Недостаточно лучиков!");
+                return;
+            }
+
+            try {
+                // Найти получателя
+                let recipientUid = null;
+                const usersSnap = await db.collection("users")
+                    .where("email", "==", recipient)
+                    .get();
+
+                if (!usersSnap.empty) {
+                    recipientUid = usersSnap.docs[0].id;
+                } else {
+                    // Попробовать по нику
+                    const nickSnap = await db.collection("users")
+                        .where("nick", "==", recipient)
+                        .get();
+                    if (!nickSnap.empty) {
+                        recipientUid = nickSnap.docs[0].id;
+                    }
+                }
+
+                if (!recipientUid) {
+                    alert("Участник не найден!");
+                    return;
+                }
+
+                const recipientDoc = await db.collection("users").doc(recipientUid).get();
+                const recipientEmail = recipientDoc.data().email;
+
+                // Создать транзакцию
+                await db.collection("ray_transactions").add({
+                    fromUid: user.uid,
+                    fromEmail: user.email,
+                    toUid: recipientUid,
+                    toEmail: recipientEmail,
+                    amount,
+                    createdAt: new Date(),
+                    type: "transfer"
+                });
+
+                // Обновить балансы
+                await db.collection("users").doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(-amount)
+                });
+
+                await db.collection("users").doc(recipientUid).update({
+                    rays: firebase.firestore.FieldValue.increment(amount)
+                });
+
+                alert("Лучики переданы!");
+                document.querySelector("form").reset();
+                loadProfile();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function loadTransactions() {
+            const user = window.currentUser;
+            const snapshot = await db.collection("ray_transactions")
+                .where("fromUid", "==", user.uid)
+                .orderBy("createdAt", "desc")
+                .limit(20)
+                .get();
+
+            const snapshot2 = await db.collection("ray_transactions")
+                .where("toUid", "==", user.uid)
+                .orderBy("createdAt", "desc")
+                .limit(20)
+                .get();
+
+            const transactions = [];
+            snapshot.docs.forEach(doc => {
+                transactions.push({
+                    ...doc.data(),
+                    direction: "sent"
+                });
+            });
+
+            snapshot2.docs.forEach(doc => {
+                transactions.push({
+                    ...doc.data(),
+                    direction: "received"
+                });
+            });
+
+            transactions.sort((a, b) => b.createdAt - a.createdAt);
+
+            const list = document.getElementById("transactionsList");
+
+            if (transactions.length === 0) {
+                list.innerHTML = '<div class="empty-state">Нет транзакций</div>';
+                return;
+            }
+
+            list.innerHTML = transactions.map(t => {
+                const time = new Date(t.createdAt.seconds * 1000);
+                const timeStr = time.toLocaleString("ru-RU", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+                const icon = t.direction === "sent" ? "➡️" : "⬅️";
+                const counterparty = t.direction === "sent" ? t.toEmail : t.fromEmail;
+                const verb = t.direction === "sent" ? "отправлено" : "получено";
+
+                return `
+                    <div class="transaction-item ${t.direction}">
+                        <span class="transaction-type ${t.direction}">
+                            ${icon} ${t.amount}✨ ${verb} ${counterparty}
+                        </span>
+                        <div class="transaction-time">${timeStr}</div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        // Загрузить профиль при входе
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userRef = db.collection("users").doc(user.uid);
+                userRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        window.currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            ...doc.data()
+                        };
+                        loadProfile();
+                    }
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+</body>
+</html>

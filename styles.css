@@ -1,0 +1,474 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0e27;
+    color: #e0e6ed;
+}
+
+body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    min-height: auto;
+}
+
+/* Луна */
+.moon-container {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#moonCanvas {
+    display: block;
+    filter: drop-shadow(0 0 40px rgba(180, 100, 255, 0.6));
+}
+
+.moon-info {
+    position: absolute;
+    bottom: 30px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.lunar-day {
+    font-size: 18px;
+    font-weight: 600;
+    color: #a18cd1;
+    margin-bottom: 8px;
+}
+
+.lunar-phase {
+    font-size: 13px;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Контроль дыхания */
+.breathing-control {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.rhythm-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.rhythm-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rhythm-item label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rhythm-item input {
+    background: rgba(180, 100, 255, 0.1);
+    border: 1px solid rgba(180, 100, 255, 0.3);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: #a18cd1;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.rhythm-item input:focus {
+    outline: none;
+    border-color: rgba(180, 100, 255, 0.7);
+    box-shadow: 0 0 10px rgba(180, 100, 255, 0.2);
+}
+
+/* Будильник */
+.alarm-section {
+    width: 100%;
+    text-align: center;
+}
+
+.alarm-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.alarm-toggle input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #a18cd1;
+}
+
+.alarm-toggle label {
+    cursor: pointer;
+}
+
+.alarm-message {
+    margin-top: 15px;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffd700;
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.alarm-message.show {
+    animation: pulse 2s ease-in-out;
+}
+
+/* Уведомление будильника */
+.alarm-notification {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(180, 100, 255, 0.2);
+    border: 2px solid rgba(180, 100, 255, 0.6);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 60px rgba(180, 100, 255, 0.4);
+    animation: alarmPulse 0.6s ease-in-out infinite;
+}
+
+.alarm-notification.show {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+@keyframes alarmPulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(180, 100, 255, 0.4);
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        box-shadow: 0 0 60px rgba(180, 100, 255, 0.8);
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+}
+
+.alarm-pulse {
+    font-size: 48px;
+    animation: pulseBeat 0.8s ease-in-out infinite;
+}
+
+@keyframes pulseBeat {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+.alarm-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #ffd700;
+    letter-spacing: 1px;
+}
+
+/* Описание практики */
+.practice-description {
+    width: 100%;
+    background: rgba(180, 100, 255, 0.08);
+    border: 1px solid rgba(180, 100, 255, 0.2);
+    border-radius: 12px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    max-width: 600px;
+}
+
+.description-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: #a18cd1;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.description-content {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #c8d0db;
+}
+
+.description-content p {
+    margin-bottom: 12px;
+}
+
+.description-content p:last-child {
+    margin-bottom: 0;
+}
+
+.description-content strong {
+    color: #e0e6ed;
+    font-weight: 600;
+}
+
+.highlight-text {
+    font-size: 14px;
+    color: #ffd700;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.highlight {
+    color: #a18cd1;
+    font-weight: 500;
+}
+
+/* Мобильная адаптация */
+/* Комментарии к отчетам */
+.report-comments {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(180, 100, 255, 0.1);
+}
+
+.comments-list {
+    margin-bottom: 12px;
+}
+
+.comment-item {
+    background: rgba(180, 100, 255, 0.05);
+    border-left: 2px solid rgba(180, 100, 255, 0.3);
+    padding: 10px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.comment-author {
+    color: #a18cd1;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.comment-text {
+    color: #c8d0db;
+    line-height: 1.5;
+}
+
+.comment-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.comment-input {
+    flex: 1;
+    background: rgba(180, 100, 255, 0.1);
+    border: 1px solid rgba(180, 100, 255, 0.3);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: #e0e6ed;
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: rgba(180, 100, 255, 0.7);
+}
+
+.comment-btn {
+    background: rgba(180, 100, 255, 0.2);
+    border: 1px solid rgba(180, 100, 255, 0.5);
+    color: #a18cd1;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.comment-btn:hover {
+    background: rgba(180, 100, 255, 0.3);
+}
+
+/* Информация о марафоне */
+.marathon-info {
+    background: rgba(180, 100, 255, 0.05);
+    border-left: 3px solid rgba(180, 100, 255, 0.5);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #c8d0db;
+}
+
+.marathon-info p {
+    margin-bottom: 12px;
+}
+
+.marathon-info p:last-child {
+    margin-bottom: 0;
+}
+
+.btn-read-more {
+    background: rgba(180, 100, 255, 0.2);
+    border: 1px solid rgba(180, 100, 255, 0.5);
+    color: #a18cd1;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: 15px;
+    transition: all 0.2s;
+}
+
+.btn-read-more:hover {
+    background: rgba(180, 100, 255, 0.3);
+}
+
+/* Модаль марафона */
+.marathon-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 14, 39, 0.95);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 40px 20px;
+}
+
+.marathon-modal.show {
+    display: block;
+}
+
+.marathon-modal-content {
+    max-width: 700px;
+    margin: 0 auto;
+    background: rgba(180, 100, 255, 0.08);
+    border: 1px solid rgba(180, 100, 255, 0.2);
+    border-radius: 12px;
+    padding: 40px;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #a18cd1;
+    cursor: pointer;
+}
+
+.marathon-modal-content h2 {
+    font-size: 24px;
+    color: #a18cd1;
+    margin-bottom: 25px;
+}
+
+.marathon-modal-content h3 {
+    font-size: 16px;
+    color: #a18cd1;
+    margin-top: 20px;
+    margin-bottom: 12px;
+}
+
+.marathon-modal-content p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c8d0db;
+    margin-bottom: 15px;
+}
+
+.marathon-modal-content ul {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c8d0db;
+}
+
+.marathon-modal-content li {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 480px) {
+    .container {
+        gap: 30px;
+    }
+
+    .moon-container {
+        width: 280px;
+        height: 280px;
+    }
+
+    #moonCanvas {
+        width: 280px;
+        height: 280px;
+    }
+
+    .rhythm-display {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .moon-info {
+        bottom: 20px;
+    }
+
+    .lunar-day {
+        font-size: 16px;
+    }
+}

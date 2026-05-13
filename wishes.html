@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Желания — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .wishes-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: #a18cd1;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            color: #ffd700;
+        }
+
+        .section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .form-group textarea,
+        .form-group input,
+        .form-group select {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea:focus,
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+        }
+
+        .format-hint {
+            font-size: 12px;
+            color: #888;
+            background: rgba(180, 100, 255, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .wish-item {
+            background: rgba(180, 100, 255, 0.1);
+            border-left: 3px solid rgba(180, 100, 255, 0.5);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .wish-item.fulfilled {
+            border-left-color: rgba(0, 208, 132, 0.5);
+            opacity: 0.7;
+        }
+
+        .wish-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #a18cd1;
+            flex-shrink: 0;
+        }
+
+        .wish-content {
+            flex: 1;
+        }
+
+        .wish-type {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .wish-text {
+            font-size: 14px;
+            color: #c8d0db;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .wish-rays {
+            font-size: 12px;
+            color: #a18cd1;
+            font-weight: 600;
+        }
+
+        .wish-date {
+            font-size: 11px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .public-wish-item {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .public-wish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .public-wish-author {
+            font-size: 12px;
+            color: #a18cd1;
+            font-weight: 600;
+        }
+
+        .public-wish-content {
+            font-size: 14px;
+            color: #c8d0db;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .public-wish-footer {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .vote-btn {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            color: #ffd700;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .vote-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+        }
+
+        .vote-count {
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 30px 20px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .tab {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #a18cd1;
+            border-bottom-color: #a18cd1;
+        }
+    </style>
+</head>
+<body>
+    <div class="wishes-container">
+        <!-- Навигация -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="index.html">🌙 Будильник</a>
+                <a href="marathon.html">📖 Марафон</a>
+                <a href="profile.html">👤 Профиль</a>
+                <a href="wishes.html">✨ Желания</a>
+                <a href="habits.html">📋 Привычки</a>
+                <a href="notifications.html">🔔 Уведомления</a>
+                <a href="shop.html" id="shopLink" style="display: none;">🛍️ Товары</a>
+                <a href="admin.html" id="adminLink" style="display: none;">⚙️ Администратор</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+
+        <!-- Вкладки -->
+        <div class="tabs" style="margin-bottom: 30px;">
+            <button class="tab active" onclick="switchSection('personal')">Личные желания</button>
+            <button class="tab" onclick="switchSection('public')">Публичные желания</button>
+        </div>
+
+        <!-- Сжигание лучика на личное желание -->
+        <div id="personalSection">
+        <div class="section">
+            <div class="section-title">🔥 Сжечь лучик на желание</div>
+
+            <div class="format-hint">
+                <strong>Как оформить желание:</strong><br>
+                • <em>В моей жизни происходит ситуация, в которой я чувствую и осознаю состояние...</em><br>
+                • <em>Я хочу, намерен, имею цель...</em>
+            </div>
+
+            <form onsubmit="submitWish(event)" class="form-group" style="margin-bottom: 0;">
+                <label>Тип желания</label>
+                <select id="wishType" required>
+                    <option value="">Выбери формат</option>
+                    <option value="situation">В моей жизни происходит ситуация...</option>
+                    <option value="goal">Я хочу, намерен, имею цель...</option>
+                </select>
+
+                <label style="margin-top: 15px;">Твоё желание</label>
+                <textarea id="wishText" placeholder="Опиши своё желание или цель..." rows="5" required></textarea>
+
+                <label style="margin-top: 15px;">Сжечь лучиков</label>
+                <input type="number" id="wishRays" min="1" max="999" value="1" required>
+
+                <button type="submit" class="btn" style="margin-top: 15px;">Сжечь лучик</button>
+            </form>
+        </div>
+
+        <!-- Список желаний -->
+        <div class="section">
+            <div class="section-title">📝 Твои желания</div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('active')">Активные</button>
+                <button class="tab" onclick="switchTab('fulfilled')">Исполнённые</button>
+            </div>
+
+            <div id="activeWishes" class="wishes-list">
+                <div class="empty-state">Загрузка...</div>
+            </div>
+
+            <div id="fulfilledWishes" class="wishes-list" style="display: none;">
+                <div class="empty-state">Загрузка...</div>
+            </div>
+        </div>
+        </div><!-- конец personalSection -->
+
+        <!-- Публичные желания -->
+        <div id="publicSection" style="display: none;">
+        <div class="section">
+            <div class="section-title">✨ Создать публичное желание</div>
+            <p style="font-size: 13px; color: #888; margin-bottom: 15px;">Поделись своим желанием с сообществом! Участники смогут поддержать тебя золотой пыльцой.</p>
+
+            <form onsubmit="submitPublicWish(event)" class="form-group" style="margin-bottom: 0;">
+                <label>Твоё желание</label>
+                <textarea id="publicWishText" placeholder="Поделись своим желанием или целью..." rows="4" required></textarea>
+
+                <button type="submit" class="btn" style="margin-top: 15px;">Поделиться желанием</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🌟 Желания сообщества</div>
+            <div id="publicWishesList">
+                <div class="empty-state">Загрузка...</div>
+            </div>
+        </div>
+        </div><!-- конец publicSection -->
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+
+    <script>
+        let currentTab = "active";
+        let currentSection = "personal";
+
+        function switchSection(section) {
+            currentSection = section;
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            event.target.classList.add("active");
+
+            if (section === "personal") {
+                document.getElementById("personalSection").style.display = "block";
+                document.getElementById("publicSection").style.display = "none";
+            } else {
+                document.getElementById("personalSection").style.display = "none";
+                document.getElementById("publicSection").style.display = "block";
+                loadPublicWishes();
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll(".tabs .tab").forEach(t => t.classList.remove("active"));
+            event.target.classList.add("active");
+
+            if (tab === "active") {
+                document.getElementById("activeWishes").style.display = "block";
+                document.getElementById("fulfilledWishes").style.display = "none";
+            } else {
+                document.getElementById("activeWishes").style.display = "none";
+                document.getElementById("fulfilledWishes").style.display = "block";
+            }
+        }
+
+        async function submitWish(e) {
+            e.preventDefault();
+
+            const user = window.currentUser;
+            if (!user) {
+                alert("Ошибка: пользователь не определен");
+                return;
+            }
+
+            const type = document.getElementById("wishType").value;
+            const text = document.getElementById("wishText").value;
+            const rays = parseInt(document.getElementById("wishRays").value);
+
+            if (rays > user.rays) {
+                alert("Недостаточно лучиков!");
+                return;
+            }
+
+            try {
+                // Добавить желание
+                await db.collection("wishes").add({
+                    uid: user.uid,
+                    type,
+                    text,
+                    rays,
+                    fulfilled: false,
+                    createdAt: new Date(),
+                    fulfilledAt: null
+                });
+
+                // Вычесть лучики
+                await db.collection("users").doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(-rays)
+                });
+
+                // Очистить форму
+                document.getElementById("wishText").value = "";
+                document.getElementById("wishType").value = "";
+                document.getElementById("wishRays").value = "1";
+
+                alert("Желание сожжено! ✨");
+                loadWishes();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function loadWishes() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            const snapshot = await db.collection("wishes")
+                .where("uid", "==", user.uid)
+                .orderBy("createdAt", "desc")
+                .get();
+
+            const activeList = document.getElementById("activeWishes");
+            const fulfilledList = document.getElementById("fulfilledWishes");
+
+            const active = [];
+            const fulfilled = [];
+
+            snapshot.docs.forEach(doc => {
+                const wish = doc.data();
+                const html = `
+                    <div class="wish-item ${wish.fulfilled ? "fulfilled" : ""}">
+                        <input type="checkbox" class="wish-checkbox"
+                            ${wish.fulfilled ? "checked" : ""}
+                            onchange="toggleWish('${doc.id}', this.checked)">
+                        <div class="wish-content">
+                            <div class="wish-type">${wish.type === "situation" ? "📍 Ситуация" : "🎯 Цель"}</div>
+                            <div class="wish-text">${wish.text}</div>
+                            <div class="wish-rays">🔥 Сожжено ${wish.rays} лучиков</div>
+                            <div class="wish-date">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</div>
+                        </div>
+                    </div>
+                `;
+
+                if (wish.fulfilled) {
+                    fulfilled.push(html);
+                } else {
+                    active.push(html);
+                }
+            });
+
+            activeList.innerHTML = active.length > 0 ? active.join("") : "<div class=\"empty-state\">Нет активных желаний</div>";
+            fulfilledList.innerHTML = fulfilled.length > 0 ? fulfilled.join("") : "<div class=\"empty-state\">Нет исполнённых желаний</div>";
+        }
+
+        async function toggleWish(wishId, fulfilled) {
+            try {
+                await db.collection("wishes").doc(wishId).update({
+                    fulfilled,
+                    fulfilledAt: fulfilled ? new Date() : null
+                });
+                loadWishes();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function submitPublicWish(e) {
+            e.preventDefault();
+
+            const user = window.currentUser;
+            if (!user) {
+                alert("Ошибка: пользователь не определен");
+                return;
+            }
+
+            const text = document.getElementById("publicWishText").value;
+
+            try {
+                await db.collection("public_wishes").add({
+                    uid: user.uid,
+                    nick: user.nick,
+                    text,
+                    votes: 0,
+                    createdAt: new Date()
+                });
+
+                document.getElementById("publicWishText").value = "";
+                alert("Желание опубликовано! ✨");
+                loadPublicWishes();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function loadPublicWishes() {
+            try {
+                const snapshot = await db.collection("public_wishes")
+                    .orderBy("votes", "desc")
+                    .orderBy("createdAt", "desc")
+                    .get();
+
+                const list = document.getElementById("publicWishesList");
+
+                if (snapshot.empty) {
+                    list.innerHTML = "<div class=\"empty-state\">Нет публичных желаний</div>";
+                    return;
+                }
+
+                list.innerHTML = snapshot.docs.map(doc => {
+                    const wish = doc.data();
+                    return `
+                        <div class="public-wish-item">
+                            <div class="public-wish-header">
+                                <span class="public-wish-author">✨ ${wish.nick}</span>
+                                <span style="font-size: 11px; color: #666;">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</span>
+                            </div>
+                            <div class="public-wish-content">${wish.text}</div>
+                            <div class="public-wish-footer">
+                                <button class="vote-btn" onclick="voteWish('${doc.id}')">💛 Поддержать</button>
+                                <span class="vote-count">${wish.votes} ✨</span>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка при загрузке: " + error.message);
+            }
+        }
+
+        async function voteWish(wishId) {
+            const user = window.currentUser;
+            if (!user) {
+                alert("Нужно войти в аккаунт");
+                return;
+            }
+
+            if (!user.dustAmount || user.dustAmount === 0) {
+                alert("У вас нет золотой пыльцы. Получайте её через комментарии!");
+                return;
+            }
+
+            try {
+                await db.collection("public_wishes").doc(wishId).update({
+                    votes: firebase.firestore.FieldValue.increment(1)
+                });
+
+                // Вычесть пыльцу
+                await db.collection("users").doc(user.uid).update({
+                    dustAmount: firebase.firestore.FieldValue.increment(-1)
+                });
+
+                alert("Поддержка отправлена! 💛");
+                loadPublicWishes();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        // Загрузить админ ссылку
+        function updateAdminLink() {
+            const user = window.currentUser;
+            if (user && (user.isAdmin === true || user.email === "wuallar@gmail.com")) {
+                document.getElementById("adminLink").style.display = "block";
+            }
+        }
+
+        // Инициализация
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userRef = db.collection("users").doc(user.uid);
+                userRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        window.currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            ...doc.data()
+                        };
+                        loadWishes();
+                        updateAdminLink();
+                    }
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+</body>
+</html>

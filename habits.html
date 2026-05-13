@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Привычки — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .habits-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: #a18cd1;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            color: #ffd700;
+        }
+
+        .logout-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .add-form input {
+            flex: 1;
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 13px;
+        }
+
+        .add-form input:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .add-btn:hover {
+            opacity: 0.9;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(180, 100, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: background 0.2s;
+        }
+
+        .task-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #a18cd1;
+            flex-shrink: 0;
+        }
+
+        .task-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #e0e6ed;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .task-label.completed {
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .task-points {
+            font-size: 11px;
+            color: #ffd700;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .delete-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: none;
+            color: #ff6464;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+            font-size: 13px;
+        }
+
+        .daily-counter {
+            background: rgba(0, 208, 132, 0.1);
+            border-left: 3px solid rgba(0, 208, 132, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #00d084;
+        }
+
+        .marathon-task {
+            background: rgba(180, 100, 255, 0.1);
+            border-left: 3px solid rgba(180, 100, 255, 0.5);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .marathon-task-title {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .marathon-task-content {
+            color: #e0e6ed;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="habits-container">
+        <!-- Навигация -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="index.html">🌙 Будильник</a>
+                <a href="marathon.html">📖 Марафон</a>
+                <a href="profile.html">👤 Профиль</a>
+                <a href="wishes.html">✨ Желания</a>
+                <a href="habits.html">📋 Привычки</a>
+                <a href="notifications.html">🔔 Уведомления</a>
+                <a href="shop.html" id="shopLink" style="display: none;">🛍️ Товары</a>
+                <a href="admin.html" id="adminLink" style="display: none;">⚙️ Администратор</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+
+        <!-- Ежедневный планер -->
+        <div class="section">
+            <h2>📅 Ежедневный планер</h2>
+
+            <div class="daily-counter" id="dailyCounter">
+                Загрузка...
+            </div>
+
+            <!-- Задание марафона -->
+            <div class="marathon-task" id="marathonTaskContainer" style="display: none;">
+                <div class="marathon-task-title">Задание дня</div>
+                <div class="marathon-task-content" id="marathonTaskText"></div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-top: 12px;">
+                    <input type="checkbox" id="marathonTaskCheckbox" onchange="toggleMarathonTaskCompletion()">
+                    <label for="marathonTaskCheckbox" style="font-size: 12px; color: #888; cursor: pointer; margin: 0;">
+                        Выполнено (+1 лучик)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Ежедневные задачи -->
+            <h3 style="font-size: 14px; color: #a18cd1; text-transform: uppercase; margin-top: 20px; margin-bottom: 15px; letter-spacing: 0.5px;">Мои задачи дня</h3>
+            <div id="dailyTasksList" class="empty-state">
+                Нет добавленных задач
+            </div>
+        </div>
+
+        <!-- Привычки -->
+        <div class="section">
+            <h2>⭐ Мои привычки</h2>
+
+            <div class="add-form">
+                <input type="text" id="habitInput" placeholder="Добавить новую привычку..." maxlength="100">
+                <button class="add-btn" onclick="addHabit()">Добавить</button>
+            </div>
+
+            <div id="habitsList" class="empty-state">
+                Нет привычек
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        let currentDayNum = 0;
+
+        function getTodayDateString() {
+            const today = new Date();
+            return today.getFullYear() + "-" +
+                   String(today.getMonth() + 1).padStart(2, '0') + "-" +
+                   String(today.getDate()).padStart(2, '0');
+        }
+
+        async function loadMarathonTask() {
+            currentDayNum = getLunarDay();
+            const dayDoc = await db.collection("days").doc(currentDayNum.toString()).get();
+
+            if (dayDoc.exists) {
+                const data = dayDoc.data();
+                document.getElementById("marathonTaskText").textContent = data.content || "Задание дня";
+                document.getElementById("marathonTaskContainer").style.display = "block";
+                await checkMarathonTaskCompletion();
+            }
+        }
+
+        async function checkMarathonTaskCompletion() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            const today = getTodayDateString();
+            const docId = user.uid + "_" + today;
+
+            try {
+                const doc = await db.collection("daily_tasks").doc(docId).get();
+                if (doc.exists) {
+                    const tasks = doc.data().tasks || [];
+                    const marathonTask = tasks.find(t => t.source === "marathon");
+                    if (marathonTask && marathonTask.completed) {
+                        document.getElementById("marathonTaskCheckbox").checked = true;
+                        document.getElementById("marathonTaskCheckbox").disabled = true;
+                    }
+                }
+            } catch (error) {
+                console.error("Ошибка при проверке задания марафона:", error);
+            }
+        }
+
+        async function toggleMarathonTaskCompletion() {
+            const user = window.currentUser;
+            if (!user) {
+                alert("Нужно войти в аккаунт");
+                return;
+            }
+
+            const checkbox = document.getElementById("marathonTaskCheckbox");
+            if (!checkbox.checked) {
+                checkbox.checked = true;
+                return;
+            }
+
+            try {
+                const today = getTodayDateString();
+                const docId = user.uid + "_" + today;
+
+                const doc = await db.collection("daily_tasks").doc(docId).get();
+                let tasks = [];
+
+                if (doc.exists) {
+                    tasks = doc.data().tasks || [];
+                }
+
+                // Найти или добавить задание марафона
+                let marathonTask = tasks.find(t => t.source === "marathon");
+                if (!marathonTask) {
+                    marathonTask = {
+                        id: "marathon_" + currentDayNum,
+                        text: "Задание дня",
+                        source: "marathon",
+                        completed: false,
+                        createdAt: new Date()
+                    };
+                    tasks.push(marathonTask);
+                }
+
+                marathonTask.completed = true;
+
+                // Сохранить в Firestore
+                await db.collection("daily_tasks").doc(docId).set({
+                    uid: user.uid,
+                    nick: user.nick,
+                    email: user.email,
+                    date: today,
+                    tasks,
+                    updatedAt: new Date()
+                }, { merge: true });
+
+                // Добавить лучик
+                await db.collection("users").doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(1)
+                });
+
+                window.currentUser.rays = (window.currentUser.rays || 0) + 1;
+                checkbox.disabled = true;
+                updateDailyCounter();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+                checkbox.checked = false;
+            }
+        }
+
+        async function addHabit() {
+            const input = document.getElementById("habitInput");
+            const text = input.value.trim();
+
+            if (!text) {
+                alert("Введите привычку");
+                return;
+            }
+
+            const user = window.currentUser;
+            if (!user) {
+                alert("Нужно войти в аккаунт");
+                return;
+            }
+
+            try {
+                const docId = user.uid;
+                const doc = await db.collection("habits").doc(docId).get();
+
+                let habits = [];
+                if (doc.exists) {
+                    habits = doc.data().habits || [];
+                }
+
+                const newHabit = {
+                    id: Date.now().toString(),
+                    text,
+                    createdAt: new Date()
+                };
+
+                habits.push(newHabit);
+
+                await db.collection("habits").doc(docId).set({
+                    uid: user.uid,
+                    nick: user.nick,
+                    email: user.email,
+                    habits,
+                    updatedAt: new Date()
+                }, { merge: true });
+
+                input.value = "";
+                loadHabits();
+            } catch (error) {
+                alert("Ошибка при добавлении привычки: " + error.message);
+            }
+        }
+
+        async function deleteHabit(habitId) {
+            if (!confirm("Удалить привычку?")) return;
+
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const docId = user.uid;
+                const doc = await db.collection("habits").doc(docId).get();
+
+                if (doc.exists) {
+                    let habits = doc.data().habits || [];
+                    habits = habits.filter(h => h.id !== habitId);
+
+                    await db.collection("habits").doc(docId).set({
+                        uid: user.uid,
+                        nick: user.nick,
+                        email: user.email,
+                        habits,
+                        updatedAt: new Date()
+                    }, { merge: true });
+
+                    loadHabits();
+                }
+            } catch (error) {
+                alert("Ошибка при удалении: " + error.message);
+            }
+        }
+
+        async function toggleHabitCompletion(habitId) {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const today = getTodayDateString();
+                const docId = user.uid + "_" + today;
+
+                const doc = await db.collection("habit_completions").doc(docId).get();
+                let completions = {};
+
+                if (doc.exists) {
+                    completions = doc.data().completions || {};
+                }
+
+                if (completions[habitId]) {
+                    // Уже было отмечено сегодня
+                    return;
+                }
+
+                completions[habitId] = true;
+
+                await db.collection("habit_completions").doc(docId).set({
+                    uid: user.uid,
+                    nick: user.nick,
+                    email: user.email,
+                    date: today,
+                    completions,
+                    createdAt: new Date()
+                }, { merge: true });
+
+                // Добавить лучик
+                await db.collection("users").doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(1)
+                });
+
+                window.currentUser.rays = (window.currentUser.rays || 0) + 1;
+                loadHabits();
+                updateDailyCounter();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function loadHabits() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const habitsDoc = await db.collection("habits").doc(user.uid).get();
+                const habits = habitsDoc.exists ? habitsDoc.data().habits || [] : [];
+
+                const today = getTodayDateString();
+                const completionsDoc = await db.collection("habit_completions")
+                    .doc(user.uid + "_" + today).get();
+                const completions = completionsDoc.exists ? completionsDoc.data().completions || {} : {};
+
+                const list = document.getElementById("habitsList");
+
+                if (habits.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет привычек</div>';
+                    return;
+                }
+
+                list.innerHTML = habits.map(habit => {
+                    const isCompleted = completions[habit.id];
+                    return `
+                        <div class="task-item">
+                            <input type="checkbox" ${isCompleted ? 'checked disabled' : ''}
+                                onchange="toggleHabitCompletion('${habit.id}')">
+                            <label class="task-label ${isCompleted ? 'completed' : ''}">
+                                ${habit.text}
+                            </label>
+                            ${!isCompleted ? `<span class="task-points">+1</span>` : ''}
+                            ${!isCompleted ? `<button class="delete-btn" onclick="deleteHabit('${habit.id}')">Удалить</button>` : ''}
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка при загрузке привычек:", error);
+            }
+        }
+
+        async function updateDailyCounter() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const today = getTodayDateString();
+
+                // Подсчет из социальных наград
+                const socialDoc = await db.collection("social_rewards")
+                    .doc(user.uid + "_" + today).get();
+                const socialPoints = socialDoc.exists ? Object.values(socialDoc.data().claimed || {}).filter(v => v).length : 0;
+
+                // Подсчет из завершенных привычек
+                const completionsDoc = await db.collection("habit_completions")
+                    .doc(user.uid + "_" + today).get();
+                const habitPoints = completionsDoc.exists ? Object.values(completionsDoc.data().completions || {}).filter(v => v).length : 0;
+
+                // Проверка марафона
+                const tasksDoc = await db.collection("daily_tasks")
+                    .doc(user.uid + "_" + today).get();
+                const marathonPoints = tasksDoc.exists && tasksDoc.data().tasks.some(t => t.source === "marathon" && t.completed) ? 1 : 0;
+
+                const totalPoints = socialPoints + habitPoints + marathonPoints;
+
+                document.getElementById("dailyCounter").innerHTML = `
+                    ✨ Сегодня вы получили <strong>${totalPoints}</strong> лучик${totalPoints === 1 ? '' : 'ов'}
+                    <br>
+                    <span style="font-size: 11px; color: #666;">
+                        Социальные задачи: ${socialPoints} | Привычки: ${habitPoints} | Марафон: ${marathonPoints}
+                    </span>
+                `;
+            } catch (error) {
+                console.error("Ошибка при обновлении счетчика:", error);
+            }
+        }
+
+        // Показать панель администратора если админ
+        function updateAdminLink() {
+            const user = window.currentUser;
+            if (user && (user.isAdmin === true || user.email === "wuallar@gmail.com")) {
+                document.getElementById("adminLink").style.display = "block";
+            }
+        }
+
+        // Инициализация
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userRef = db.collection("users").doc(user.uid);
+                userRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        window.currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            ...doc.data()
+                        };
+                        loadMarathonTask();
+                        loadHabits();
+                        updateDailyCounter();
+                        updateAdminLink();
+                    }
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+</body>
+</html>

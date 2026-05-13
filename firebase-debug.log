@@ -1,0 +1,75 @@
+[debug] [2026-05-13T22:56:24.594Z] ----------------------------------------------------------------------
+[debug] [2026-05-13T22:56:24.603Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Lenovo\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-05-13T22:56:24.605Z] CLI Version:   15.18.0
+[debug] [2026-05-13T22:56:24.605Z] Platform:      win32
+[debug] [2026-05-13T22:56:24.606Z] Node Version:  v24.15.0
+[debug] [2026-05-13T22:56:24.606Z] Time:          Thu May 14 2026 01:56:24 GMT+0300 (Москва, стандартное время)
+[debug] [2026-05-13T22:56:24.607Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-13T22:56:29.282Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-13T22:56:29.283Z] > authorizing via signed-in user (wuallar@gmail.com)
+[debug] [2026-05-13T22:56:29.283Z] [iam] checking project budilnik-notifications for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-05-13T22:56:29.285Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:29.285Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:29.287Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications:testIamPermissions [none]
+[debug] [2026-05-13T22:56:29.287Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications:testIamPermissions  x-goog-user-project=budilnik-notifications
+[debug] [2026-05-13T22:56:29.288Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-13T22:56:30.573Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications:testIamPermissions 200
+[debug] [2026-05-13T22:56:30.574Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-13T22:56:30.575Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:30.575Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:30.575Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/budilnik-notifications [none]
+[debug] [2026-05-13T22:56:31.836Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/budilnik-notifications 404
+[debug] [2026-05-13T22:56:31.836Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/budilnik-notifications {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2026-05-13T22:56:31.839Z] Couldn't get project info from firedata for budilnik-notifications, trying resource manager. Original error: FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/budilnik-notifications had HTTP Error: 404, Requested entity was not found.
+[debug] [2026-05-13T22:56:31.841Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:31.841Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:31.841Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications [none]
+[debug] [2026-05-13T22:56:32.147Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications 200
+[debug] [2026-05-13T22:56:32.148Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications {"projectNumber":"10495996192","projectId":"budilnik-notifications","lifecycleState":"ACTIVE","name":"Budilnik Notifications","createTime":"2026-05-13T20:19:32.303Z"}
+[debug] [2026-05-13T22:56:32.148Z] the default site does not exist on the Firebase project; asking Hosting.
+[debug] [2026-05-13T22:56:32.148Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:32.148Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:32.149Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/budilnik-notifications/sites pageToken=&pageSize=10
+[debug] [2026-05-13T22:56:33.986Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/budilnik-notifications/sites 200
+[debug] [2026-05-13T22:56:33.987Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/budilnik-notifications/sites {}
+[info] i  No Hosting site detected. 
+[debug] [2026-05-13T22:56:33.989Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:33.989Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:33.989Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications [none]
+[debug] [2026-05-13T22:56:34.371Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications 200
+[debug] [2026-05-13T22:56:34.372Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/budilnik-notifications {"projectNumber":"10495996192","projectId":"budilnik-notifications","lifecycleState":"ACTIVE","name":"Budilnik Notifications","createTime":"2026-05-13T20:19:32.303Z"}
+[debug] [2026-05-13T22:56:34.372Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:34.372Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T22:56:34.372Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites siteId=budilnik-notifications&validateOnly=true
+[debug] [2026-05-13T22:56:34.373Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"appId":""}
+[debug] [2026-05-13T22:56:36.248Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites 200
+[debug] [2026-05-13T22:56:36.248Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"name":"projects/10495996192/sites/budilnik-notifications","defaultUrl":"https://budilnik-notifications.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-05-13T23:04:12.331Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:04:12.332Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:04:12.333Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites siteId=firebase+deploy+--only+hosting&validateOnly=true
+[debug] [2026-05-13T23:04:12.333Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"appId":""}
+[debug] [2026-05-13T23:04:14.079Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites 400
+[debug] [2026-05-13T23:04:14.080Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"error":{"code":400,"message":"CreateSite can't create a site that contains unexpected double-hyphens","status":"INVALID_ARGUMENT"}}
+[warn] !  Request to https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites?siteId=firebase+deploy+--only+hosting&validateOnly=true had HTTP Error: 400, CreateSite can't create a site that contains unexpected double-hyphens 
+[debug] [2026-05-13T23:08:43.452Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:08:43.453Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:08:43.453Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites siteId=firebase+deploy+--only+hosting&validateOnly=true
+[debug] [2026-05-13T23:08:43.454Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"appId":""}
+[debug] [2026-05-13T23:08:45.368Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites 400
+[debug] [2026-05-13T23:08:45.368Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"error":{"code":400,"message":"CreateSite can't create a site that contains unexpected double-hyphens","status":"INVALID_ARGUMENT"}}
+[warn] !  Request to https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites?siteId=firebase+deploy+--only+hosting&validateOnly=true had HTTP Error: 400, CreateSite can't create a site that contains unexpected double-hyphens 
+[debug] [2026-05-13T23:09:00.390Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:09:00.391Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:09:00.391Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites siteId=firebase+deploy+--only+hosting&validateOnly=true
+[debug] [2026-05-13T23:09:00.391Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"appId":""}
+[debug] [2026-05-13T23:09:02.351Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites 400
+[debug] [2026-05-13T23:09:02.351Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"error":{"code":400,"message":"CreateSite can't create a site that contains unexpected double-hyphens","status":"INVALID_ARGUMENT"}}
+[warn] !  Request to https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites?siteId=firebase+deploy+--only+hosting&validateOnly=true had HTTP Error: 400, CreateSite can't create a site that contains unexpected double-hyphens 
+[debug] [2026-05-13T23:09:40.625Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:09:40.625Z] Checked if tokens are valid: true, expires at: 1778716072923
+[debug] [2026-05-13T23:09:40.625Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites siteId=firebase+deploy+--only+hosting%3Abudilnik-notifications&validateOnly=true
+[debug] [2026-05-13T23:09:40.625Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"appId":""}
+[debug] [2026-05-13T23:09:42.744Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites 400
+[debug] [2026-05-13T23:09:42.745Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites {"error":{"code":400,"message":"CreateSite can't create a site that contains unexpected double-hyphens","status":"INVALID_ARGUMENT"}}
+[warn] !  Request to https://firebasehosting.googleapis.com/v1beta1/projects/10495996192/sites?siteId=firebase+deploy+--only+hosting%3Abudilnik-notifications&validateOnly=true had HTTP Error: 400, CreateSite can't create a site that contains unexpected double-hyphens 

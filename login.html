@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #a18cd1;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+            box-shadow: 0 0 10px rgba(180, 100, 255, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toggle-form {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-top: 15px;
+        }
+
+        .toggle-form a {
+            color: #a18cd1;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .error {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">⭕ Осознавание</div>
+
+        <div class="error" id="authError"></div>
+
+        <!-- Вход -->
+        <div id="loginForm">
+            <form class="auth-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn">Войти</button>
+            </form>
+            <div class="toggle-form">
+                Нет аккаунта? <a onclick="showRegister()">Зарегистрироваться</a>
+            </div>
+        </div>
+
+        <!-- Регистрация -->
+        <div id="registerForm" style="display: none;">
+            <form class="auth-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Ник</label>
+                    <input type="text" id="registerNick" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <button type="submit" class="btn">Зарегистрироваться</button>
+            </form>
+            <div class="toggle-form">
+                Уже есть аккаунт? <a onclick="showLogin()">Войти</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const errorDiv = document.getElementById("authError");
+
+        function showError(msg) {
+            errorDiv.textContent = msg;
+            errorDiv.classList.add("show");
+            setTimeout(() => errorDiv.classList.remove("show"), 5000);
+        }
+
+        function showRegister() {
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("registerForm").style.display = "block";
+        }
+
+        function showLogin() {
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("loginForm").style.display = "block";
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = "marathon.html";
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const nick = document.getElementById("registerNick").value;
+            const email = document.getElementById("registerEmail").value;
+            const password = document.getElementById("registerPassword").value;
+
+            try {
+                const res = await auth.createUserWithEmailAndPassword(email, password);
+                const uid = res.user.uid;
+
+                // Добавить в Firestore
+                await db.collection("users").doc(uid).set({
+                    email,
+                    nick,
+                    rays: 0,
+                    dustAmount: 0,
+                    status: "active",
+                    subscription: "free",
+                    joinedAt: new Date(),
+                    lastReportDay: 0,
+                    isAdmin: email === "wuallar@gmail.com",
+                    creativeProfile: {
+                        bio: "",
+                        services: "",
+                        links: [],
+                        submittedAt: null,
+                        raysEarned: 0
+                    },
+                    notificationSettings: {
+                        practiceEnabled: true,
+                        marathonEnabled: true,
+                        commentsEnabled: true,
+                        rayEnabled: true,
+                        reportsEnabled: true,
+                        reminderTime: "07:00",
+                        frequency: "daily",
+                        updatedAt: new Date()
+                    }
+                });
+
+                window.location.href = "marathon.html";
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Проверить состояние
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.location.href = "marathon.html";
+            }
+        });
+    </script>
+</body>
+</html>
