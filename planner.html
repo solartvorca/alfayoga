@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Планировщик — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .planner-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: #a18cd1;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            color: #ffd700;
+        }
+
+        .logout-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .add-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .add-form input,
+        .add-form select {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-size: 13px;
+        }
+
+        .add-form input:focus,
+        .add-form select:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .add-btn:hover {
+            opacity: 0.9;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            color: #a18cd1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: rgba(180, 100, 255, 0.3);
+            border-color: rgba(180, 100, 255, 0.7);
+            color: #ffd700;
+        }
+
+        .filter-btn:hover {
+            background: rgba(180, 100, 255, 0.2);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(180, 100, 255, 0.05);
+            border-left: 3px solid rgba(180, 100, 255, 0.3);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .task-item.high-priority {
+            border-left-color: #ff6464;
+            background: rgba(255, 100, 100, 0.05);
+        }
+
+        .task-item.low-priority {
+            border-left-color: #00d084;
+            background: rgba(0, 208, 132, 0.05);
+        }
+
+        .task-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #a18cd1;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-label {
+            color: #e0e6ed;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .task-label.completed {
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 11px;
+        }
+
+        .task-priority {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background: rgba(255, 100, 100, 0.2);
+            color: #ff6464;
+        }
+
+        .priority-medium {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+        }
+
+        .priority-low {
+            background: rgba(0, 208, 132, 0.2);
+            color: #00d084;
+        }
+
+        .task-date {
+            color: #888;
+        }
+
+        .delete-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: none;
+            color: #ff6464;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+            font-size: 13px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .planner-container {
+                max-width: 100%;
+                padding: 15px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="planner-container">
+        <!-- Навигация -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="index.html">🌙 Будильник</a>
+                <a href="marathon.html">📖 Марафон</a>
+                <a href="profile.html">👤 Профиль</a>
+                <a href="wishes.html">✨ Желания</a>
+                <a href="habits.html">📋 Привычки</a>
+                <a href="planner.html" style="color: #ffd700; font-weight: 600;">📅 Планировщик</a>
+                <a href="notifications.html">🔔 Уведомления</a>
+                <a href="shop.html" id="shopLink" style="display: none;">🛍️ Товары</a>
+                <a href="admin.html" id="adminLink" style="display: none;">⚙️ Администратор</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats" id="statsContainer"></div>
+
+        <!-- Добавление задачи -->
+        <div class="section">
+            <h2>➕ Новая задача</h2>
+
+            <form class="add-form" onsubmit="addTask(event)">
+                <div class="form-group">
+                    <label for="taskInput">Описание задачи</label>
+                    <input type="text" id="taskInput" placeholder="Что нужно сделать?" maxlength="150" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskPriority">Приоритет</label>
+                        <select id="taskPriority">
+                            <option value="medium">Средний</option>
+                            <option value="high">Высокий</option>
+                            <option value="low">Низкий</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskDate">Дата выполнения</label>
+                        <input type="date" id="taskDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskCategory">Категория</label>
+                        <select id="taskCategory">
+                            <option value="general">Общее</option>
+                            <option value="work">Работа</option>
+                            <option value="health">Здоровье</option>
+                            <option value="learning">Обучение</option>
+                            <option value="personal">Личное</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="add-btn">Добавить</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Фильтры и список задач -->
+        <div class="section">
+            <h2>📋 Мои задачи</h2>
+
+            <div class="filter-tabs">
+                <button class="filter-btn active" onclick="filterTasks('all')">Все</button>
+                <button class="filter-btn" onclick="filterTasks('today')">На сегодня</button>
+                <button class="filter-btn" onclick="filterTasks('week')">На неделю</button>
+                <button class="filter-btn" onclick="filterTasks('high')">🔴 Высокий приоритет</button>
+                <button class="filter-btn" onclick="filterTasks('completed')">✅ Выполненные</button>
+            </div>
+
+            <div id="tasksList" class="empty-state">
+                Нет задач
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        let allTasks = [];
+        let currentFilter = 'all';
+
+        function getTodayDateString() {
+            const today = new Date();
+            return today.getFullYear() + "-" +
+                   String(today.getMonth() + 1).padStart(2, '0') + "-" +
+                   String(today.getDate()).padStart(2, '0');
+        }
+
+        function getWeekStartDate() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day;
+            const weekStart = new Date(today.setDate(diff));
+            return weekStart.getFullYear() + "-" +
+                   String(weekStart.getMonth() + 1).padStart(2, '0') + "-" +
+                   String(weekStart.getDate()).padStart(2, '0');
+        }
+
+        function getWeekEndDate() {
+            const today = new Date();
+            const weekEnd = new Date(today.setDate(today.getDate() + (6 - today.getDay())));
+            return weekEnd.getFullYear() + "-" +
+                   String(weekEnd.getMonth() + 1).padStart(2, '0') + "-" +
+                   String(weekEnd.getDate()).padStart(2, '0');
+        }
+
+        async function addTask(event) {
+            event.preventDefault();
+            const user = window.currentUser;
+            if (!user) {
+                alert("Нужно войти в аккаунт");
+                return;
+            }
+
+            const taskText = document.getElementById("taskInput").value.trim();
+            const priority = document.getElementById("taskPriority").value;
+            const dueDate = document.getElementById("taskDate").value;
+            const category = document.getElementById("taskCategory").value;
+
+            if (!taskText) return;
+
+            try {
+                await db.collection("users").doc(user.uid).collection("tasks").add({
+                    text: taskText,
+                    priority: priority,
+                    dueDate: dueDate || getTodayDateString(),
+                    category: category,
+                    completed: false,
+                    createdAt: new Date(),
+                    completedAt: null
+                });
+
+                document.getElementById("taskInput").value = "";
+                document.getElementById("taskDate").value = "";
+                document.getElementById("taskPriority").value = "medium";
+                document.getElementById("taskCategory").value = "general";
+
+                loadTasks();
+            } catch (error) {
+                console.error("Ошибка при добавлении задачи:", error);
+                alert("Ошибка при добавлении задачи");
+            }
+        }
+
+        async function loadTasks() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const snapshot = await db.collection("users").doc(user.uid).collection("tasks").orderBy("createdAt", "desc").get();
+                allTasks = [];
+                snapshot.forEach(doc => {
+                    allTasks.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                updateStats();
+                filterTasks(currentFilter);
+            } catch (error) {
+                console.error("Ошибка при загрузке задач:", error);
+            }
+        }
+
+        function filterTasks(filter) {
+            currentFilter = filter;
+
+            // Обновить активную кнопку фильтра
+            document.querySelectorAll(".filter-btn").forEach(btn => {
+                btn.classList.remove("active");
+            });
+            event.target.classList.add("active");
+
+            const today = getTodayDateString();
+            const weekStart = getWeekStartDate();
+            const weekEnd = getWeekEndDate();
+
+            let filtered = allTasks;
+
+            switch (filter) {
+                case 'today':
+                    filtered = allTasks.filter(t => t.dueDate === today);
+                    break;
+                case 'week':
+                    filtered = allTasks.filter(t => t.dueDate >= weekStart && t.dueDate <= weekEnd);
+                    break;
+                case 'high':
+                    filtered = allTasks.filter(t => t.priority === 'high');
+                    break;
+                case 'completed':
+                    filtered = allTasks.filter(t => t.completed);
+                    break;
+            }
+
+            renderTasks(filtered);
+        }
+
+        function renderTasks(tasksToRender) {
+            const tasksList = document.getElementById("tasksList");
+
+            if (tasksToRender.length === 0) {
+                tasksList.innerHTML = '<div class="empty-state">Нет задач</div>';
+                return;
+            }
+
+            tasksList.innerHTML = tasksToRender.map(task => {
+                const dueDate = new Date(task.dueDate);
+                const dateStr = dueDate.toLocaleDateString('ru-RU');
+                const today = getTodayDateString();
+                const isToday = task.dueDate === today;
+                const isPast = task.dueDate < today && !task.completed;
+
+                return `
+                    <div class="task-item ${task.priority}-priority">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''}
+                               onchange="toggleTask('${task.id}', this.checked)">
+                        <div class="task-content">
+                            <div class="task-label ${task.completed ? 'completed' : ''}">
+                                ${task.text}
+                            </div>
+                            <div class="task-meta">
+                                <span class="task-priority priority-${task.priority}">
+                                    ${task.priority === 'high' ? '🔴 Высокий' :
+                                      task.priority === 'low' ? '🟢 Низкий' : '🟡 Средний'}
+                                </span>
+                                <span class="task-date" style="${isPast ? 'color: #ff6464;' : isToday ? 'color: #ffd700;' : ''}">
+                                    ${isToday ? '📅 Сегодня' : isPast ? '⚠️ Просрочено: ' + dateStr : dateStr}
+                                </span>
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask('${task.id}')">Удалить</button>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function toggleTask(taskId, completed) {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                await db.collection("users").doc(user.uid).collection("tasks").doc(taskId).update({
+                    completed: completed,
+                    completedAt: completed ? new Date() : null
+                });
+                loadTasks();
+            } catch (error) {
+                console.error("Ошибка при обновлении задачи:", error);
+            }
+        }
+
+        async function deleteTask(taskId) {
+            if (!confirm("Вы уверены?")) return;
+
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                await db.collection("users").doc(user.uid).collection("tasks").doc(taskId).delete();
+                loadTasks();
+            } catch (error) {
+                console.error("Ошибка при удалении задачи:", error);
+            }
+        }
+
+        function updateStats() {
+            const today = getTodayDateString();
+            const total = allTasks.length;
+            const completed = allTasks.filter(t => t.completed).length;
+            const todayTasks = allTasks.filter(t => t.dueDate === today).length;
+            const highPriority = allTasks.filter(t => t.priority === 'high' && !t.completed).length;
+
+            document.getElementById("statsContainer").innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${total}</div>
+                    <div class="stat-label">Всего задач</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completed}</div>
+                    <div class="stat-label">Выполнено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${todayTasks}</div>
+                    <div class="stat-label">На сегодня</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ff6464;">${highPriority}</div>
+                    <div class="stat-label">Высокий приоритет</div>
+                </div>
+            `;
+        }
+
+        // Загрузка при входе
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadTasks();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+    <script src="mobile-nav.js"></script>
+</body>
+</html>
