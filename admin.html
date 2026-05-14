@@ -175,6 +175,18 @@
             color: #c8d0db;
         }
 
+        .user-nick-link {
+            color: #a18cd1;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .user-nick-link:hover {
+            color: #ffd700;
+        }
+
         .subscription-free {
             color: #888;
         }
@@ -437,6 +449,7 @@
                             <th>Ник</th>
                             <th>Email</th>
                             <th>Лучики</th>
+                            <th>Последний отчёт</th>
                             <th>Подписка</th>
                             <th>Пропусков (Premium)</th>
                             <th>Статус</th>
@@ -452,6 +465,21 @@
 
         <!-- Рассылка -->
         <div id="mailing-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">🔔 Напоминание о практике</div>
+                <p style="color: #c8d0db; margin-bottom: 15px; font-size: 13px;">Отправить напоминание участникам, у которых включены уведомления</p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Время практики</label>
+                        <input type="time" id="practiceTime" value="07:00" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed;">
+                    </div>
+                    <button onclick="sendPracticeReminder()" style="padding: 12px; background: linear-gradient(135deg, #00d084 0%, #00a366 100%); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer; font-size: 14px; align-self: flex-end;">💌 Отправить напоминания</button>
+                </div>
+
+                <div id="reminderStatus" style="margin-top: 20px; padding: 15px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 8px; display: none; color: #a18cd1;"></div>
+            </div>
+
             <div class="admin-section">
                 <div class="section-title">📨 Рассылка сообщений участникам</div>
 
@@ -516,6 +544,66 @@
                 loadUsers();
             } else if (tabName === "author") {
                 loadAuthorInfo();
+            }
+        }
+
+        // Отправить напоминание о практике
+        async function sendPracticeReminder() {
+            const time = document.getElementById("practiceTime").value;
+            const statusDiv = document.getElementById("reminderStatus");
+
+            if (!time) {
+                statusDiv.style.display = "block";
+                statusDiv.textContent = "❌ Выберите время";
+                statusDiv.style.background = "rgba(255, 100, 100, 0.1)";
+                statusDiv.style.color = "#ff6464";
+                return;
+            }
+
+            try {
+                statusDiv.style.display = "block";
+                statusDiv.textContent = "⏳ Отправляю напоминания...";
+                statusDiv.style.background = "rgba(180, 100, 255, 0.1)";
+                statusDiv.style.color = "#a18cd1";
+
+                // Получить всех пользователей с включенными уведомлениями
+                const snapshot = await db.collection("users").get();
+                let count = 0;
+
+                for (const doc of snapshot.docs) {
+                    const user = doc.data();
+                    const notificationSettings = user.notificationSettings || {};
+
+                    // Отправить только если пользователь включил напоминания о практике
+                    if (notificationSettings.practiceEnabled !== false) {
+                        await db.collection("mailing_queue").add({
+                            uid: doc.id,
+                            email: user.email,
+                            nick: user.nick,
+                            subject: '🧘 Напоминание о практике — Лунный Будильник',
+                            type: 'practice_reminder',
+                            time: time,
+                            createdAt: new Date(),
+                            sent: false
+                        });
+                        count++;
+                    }
+                }
+
+                statusDiv.innerHTML = `✅ Напоминания отправлены ${count} участникам!`;
+                statusDiv.style.background = "rgba(0, 208, 132, 0.1)";
+                statusDiv.style.color = "#00d084";
+
+                setTimeout(() => {
+                    statusDiv.style.display = "none";
+                }, 5000);
+
+            } catch (error) {
+                statusDiv.style.display = "block";
+                statusDiv.textContent = "❌ Ошибка: " + error.message;
+                statusDiv.style.background = "rgba(255, 100, 100, 0.1)";
+                statusDiv.style.color = "#ff6464";
+                console.error("Ошибка при отправке напоминаний:", error);
             }
         }
 
@@ -831,7 +919,7 @@
             const tbody = document.getElementById("usersList");
 
             if (snapshot.empty) {
-                tbody.innerHTML = "<tr><td colspan='7' style='text-align: center;'>Участников нет</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='8' style='text-align: center;'>Участников нет</td></tr>";
                 return;
             }
 
@@ -851,11 +939,15 @@
                 const statusClass = user.status === "active" ? "status-active" : "status-removed";
                 const statusText = user.status === "active" ? "Активен" : "Исключен";
 
+                const lastReportDay = user.lastReportDay || 0;
+                const lastReportText = lastReportDay > 0 ? `День ${lastReportDay}` : "—";
+
                 return `
                     <tr>
-                        <td>${user.nick}</td>
+                        <td><a href="view-profile.html?uid=${doc.id}" class="user-nick-link">${user.nick}</a></td>
                         <td>${user.email}</td>
                         <td>🔥 ${user.rays || 0}</td>
+                        <td>${lastReportText}</td>
                         <td><span class="${subscriptionClass}">${subscriptionText}</span></td>
                         <td>${skipsText}</td>
                         <td><span class="${statusClass}">${statusText}</span></td>
