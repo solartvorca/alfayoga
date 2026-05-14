@@ -220,10 +220,17 @@
                 document.getElementById("userNav").style.display = "block";
                 document.getElementById("mainContent").style.display = "flex";
 
-                // Проверить админ
+                // Загрузить данные пользователя
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
-                    if (doc.exists && doc.data().isAdmin) {
-                        document.getElementById("adminLink").style.display = "block";
+                    if (doc.exists) {
+                        window.currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            ...doc.data()
+                        };
+                        if (doc.data().isAdmin) {
+                            document.getElementById("adminLink").style.display = "block";
+                        }
                     }
                 });
             } else {
@@ -271,10 +278,23 @@
                             <div class="chapter-body">
                                 ${ch.content}
                                 <div class="chapter-date">Добавлено: ${dateStr}</div>
+                                <div class="report-comments" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(180, 100, 255, 0.1);">
+                                    <div class="comments-list" id="comments-${ch.id}">
+                                        <div style="font-size: 12px; color: #666;">Загрузка комментариев...</div>
+                                    </div>
+                                    <div class="comment-form">
+                                        <input type="text" class="comment-input"
+                                            placeholder="Ваш комментарий..."
+                                            onkeypress="if(event.key==='Enter') addChapterComment('${ch.id}', this.value, event)">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
                 }).join("");
+
+                // Загрузить комментарии для каждой главы
+                chapters.forEach(ch => loadChapterComments(ch.id));
 
                 document.getElementById("bookSection").style.display = "block";
             } catch (error) {
@@ -289,6 +309,68 @@
 
             body.classList.toggle("open");
             arrow.style.transform = body.classList.contains("open") ? "rotate(180deg)" : "rotate(0deg)";
+        }
+
+        // Загрузить комментарии к главе
+        async function loadChapterComments(chapterId) {
+            try {
+                const snapshot = await db.collection("chapter_comments")
+                    .where("chapterId", "==", chapterId)
+                    .get();
+
+                const docs = snapshot.docs.map(d => ({
+                    id: d.id,
+                    ...d.data()
+                }));
+
+                docs.sort((a, b) => b.createdAt - a.createdAt);
+
+                const list = document.getElementById("comments-" + chapterId);
+                if (!list) return;
+
+                if (docs.length === 0) {
+                    list.innerHTML = "";
+                    return;
+                }
+
+                list.innerHTML = docs.map(d => {
+                    return `
+                        <div class="comment-item">
+                            <a href="view-profile.html?uid=${d.uid}" class="comment-author">${d.nick}</a>
+                            <div class="comment-text">${d.text}</div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка загрузки комментариев:", error);
+            }
+        }
+
+        // Добавить комментарий к главе
+        async function addChapterComment(chapterId, text, event) {
+            if (!text.trim()) return;
+
+            const user = window.currentUser;
+            if (!user) {
+                alert("Нужно войти в аккаунт");
+                return;
+            }
+
+            try {
+                await db.collection("chapter_comments").add({
+                    chapterId,
+                    uid: user.uid,
+                    nick: user.nick,
+                    text: text.trim(),
+                    createdAt: new Date()
+                });
+
+                event.target.value = "";
+                loadChapterComments(chapterId);
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+                console.error("Ошибка при добавлении комментария:", error);
+            }
         }
 
         // Загрузить книгу при инициализации
