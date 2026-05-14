@@ -302,6 +302,7 @@
             <button class="tab-btn" onclick="switchTab('author', this)">👨‍🎓 Автор & Товары</button>
             <button class="tab-btn" onclick="switchTab('users', this)">👥 Участники</button>
             <button class="tab-btn" onclick="switchTab('mailing', this)">📨 Рассылка</button>
+            <button class="tab-btn" onclick="switchTab('book', this)">📖 Книга</button>
         </div>
 
         <!-- Марафоны -->
@@ -535,6 +536,36 @@
                 <div id="mailingStatus" style="margin-top: 20px; padding: 15px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 8px; display: none; color: #a18cd1;"></div>
             </div>
         </div>
+
+        <!-- Книга -->
+        <div id="book-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">📖 Добавить/редактировать главу</div>
+                <form onsubmit="saveChapter(event)" class="form-grid">
+                    <input type="hidden" id="chapterEditId">
+                    <div class="form-group">
+                        <label>Номер главы</label>
+                        <input type="number" id="chapterNumber" min="1" max="999" placeholder="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Название главы</label>
+                        <input type="text" id="chapterTitle" placeholder="Название" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Содержание главы</label>
+                        <textarea id="chapterContent" rows="8" placeholder="Полный текст главы..." required style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; padding: 10px; color: #e0e6ed; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">💾 Сохранить главу</button>
+                </form>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📚 Главы книги</div>
+                <div id="chaptersList">
+                    <p style="text-align: center; color: #888;">Загрузка...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -563,6 +594,8 @@
                 loadUsers();
             } else if (tabName === "author") {
                 loadAuthorInfo();
+            } else if (tabName === "book") {
+                loadBookChapters();
             }
         }
 
@@ -1201,6 +1234,127 @@
                 }, { merge: true });
 
                 loadAuthorProducts();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        // Загрузить главы книги
+        async function loadBookChapters() {
+            try {
+                const snapshot = await db.collection("books").doc("main").collection("chapters").get();
+                const chapters = [];
+
+                snapshot.docs.forEach(doc => {
+                    chapters.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                chapters.sort((a, b) => (a.number || 0) - (b.number || 0));
+
+                const list = document.getElementById("chaptersList");
+                if (chapters.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: #888;">Глав пока нет</p>';
+                    return;
+                }
+
+                list.innerHTML = chapters.map(ch => {
+                    const date = new Date(ch.createdAt.seconds * 1000);
+                    const dateStr = date.toLocaleDateString("ru-RU");
+                    return `
+                        <div style="background: rgba(180, 100, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <h4 style="color: #a18cd1; margin: 0 0 8px 0;">Глава ${ch.number}: ${ch.title}</h4>
+                                    <p style="color: #c8d0db; font-size: 12px; margin: 0 0 8px 0; max-height: 60px; overflow: hidden; text-overflow: ellipsis;">${ch.content.substring(0, 100)}...</p>
+                                    <p style="color: #888; font-size: 11px; margin: 0;">📅 ${dateStr}</p>
+                                </div>
+                                <div style="display: flex; gap: 8px; margin-left: 10px;">
+                                    <button class="btn btn-small" onclick="editChapter('${ch.id}')">✏️ Редактировать</button>
+                                    <button class="btn btn-danger btn-small" onclick="deleteChapter('${ch.id}')">🗑️ Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка при загрузке глав:", error);
+                document.getElementById("chaptersList").innerHTML = '<p style="text-align: center; color: #ff6464;">Ошибка загрузки: ' + error.message + '</p>';
+            }
+        }
+
+        // Сохранить главу (добавить или обновить)
+        async function saveChapter(e) {
+            e.preventDefault();
+            const editId = document.getElementById("chapterEditId").value;
+            const number = parseInt(document.getElementById("chapterNumber").value);
+            const title = document.getElementById("chapterTitle").value.trim();
+            const content = document.getElementById("chapterContent").value.trim();
+
+            if (!number || !title || !content) {
+                alert("Заполните все поля!");
+                return;
+            }
+
+            try {
+                const chapterData = {
+                    number,
+                    title,
+                    content,
+                    createdAt: new Date()
+                };
+
+                if (editId) {
+                    // Обновляем существующую главу
+                    await db.collection("books").doc("main").collection("chapters").doc(editId).update(chapterData);
+                    alert("Глава обновлена!");
+                } else {
+                    // Добавляем новую главу
+                    await db.collection("books").doc("main").collection("chapters").add(chapterData);
+                    alert("Глава добавлена!");
+                }
+
+                document.querySelector("#book-tab form").reset();
+                document.getElementById("chapterEditId").value = "";
+                loadBookChapters();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+                console.error("Ошибка при сохранении главы:", error);
+            }
+        }
+
+        // Редактировать главу
+        async function editChapter(id) {
+            try {
+                const doc = await db.collection("books").doc("main").collection("chapters").doc(id).get();
+                if (!doc.exists) {
+                    alert("Глава не найдена");
+                    return;
+                }
+
+                const chapter = doc.data();
+                document.getElementById("chapterEditId").value = id;
+                document.getElementById("chapterNumber").value = chapter.number;
+                document.getElementById("chapterTitle").value = chapter.title;
+                document.getElementById("chapterContent").value = chapter.content;
+
+                document.querySelector("#book-tab form").scrollIntoView({ behavior: 'smooth' });
+                document.getElementById("chapterNumber").focus();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        // Удалить главу
+        async function deleteChapter(id) {
+            if (!confirm("Удалить эту главу?")) return;
+
+            try {
+                await db.collection("books").doc("main").collection("chapters").doc(id).delete();
+                alert("Глава удалена!");
+                loadBookChapters();
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }

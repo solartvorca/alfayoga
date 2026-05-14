@@ -56,6 +56,68 @@
             text-decoration: underline;
             cursor: pointer;
         }
+
+        .book-section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .book-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 20px;
+        }
+
+        .chapter-item {
+            border-bottom: 1px solid rgba(180, 100, 255, 0.1);
+        }
+
+        .chapter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            cursor: pointer;
+            color: #e0e6ed;
+            transition: color 0.2s;
+        }
+
+        .chapter-header:hover {
+            color: #ffd700;
+        }
+
+        .chapter-arrow {
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .chapter-body {
+            display: none;
+            font-size: 13px;
+            color: #c8d0db;
+            line-height: 1.8;
+            padding-bottom: 16px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .chapter-body.open {
+            display: block;
+        }
+
+        .chapter-item:last-child {
+            border-bottom: none;
+        }
+
+        .chapter-date {
+            font-size: 11px;
+            color: #888;
+            margin-top: 12px;
+        }
     </style>
 </head>
 <body>
@@ -137,6 +199,12 @@
                 <p>Это и есть сама Жизнь и её вечный Источник. Ничто из того, на что возможно обратить внимание. Мы будем учиться держать внимание в этом источнике, осознавая настоящий момент, все чувства и осознавание себя в том, что есть как аспект пустотности на уровне восприятия и чувств.</p>
             </div>
         </div>
+
+        <!-- Книга автора -->
+        <div class="book-section" id="bookSection" style="display:none;">
+            <div class="book-title">📖 Альфа йога От Гамма до Эпсилон</div>
+            <div class="chapters-list" id="chaptersList"></div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -162,6 +230,71 @@
                 document.getElementById("loginPrompt").style.display = "block";
                 document.getElementById("userNav").style.display = "none";
                 document.getElementById("mainContent").style.display = "none";
+            }
+        });
+
+        // Загрузить книгу
+        async function loadBook() {
+            try {
+                const snapshot = await db.collection("books").doc("main").collection("chapters").get();
+                const chapters = [];
+
+                snapshot.docs.forEach(doc => {
+                    chapters.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                if (chapters.length === 0) {
+                    document.getElementById("bookSection").style.display = "none";
+                    return;
+                }
+
+                chapters.sort((a, b) => (a.number || 0) - (b.number || 0));
+
+                const list = document.getElementById("chaptersList");
+                list.innerHTML = chapters.map(ch => {
+                    const date = new Date(ch.createdAt.seconds * 1000);
+                    const dateStr = date.toLocaleDateString("ru-RU", {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    return `
+                        <div class="chapter-item">
+                            <div class="chapter-header" onclick="toggleChapter(this)">
+                                <span>Глава ${ch.number}: ${ch.title}</span>
+                                <span class="chapter-arrow">▼</span>
+                            </div>
+                            <div class="chapter-body">
+                                ${ch.content}
+                                <div class="chapter-date">Добавлено: ${dateStr}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                document.getElementById("bookSection").style.display = "block";
+            } catch (error) {
+                console.error("Ошибка при загрузке книги:", error);
+            }
+        }
+
+        // Переключить главу (развернуть/свернуть)
+        function toggleChapter(header) {
+            const body = header.nextElementSibling;
+            const arrow = header.querySelector(".chapter-arrow");
+
+            body.classList.toggle("open");
+            arrow.style.transform = body.classList.contains("open") ? "rotate(180deg)" : "rotate(0deg)";
+        }
+
+        // Загрузить книгу при инициализации
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadBook();
             }
         });
     </script>
