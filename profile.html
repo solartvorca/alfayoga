@@ -629,7 +629,6 @@
             try {
                 const snapshot = await db.collection("reports")
                     .where("uid", "==", user.uid)
-                    .orderBy("createdAt", "desc")
                     .get();
 
                 const list = document.getElementById("myReportsList");
@@ -639,7 +638,9 @@
                     return;
                 }
 
-                list.innerHTML = snapshot.docs.map(doc => {
+                const sortedDocs = snapshot.docs.sort((a, b) => b.data().createdAt - a.data().createdAt);
+
+                list.innerHTML = sortedDocs.map(doc => {
                     const data = doc.data();
                     const time = new Date(data.createdAt.seconds * 1000);
                     const dateStr = time.toLocaleString("ru-RU", {

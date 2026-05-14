@@ -591,7 +591,6 @@
         async function loadReports() {
             const snapshot = await db.collection("reports")
                 .where("dayNumber", "==", currentDayNum)
-                .orderBy("createdAt", "desc")
                 .get();
 
             const list = document.getElementById("reportsList");
@@ -602,7 +601,9 @@
                 return;
             }
 
-            list.innerHTML = snapshot.docs.map(doc => {
+            const sortedDocs = snapshot.docs.sort((a, b) => b.data().createdAt - a.data().createdAt);
+
+            list.innerHTML = sortedDocs.map(doc => {
                 const data = doc.data();
                 const time = new Date(data.createdAt.seconds * 1000);
                 const timeStr = time.toLocaleString("ru-RU", {
