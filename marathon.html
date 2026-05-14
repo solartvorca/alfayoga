@@ -232,6 +232,13 @@
         .report-nick {
             font-weight: 600;
             color: #a18cd1;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .report-nick:hover {
+            color: #ffd700;
         }
 
         .report-time {
@@ -651,7 +658,7 @@
                     return `
                         <div class="report-item" style="border-left: 3px solid rgba(200, 150, 255, 0.5);">
                             <div class="report-header">
-                                <span class="report-nick">🌙 ${data.nick}</span>
+                                <a href="view-profile.html?uid=${data.uid}" class="report-nick">🌙 ${data.nick}</a>
                                 <span class="report-time">${timeStr}</span>
                             </div>
                             <div class="report-text">${data.text}</div>
@@ -675,7 +682,7 @@
                 return `
                     <div class="report-item">
                         <div class="report-header">
-                            <span class="report-nick">${data.nick}</span>
+                            <a href="view-profile.html?uid=${data.uid}" class="report-nick">${data.nick}</a>
                             <span class="report-time">${timeStr}</span>
                         </div>
                         <div class="report-text">${data.text}</div>
