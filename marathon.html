@@ -497,11 +497,10 @@
                     if (data.videoId) {
                         const videoId = data.videoId;
                         const vkLink = `https://vk.com/video-${videoId}`;
-                        const videoEmbedId = videoId.includes('_') ? videoId.split('_')[1] : videoId;
 
                         document.getElementById("dayVideo").innerHTML = `
                             <iframe
-                                src="https://vk.com/video_ext.php?oid=-186690269&id=${videoEmbedId}&autoplay=0"
+                                src="${vkLink}?embed=1&w=600&h=400&preload=1"
                                 width="100%"
                                 height="400"
                                 frameborder="0"
