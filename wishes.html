@@ -531,7 +531,6 @@
         async function loadPublicWishes() {
             try {
                 const snapshot = await db.collection("public_wishes")
-                    .orderBy("votes", "desc")
                     .orderBy("createdAt", "desc")
                     .get();
 
@@ -542,17 +541,26 @@
                     return;
                 }
 
-                list.innerHTML = snapshot.docs.map(doc => {
-                    const wish = doc.data();
+                // Сортировка на клиенте (по голосам, потом по дате)
+                const wishes = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                wishes.sort((a, b) => {
+                    if (b.votes !== a.votes) return b.votes - a.votes;
+                    return b.createdAt.seconds - a.createdAt.seconds;
+                });
+
+                list.innerHTML = wishes.map(wish => {
                     return `
                         <div class="public-wish-item">
                             <div class="public-wish-header">
-                                <span class="public-wish-author">✨ ${wish.nick}</span>
+                                <a href="view-profile.html?uid=${wish.uid}" style="color: #a18cd1; text-decoration: none; font-weight: 600;">✨ ${wish.nick}</a>
                                 <span style="font-size: 11px; color: #666;">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</span>
                             </div>
                             <div class="public-wish-content">${wish.text}</div>
                             <div class="public-wish-footer">
-                                <button class="vote-btn" onclick="voteWish('${doc.id}')">💛 Поддержать</button>
+                                <button class="vote-btn" onclick="voteWish('${wish.id}')">💛 Поддержать</button>
                                 <span class="vote-count">${wish.votes} ✨</span>
                             </div>
                         </div>
@@ -560,6 +568,7 @@
                 }).join("");
             } catch (error) {
                 console.error("Ошибка при загрузке: " + error.message);
+                document.getElementById("publicWishesList").innerHTML = "<div class=\"empty-state\">Ошибка загрузки желаний</div>";
             }
         }
 
@@ -612,6 +621,7 @@
                             ...doc.data()
                         };
                         loadWishes();
+                        loadPublicWishes();
                         updateAdminLink();
                     }
                 });

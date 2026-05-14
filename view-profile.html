@@ -144,6 +144,45 @@
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
+        async function loadPublicUserWishes(uid) {
+            try {
+                const snapshot = await db.collection("public_wishes")
+                    .where("uid", "==", uid)
+                    .orderBy("createdAt", "desc")
+                    .get();
+
+                if (snapshot.empty) {
+                    return; // No public wishes
+                }
+
+                let wishesHTML = `
+                    <div class="section">
+                        <div class="section-title">✨ Публичные желания</div>
+                `;
+
+                snapshot.docs.forEach(doc => {
+                    const wish = doc.data();
+                    wishesHTML += `
+                        <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(180, 100, 255, 0.1);">
+                            <div style="font-size: 14px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${wish.text}</div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span style="font-size: 12px; color: #ffd700; font-weight: 600;">💛 ${wish.votes} ✨</span>
+                                <span style="font-size: 11px; color: #888;">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                wishesHTML += '</div>';
+
+                // Append wishes to profileSection
+                const profileSection = document.getElementById("profileSection");
+                profileSection.innerHTML += wishesHTML;
+            } catch (error) {
+                console.error("Ошибка при загрузке публичных желаний:", error);
+            }
+        }
+
         async function loadPublicProfile() {
             const params = new URLSearchParams(window.location.search);
             const uid = params.get("uid");
@@ -198,14 +237,67 @@
                     `;
                 }
 
-                if (!profileHTML) {
-                    profileHTML = '<div class="empty-state">Профиль не заполнен</div>';
-                }
+                document.getElementById("profileSection").innerHTML = profileHTML || '<div class="empty-state">Профиль не заполнен</div>';
 
-                document.getElementById("profileSection").innerHTML = profileHTML;
+                // Загрузить публичные желания и сны
+                loadPublicDreams(uid);
+                loadPublicUserWishes(uid);
             } catch (error) {
                 console.error("Ошибка:", error);
                 document.querySelector(".profile-container").innerHTML = '<p style="text-align: center; color: #888;">Ошибка загрузки профиля</p>';
+            }
+        }
+
+        async function loadPublicDreams(uid) {
+            try {
+                const snapshot = await db.collection("dreams")
+                    .where("uid", "==", uid)
+                    .where("isPublic", "==", true)
+                    .get();
+
+                const dreams = [];
+                snapshot.docs.forEach(doc => {
+                    dreams.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // Sort by createdAt descending (newest first)
+                dreams.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                if (dreams.length === 0) {
+                    return; // No public dreams
+                }
+
+                let dreamsHTML = `
+                    <div class="section">
+                        <div class="section-title">🌙 Публичные сны</div>
+                `;
+
+                dreams.forEach(dream => {
+                    const date = new Date(dream.createdAt?.seconds * 1000 || 0);
+                    const dateStr = date.toLocaleDateString("ru-RU", {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    dreamsHTML += `
+                        <div class="dream-item" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(180, 100, 255, 0.1);">
+                            <div style="font-size: 12px; color: #888; margin-bottom: 8px;">${dateStr}</div>
+                            <div style="font-size: 14px; color: #c8d0db; line-height: 1.8;">${dream.text}</div>
+                        </div>
+                    `;
+                });
+
+                dreamsHTML += '</div>';
+
+                // Append dreams to profileSection
+                const profileSection = document.getElementById("profileSection");
+                profileSection.innerHTML += dreamsHTML;
+            } catch (error) {
+                console.error("Ошибка при загрузке публичных снов:", error);
             }
         }
 

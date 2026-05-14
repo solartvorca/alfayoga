@@ -711,10 +711,62 @@
 
             list.innerHTML = snapshot.docs.map(doc => {
                 const data = doc.data();
+                const commentId = doc.id;
                 return `
                     <div class="comment-item">
                         <a href="view-profile.html?uid=${data.uid}" class="comment-author">${data.nick}</a>
                         <div class="comment-text">${data.text}</div>
+                        <div class="comment-replies" id="replies-${commentId}" style="margin-left: 20px; margin-top: 8px; border-left: 2px solid rgba(180, 100, 255, 0.2); padding-left: 12px;">
+                            <div style="font-size: 11px; color: #666;">Загрузка ответов...</div>
+                        </div>
+                        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+                            <input type="text" class="reply-input" data-report-id="${reportId}" data-comment-id="${commentId}" placeholder="Ответить..."
+                                style="font-size: 12px; padding: 6px 8px; flex: 1; background: rgba(180, 100, 255, 0.05); border: 1px solid rgba(180, 100, 255, 0.2); border-radius: 4px; color: #c8d0db;">
+                            <button type="button" class="reply-btn" data-report-id="${reportId}" data-comment-id="${commentId}"
+                                style="font-size: 11px; padding: 6px 12px; background: rgba(180, 100, 255, 0.2); border: 1px solid rgba(180, 100, 255, 0.4); border-radius: 4px; color: #a18cd1; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                Отправить
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            // Добавить обработчик для кнопок отправки ответа
+            document.querySelectorAll('.reply-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const reportId = this.dataset.reportId;
+                    const commentId = this.dataset.commentId;
+                    const input = this.previousElementSibling;
+                    const text = input.value;
+                    addReply(reportId, commentId, text, input);
+                });
+            });
+
+            // Загрузить ответы для каждого комментария
+            snapshot.docs.forEach(doc => {
+                loadReplies(doc.id);
+            });
+        }
+
+        async function loadReplies(commentId) {
+            const snapshot = await db.collection("replies")
+                .where("commentId", "==", commentId)
+                .orderBy("createdAt", "asc")
+                .get();
+
+            const list = document.getElementById(`replies-${commentId}`);
+
+            if (snapshot.empty) {
+                list.innerHTML = "";
+                return;
+            }
+
+            list.innerHTML = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return `
+                    <div class="reply-item" style="margin-bottom: 8px;">
+                        <a href="view-profile.html?uid=${data.uid}" class="comment-author" style="font-size: 11px;">${data.nick}</a>
+                        <div class="comment-text" style="font-size: 12px;">${data.text}</div>
                     </div>
                 `;
             }).join("");
@@ -751,6 +803,34 @@
                 // Очистить инпут и перезагрузить комментарии
                 event.target.value = "";
                 loadComments(reportId);
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function addReply(reportId, commentId, text, inputElement) {
+            if (!text.trim()) return;
+
+            const user = window.currentUser;
+            if (!user) {
+                alert("Нужно войти в аккаунт");
+                return;
+            }
+
+            try {
+                // Добавить ответ
+                await db.collection("replies").add({
+                    reportId,
+                    commentId,
+                    uid: user.uid,
+                    nick: user.nick,
+                    text: text.trim(),
+                    createdAt: new Date()
+                });
+
+                // Очистить инпут и перезагрузить ответы
+                inputElement.value = "";
+                await loadReplies(commentId);
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }

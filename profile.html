@@ -368,6 +368,14 @@
             </div>
         </div>
 
+        <!-- Мои публичные желания -->
+        <div class="section">
+            <div class="section-title">✨ Мои публичные желания</div>
+            <div id="myPublicWishesList" style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="empty-state">Нет публичных желаний</div>
+            </div>
+        </div>
+
         <!-- Дневник сновидений -->
         <div class="section">
             <div class="section-title">🌙 Дневник сновидений</div>
@@ -414,6 +422,7 @@
             loadTransactions();
             loadMyReports();
             loadMyDreams();
+            loadUserPublicWishes(user.uid);
         }
 
         async function loadCreativeProfile() {
@@ -796,6 +805,37 @@
                 loadMyDreams();
             } catch (error) {
                 alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function loadUserPublicWishes(uid) {
+            try {
+                const snapshot = await db.collection("public_wishes")
+                    .where("uid", "==", uid)
+                    .orderBy("createdAt", "desc")
+                    .get();
+
+                const list = document.getElementById("myPublicWishesList");
+
+                if (snapshot.empty) {
+                    list.innerHTML = '<div class="empty-state">Нет публичных желаний</div>';
+                    return;
+                }
+
+                list.innerHTML = snapshot.docs.map(doc => {
+                    const wish = doc.data();
+                    return `
+                        <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(180, 100, 255, 0.5); padding: 12px; border-radius: 4px;">
+                            <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${wish.text}</div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span style="font-size: 12px; color: #ffd700; font-weight: 600;">💛 ${wish.votes} ✨</span>
+                                <span style="font-size: 11px; color: #888;">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка загрузки публичных желаний:", error);
             }
         }
 
