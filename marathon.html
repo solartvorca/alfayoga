@@ -512,18 +512,27 @@
                         const videoId = data.videoId;
                         const vkLink = `https://vk.com/video-${videoId}`;
                         const isMobile = window.innerWidth <= 640;
-                        const videoWidth = isMobile ? Math.floor(window.innerWidth - 40) : 700;
 
-                        document.getElementById("dayVideo").innerHTML = `
-                            <iframe
-                                src="${vkLink}?embed=1&w=${videoWidth}&h=500&preload=1"
-                                width="100%"
-                                frameborder="0"
-                                allowfullscreen
-                                allow="autoplay; encrypted-media; picture-in-picture"
-                            ></iframe>
-                            <a href="${vkLink}" target="_blank" class="video-link-btn">💬 Открыть в ВК (комментируй и получай лучики)</a>
-                        `;
+                        if (isMobile) {
+                            document.getElementById("dayVideo").innerHTML = `
+                                <div style="background: rgba(0, 143, 204, 0.15); padding: 20px; border-radius: 8px; text-align: center;">
+                                    <p style="color: #c8d0db; margin-bottom: 15px;">Видео лучше смотреть в приложении ВК</p>
+                                    <a href="${vkLink}" target="_blank" class="video-link-btn" style="display: inline-block;">🎬 Открыть видео в ВК</a>
+                                </div>
+                            `;
+                        } else {
+                            const videoWidth = Math.floor(window.innerWidth - 40);
+                            document.getElementById("dayVideo").innerHTML = `
+                                <iframe
+                                    src="${vkLink}?embed=1&w=${videoWidth}&h=500&preload=1"
+                                    width="100%"
+                                    frameborder="0"
+                                    allowfullscreen
+                                    allow="autoplay; encrypted-media; picture-in-picture"
+                                ></iframe>
+                                <a href="${vkLink}" target="_blank" class="video-link-btn">💬 Открыть в ВК (комментируй и получай лучики)</a>
+                            `;
+                        }
                     }
                 } else {
                     console.log("День не найден в Firestore!");
