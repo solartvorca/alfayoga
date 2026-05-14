@@ -496,7 +496,7 @@
 
                     if (data.videoId) {
                         const videoId = data.videoId;
-                        const vkLink = `https://vk.com/video${videoId}`;
+                        const vkLink = `https://vk.com/video-${videoId}`;
                         const videoEmbedId = videoId.includes('_') ? videoId.split('_')[1] : videoId;
 
                         document.getElementById("dayVideo").innerHTML = `
