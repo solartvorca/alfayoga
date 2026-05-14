@@ -597,23 +597,49 @@
         }
 
         async function loadReports() {
-            const snapshot = await db.collection("reports")
+            const reportsSnapshot = await db.collection("reports")
                 .where("dayNumber", "==", currentDayNum)
+                .get();
+
+            const dreamsSnapshot = await db.collection("dreams")
+                .where("isPublic", "==", true)
                 .get();
 
             const list = document.getElementById("reportsList");
             const onlyReports = document.getElementById("onlyReportsFilter").checked;
 
-            if (snapshot.empty) {
-                list.innerHTML = "<p style='text-align: center; color: #888;'>Ещё нет отчётов</p>";
+            const items = [];
+
+            reportsSnapshot.docs.forEach(doc => {
+                items.push({
+                    type: "report",
+                    id: doc.id,
+                    data: doc.data(),
+                    timestamp: doc.data().createdAt
+                });
+            });
+
+            if (!onlyReports) {
+                dreamsSnapshot.docs.forEach(doc => {
+                    items.push({
+                        type: "dream",
+                        id: doc.id,
+                        data: doc.data(),
+                        timestamp: doc.data().createdAt
+                    });
+                });
+            }
+
+            if (items.length === 0) {
+                list.innerHTML = "<p style='text-align: center; color: #888;'>Нет записей</p>";
                 return;
             }
 
-            const sortedDocs = snapshot.docs.sort((a, b) => b.data().createdAt - a.data().createdAt);
+            items.sort((a, b) => b.timestamp - a.timestamp);
 
-            list.innerHTML = sortedDocs.map(doc => {
-                const data = doc.data();
-                const time = new Date(data.createdAt.seconds * 1000);
+            list.innerHTML = items.map(item => {
+                const data = item.data;
+                const time = new Date(item.timestamp.seconds * 1000);
                 const timeStr = time.toLocaleString("ru-RU", {
                     month: "short",
                     day: "numeric",
@@ -621,15 +647,27 @@
                     minute: "2-digit"
                 });
 
-                const commentsSection = onlyReports ? "" : `
+                if (item.type === "dream") {
+                    return `
+                        <div class="report-item" style="border-left: 3px solid rgba(200, 150, 255, 0.5);">
+                            <div class="report-header">
+                                <span class="report-nick">🌙 ${data.nick}</span>
+                                <span class="report-time">${timeStr}</span>
+                            </div>
+                            <div class="report-text">${data.text}</div>
+                        </div>
+                    `;
+                }
+
+                const commentsSection = `
                     <div class="report-comments">
-                        <div class="comments-list" id="comments-${doc.id}">
+                        <div class="comments-list" id="comments-${item.id}">
                             <div style="font-size: 12px; color: #666;">Загрузка комментариев...</div>
                         </div>
                         <div class="comment-form">
                             <input type="text" class="comment-input"
                                 placeholder="Добавить комментарий..."
-                                onkeypress="if(event.key==='Enter') addComment('${doc.id}', this.value, event)">
+                                onkeypress="if(event.key==='Enter') addComment('${item.id}', this.value, event)">
                         </div>
                     </div>
                 `;
@@ -646,11 +684,9 @@
                 `;
             }).join("");
 
-            if (!onlyReports) {
-                snapshot.docs.forEach(doc => {
-                    loadComments(doc.id);
-                });
-            }
+            reportsSnapshot.docs.forEach(doc => {
+                loadComments(doc.id);
+            });
         }
 
         async function loadComments(reportId) {
