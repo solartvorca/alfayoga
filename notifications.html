@@ -258,6 +258,17 @@
             <button class="logout-btn" onclick="logout()">Выход</button>
         </div>
 
+        <!-- Инструкция по настройке -->
+        <div class="section" style="background: rgba(0, 208, 132, 0.08); border-left: 3px solid rgba(0, 208, 132, 0.5);">
+            <div class="section-title" style="color: #00d084;">📧 Как включить уведомления на почту</div>
+            <ol style="color: #c8d0db; font-size: 13px; line-height: 1.8; padding-left: 20px;">
+                <li>Перейдите на <a href="https://www.emailjs.com" target="_blank" style="color: #a18cd1;">emailjs.com</a> и создайте бесплатный аккаунт</li>
+                <li>Скопируйте <strong>Service ID</strong>, <strong>Template ID</strong> и <strong>Public ID</strong></li>
+                <li>Напишите администратору с этими данными для интеграции</li>
+                <li>После настройки вы сможете получать уведомления по почте</li>
+            </ol>
+        </div>
+
         <!-- Напоминания о практике -->
         <div class="section">
             <div class="section-title">🔔 Напоминания о практике</div>
@@ -366,6 +377,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -529,11 +541,27 @@
             if (!user) return;
 
             try {
-                alert("Тестовое письмо будет отправлено на " + user.email);
-                // Позже можно интегрировать с EmailJS или облачной функцией
-                console.log("Тестовое письмо для:", user.email);
+                // Инициализировать EmailJS (используется публичный ID)
+                emailjs.init("YOUR_EMAILJS_PUBLIC_ID");
+
+                // Отправить тестовое письмо
+                const templateParams = {
+                    to_email: user.email,
+                    user_nick: user.nick || "Участник",
+                    subject: "Тестовое напоминание — Лунный Будильник",
+                    message: `Привет, ${user.nick || "участник"}!\n\nЭто тестовое уведомление от приложения "Лунный Будильник".\n\nЕсли вы получили это письмо, значит система уведомлений работает правильно!\n\nМедитируй с нами! 🌙`
+                };
+
+                await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams);
+
+                const successMsg = document.getElementById("successMessage");
+                successMsg.textContent = "✓ Тестовое письмо отправлено на " + user.email;
+                successMsg.classList.add("show");
+                setTimeout(() => {
+                    successMsg.classList.remove("show");
+                }, 3000);
             } catch (error) {
-                alert("Ошибка: " + error.message);
+                alert("Ошибка при отправке: " + error.message + "\n\nУбедитесь, что заполнены параметры EmailJS в коде.");
             }
         }
 

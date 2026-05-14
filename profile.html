@@ -324,6 +324,14 @@
             <div id="profileCompletionStatus"></div>
         </div>
 
+        <!-- Администраторская панель -->
+        <div class="section" id="adminSection" style="display: none; border-left: 3px solid #ffd700; background: rgba(255, 215, 0, 0.08);">
+            <div class="section-title" style="color: #ffd700;">⚙️ Администраторская панель</div>
+            <a href="admin.html" class="btn" style="text-decoration: none; display: block; text-align: center;">
+                Перейти в администратор
+            </a>
+        </div>
+
         <!-- Передача лучиков -->
         <div class="section">
             <div class="section-title">🎁 Передать лучик</div>
@@ -369,6 +377,7 @@
 
             if (user.isAdmin === true || user.email === "wuallar@gmail.com") {
                 document.getElementById("adminLink").style.display = "block";
+                document.getElementById("adminSection").style.display = "block";
             }
 
             loadCreativeProfile();
