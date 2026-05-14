@@ -148,20 +148,25 @@
             try {
                 const snapshot = await db.collection("public_wishes")
                     .where("uid", "==", uid)
-                    .orderBy("createdAt", "desc")
                     .get();
 
                 if (snapshot.empty) {
                     return; // No public wishes
                 }
 
+                // Сортировка на клиенте (по дате)
+                const wishes = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                wishes.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+
                 let wishesHTML = `
                     <div class="section">
                         <div class="section-title">✨ Публичные желания</div>
                 `;
 
-                snapshot.docs.forEach(doc => {
-                    const wish = doc.data();
+                wishes.forEach(wish => {
                     wishesHTML += `
                         <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(180, 100, 255, 0.1);">
                             <div style="font-size: 14px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${wish.text}</div>

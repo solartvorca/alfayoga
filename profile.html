@@ -812,7 +812,6 @@
             try {
                 const snapshot = await db.collection("public_wishes")
                     .where("uid", "==", uid)
-                    .orderBy("createdAt", "desc")
                     .get();
 
                 const list = document.getElementById("myPublicWishesList");
@@ -822,8 +821,14 @@
                     return;
                 }
 
-                list.innerHTML = snapshot.docs.map(doc => {
-                    const wish = doc.data();
+                // Сортировка на клиенте (по дате)
+                const wishes = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                wishes.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+
+                list.innerHTML = wishes.map(wish => {
                     return `
                         <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(180, 100, 255, 0.5); padding: 12px; border-radius: 4px;">
                             <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${wish.text}</div>
