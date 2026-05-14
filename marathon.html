@@ -713,7 +713,7 @@
                 const data = doc.data();
                 return `
                     <div class="comment-item">
-                        <div class="comment-author">${data.nick}</div>
+                        <a href="view-profile.html?uid=${data.uid}" class="comment-author">${data.nick}</a>
                         <div class="comment-text">${data.text}</div>
                     </div>
                 `;

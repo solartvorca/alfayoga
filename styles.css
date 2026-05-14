@@ -295,6 +295,14 @@ body {
     color: #a18cd1;
     font-weight: 600;
     margin-bottom: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: inline-block;
+}
+
+.comment-author:hover {
+    color: #ffd700;
 }
 
 .comment-text {
