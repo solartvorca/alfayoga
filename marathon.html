@@ -366,6 +366,12 @@
             <div class="day-title" id="dayTitle">Загрузка...</div>
             <div class="day-content" id="dayContent"></div>
             <div class="day-video" id="dayVideo"></div>
+
+            <!-- Навигация по дням (только для админа) -->
+            <div id="dayNavigation" style="display: none; margin-top: 30px; gap: 10px; justify-content: center;">
+                <button onclick="previousDay()" style="padding: 10px 20px; background: rgba(180, 100, 255, 0.3); border: 1px solid rgba(180, 100, 255, 0.5); color: #a18cd1; border-radius: 6px; cursor: pointer;">← Предыдущий день</button>
+                <button onclick="nextDay()" style="padding: 10px 20px; background: rgba(180, 100, 255, 0.3); border: 1px solid rgba(180, 100, 255, 0.5); color: #a18cd1; border-radius: 6px; cursor: pointer;">Следующий день →</button>
+            </div>
         </div>
 
         <!-- Социальные награды -->
@@ -537,6 +543,25 @@
             } catch (error) {
                 console.error("Ошибка загрузки задания:", error);
                 document.getElementById("dayTitle").textContent = "Ошибка загрузки";
+            }
+        }
+
+        // Навигация по дням (для администратора)
+        function previousDay() {
+            if (currentDayNum > 1) {
+                currentDayNum--;
+                document.getElementById("dayNumber").textContent = currentDayNum;
+                loadDayAssignment();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function nextDay() {
+            if (currentDayNum < 28) {
+                currentDayNum++;
+                document.getElementById("dayNumber").textContent = currentDayNum;
+                loadDayAssignment();
+                window.scrollTo(0, 0);
             }
         }
 
@@ -1153,6 +1178,12 @@
                         };
                         console.log("Вызываю loadDayAssignment...");
                         loadDayAssignment();
+
+                        // Показать кнопки навигации для администратора
+                        if (window.currentUser.email === "wuallar@gmail.com") {
+                            document.getElementById("dayNavigation").style.display = "flex";
+                        }
+
                         loadReports();
                         checkUserReport();
                         loadSocialRewardsStatus();
