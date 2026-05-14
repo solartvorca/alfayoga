@@ -500,7 +500,10 @@
         let hasSubmitted = false;
 
         async function loadDayAssignment() {
-            currentDayNum = getLunarDay();
+            // Первая загрузка - используем лунный день
+            if (!window.dayNavigationActive) {
+                currentDayNum = getLunarDay();
+            }
             document.getElementById("dayNumber").textContent = currentDayNum;
 
             try {
@@ -549,8 +552,8 @@
         // Навигация по дням (для администратора)
         function previousDay() {
             if (currentDayNum > 1) {
+                window.dayNavigationActive = true;
                 currentDayNum--;
-                document.getElementById("dayNumber").textContent = currentDayNum;
                 loadDayAssignment();
                 window.scrollTo(0, 0);
             }
@@ -558,8 +561,8 @@
 
         function nextDay() {
             if (currentDayNum < 28) {
+                window.dayNavigationActive = true;
                 currentDayNum++;
-                document.getElementById("dayNumber").textContent = currentDayNum;
                 loadDayAssignment();
                 window.scrollTo(0, 0);
             }
