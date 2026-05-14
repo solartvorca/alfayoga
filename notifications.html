@@ -537,21 +537,14 @@
             if (!user) return;
 
             try {
-                // Получить Firebase ID token для аутентификации
-                const token = await auth.currentUser.getIdToken();
-
-                // Отправить тестовое письмо через Google Cloud Function
-                const response = await fetch('https://us-central1-budilnik-notifications.cloudfunctions.net/send-marathon-emails', {
+                const response = await fetch('https://lunar-mailer-10495996192.europe-west1.run.app/sendTestEmail', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         email: user.email,
-                        nick: user.nick || "Участник",
-                        subject: "Тестовое уведомление",
-                        type: "test"
+                        nick: user.nick || "Участник"
                     })
                 });
 
