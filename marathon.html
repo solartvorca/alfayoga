@@ -578,13 +578,21 @@
                 document.getElementById("reportText").value = "";
                 hasSubmitted = true;
                 document.getElementById("submitBtn").disabled = true;
-                loadReports();
+
+                try {
+                    loadReports();
+                } catch (e) {
+                    console.error("Ошибка загрузки отчетов:", e);
+                }
+
+                alert("✓ Отчет отправлен! +1 лучик");
 
                 // Обновить текущего пользователя
                 window.currentUser.rays = (window.currentUser.rays || 0) + 1;
                 window.currentUser.lastReportDay = currentDayNum;
             } catch (error) {
                 alert("Ошибка при отправке: " + error.message);
+                console.error("submitReport error:", error);
             }
         }
 
