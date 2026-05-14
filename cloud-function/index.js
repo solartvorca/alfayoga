@@ -4,7 +4,11 @@ const cors = require('cors');
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+}));
 
 // Настройки Gmail (используй переменные окружения)
 const transporter = nodemailer.createTransport({
