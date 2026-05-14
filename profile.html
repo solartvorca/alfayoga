@@ -473,34 +473,38 @@
                 return;
             }
 
-            if (!bio && !services && creativeProfileLinks.length === 0) {
-                alert("Заполните хотя бы одно поле в профиле!");
-                return;
-            }
-
             try {
                 const userDoc = await db.collection("users").doc(user.uid).get();
                 const hasProfile = userDoc.data().creativeProfile && userDoc.data().creativeProfile.submittedAt;
+                const hasProfileFields = bio || services || creativeProfileLinks.length > 0;
 
                 const profileData = {
-                    nick,
-                    creativeProfile: {
+                    nick
+                };
+
+                // Обновить творческий профиль только если есть поля для сохранения
+                if (hasProfileFields) {
+                    profileData.creativeProfile = {
                         bio,
                         services,
                         links: creativeProfileLinks,
                         submittedAt: new Date(),
                         raysEarned: !hasProfile ? 3 : 0
-                    }
-                };
+                    };
 
-                // Если это первая отправка профиля, добавить 3 лучика
-                if (!hasProfile) {
-                    profileData.rays = firebase.firestore.FieldValue.increment(3);
+                    // Если это первая отправка профиля, добавить 3 лучика
+                    if (!hasProfile) {
+                        profileData.rays = firebase.firestore.FieldValue.increment(3);
+                    }
                 }
 
                 await db.collection("users").doc(user.uid).update(profileData);
 
-                alert(hasProfile ? "Профиль обновлен!" : "Профиль сохранен! +3 лучика");
+                if (hasProfileFields) {
+                    alert(hasProfile ? "Профиль обновлен!" : "Профиль сохранен! +3 лучика");
+                } else {
+                    alert("Имя изменено!");
+                }
                 checkProfileCompletion();
 
                 // Обновить отображение
