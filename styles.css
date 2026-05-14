@@ -487,8 +487,17 @@ body {
 }
 
 @media (max-width: 640px) {
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
     body {
         padding-bottom: 70px;
+    }
+
+    .nav-bar {
+        display: none !important;
     }
 
     .nav-links {
