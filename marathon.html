@@ -502,7 +502,11 @@
                         document.getElementById("dayVideo").innerHTML = `
                             <iframe
                                 src="https://vk.com/video_ext.php?oid=-186690269&id=${videoEmbedId}&autoplay=0"
+                                width="100%"
+                                height="400"
+                                frameborder="0"
                                 allowfullscreen
+                                allow="autoplay; encrypted-media; picture-in-picture"
                             ></iframe>
                             <a href="${vkLink}" target="_blank" class="video-link-btn">💬 Открыть в ВК (комментируй и получай лучики)</a>
                         `;
