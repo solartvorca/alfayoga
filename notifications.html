@@ -538,14 +538,16 @@
 
             try {
                 // Отправить тестовое письмо через Google Cloud Function
-                const response = await fetch('https://YOUR_CLOUD_FUNCTION_URL/sendTestEmail', {
+                const response = await fetch('https://us-central1-budilnik-notifications.cloudfunctions.net/send-marathon-emails', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         email: user.email,
-                        nick: user.nick || "Участник"
+                        nick: user.nick || "Участник",
+                        subject: "Тестовое уведомление",
+                        type: "test"
                     })
                 });
 
