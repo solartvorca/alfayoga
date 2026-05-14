@@ -510,10 +510,12 @@
                     if (data.videoId) {
                         const videoId = data.videoId;
                         const vkLink = `https://vk.com/video-${videoId}`;
+                        const isMobile = window.innerWidth <= 640;
+                        const videoWidth = isMobile ? Math.floor(window.innerWidth - 40) : 700;
 
                         document.getElementById("dayVideo").innerHTML = `
                             <iframe
-                                src="${vkLink}?embed=1&w=700&h=600&preload=1"
+                                src="${vkLink}?embed=1&w=${videoWidth}&h=500&preload=1"
                                 width="100%"
                                 frameborder="0"
                                 allowfullscreen
