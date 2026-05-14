@@ -717,9 +717,16 @@
 
             list.innerHTML = comments.map(data => {
                 const commentId = data.id;
+                const isOwner = window.currentUser && window.currentUser.uid === data.uid;
+                const isAdmin = window.currentUser && (window.currentUser.isAdmin === true || window.currentUser.email === "wuallar@gmail.com");
+                const canDelete = isOwner || isAdmin;
+
                 return `
                     <div class="comment-item">
-                        <a href="view-profile.html?uid=${data.uid}" class="comment-author">${data.nick}</a>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <a href="view-profile.html?uid=${data.uid}" class="comment-author">${data.nick}</a>
+                            ${canDelete ? `<button onclick="deleteComment('${reportId}', '${commentId}')" style="background: rgba(255, 100, 100, 0.2); border: none; color: #ff6464; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;">✕</button>` : ''}
+                        </div>
                         <div class="comment-text">${data.text}</div>
                         <div class="comment-replies" id="replies-${commentId}" style="margin-left: 20px; margin-top: 8px; border-left: 2px solid rgba(180, 100, 255, 0.2); padding-left: 12px;">
                             <div style="font-size: 11px; color: #666;">Загрузка ответов...</div>
@@ -780,6 +787,29 @@
                     </div>
                 `;
             }).join("");
+        }
+
+        async function deleteComment(reportId, commentId) {
+            if (!confirm("Удалить комментарий?")) return;
+
+            try {
+                // Найти автора отчета для возврата пыльцы
+                const reportDoc = await db.collection("reports").doc(reportId).get();
+                const reportAuthorId = reportDoc.data().uid;
+
+                // Удалить комментарий
+                await db.collection("comments").doc(commentId).delete();
+
+                // Вернуть пыльцу автору отчета
+                await db.collection("users").doc(reportAuthorId).update({
+                    dustAmount: firebase.firestore.FieldValue.increment(-1)
+                });
+
+                // Перезагрузить комментарии
+                loadComments(reportId);
+            } catch (error) {
+                alert("Ошибка при удалении: " + error.message);
+            }
         }
 
         async function addComment(reportId, text, event) {
