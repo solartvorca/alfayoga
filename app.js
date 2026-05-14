@@ -194,14 +194,15 @@ function updateBreathingAnimation(timestamp) {
 }
 
 // Проверка будильника
-function checkAlarm(timestamp) {
+function checkAlarm() {
     if (!alarmState.enabled) return;
 
-    const timeSinceLastAlarm = timestamp - alarmState.lastAlarmTime;
+    const now = Date.now();
+    const timeSinceLastAlarm = now - alarmState.lastAlarmTime;
 
     if (timeSinceLastAlarm >= alarmState.alarmInterval) {
         triggerAlarm();
-        alarmState.lastAlarmTime = timestamp;
+        alarmState.lastAlarmTime = now;
     }
 }
 
@@ -211,9 +212,47 @@ function triggerAlarm() {
     showAlarmMessage();
 }
 
+// Глобальный AudioContext (для мобильных)
+let audioContext = null;
+
+function getAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+}
+
+// Возобновить звук при взаимодействии пользователя
+function resumeAudioContext() {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(err => console.warn('AudioContext resume failed:', err));
+    }
+}
+
+// Слушаем первое взаимодействие пользователя
+document.addEventListener('click', resumeAudioContext, { once: true });
+document.addEventListener('touchstart', resumeAudioContext, { once: true });
+
 // Звук будильника (Web Audio API)
 function playAlarmSound() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+        const audioContext = getAudioContext();
+
+        // Возобновить если был suspended (на мобильных)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+                playAlarmSoundInternal(audioContext);
+            });
+        } else {
+            playAlarmSoundInternal(audioContext);
+        }
+    } catch (err) {
+        console.error('Audio error:', err);
+    }
+}
+
+function playAlarmSoundInternal(audioContext) {
     const now = audioContext.currentTime;
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
@@ -252,7 +291,7 @@ function showAlarmMessage() {
 // Основной цикл анимации
 function animate(timestamp) {
     updateBreathingAnimation(timestamp);
-    checkAlarm(timestamp);
+    checkAlarm();
     drawMoon();
     requestAnimationFrame(animate);
 }
@@ -260,6 +299,9 @@ function animate(timestamp) {
 // Инициализация
 updateBreathingParams();
 requestAnimationFrame(animate);
+
+// Подстраховка: проверка будильника через setInterval на мобильных (где requestAnimationFrame может тормозиться)
+setInterval(checkAlarm, 1000);
 
 // Получить текущий марафон
 async function getCurrentMarathon() {
