@@ -355,6 +355,14 @@
                 <div class="empty-state">Нет транзакций</div>
             </div>
         </div>
+
+        <!-- Мои отчеты -->
+        <div class="section">
+            <div class="section-title">📝 Мои отчеты</div>
+            <div id="myReportsList" style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="empty-state">Нет отчетов</div>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -382,6 +390,7 @@
 
             loadCreativeProfile();
             loadTransactions();
+            loadMyReports();
         }
 
         async function loadCreativeProfile() {
@@ -611,6 +620,48 @@
                     </div>
                 `;
             }).join("");
+        }
+
+        async function loadMyReports() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const snapshot = await db.collection("reports")
+                    .where("uid", "==", user.uid)
+                    .orderBy("createdAt", "desc")
+                    .get();
+
+                const list = document.getElementById("myReportsList");
+
+                if (snapshot.empty) {
+                    list.innerHTML = '<div class="empty-state">Нет отчетов</div>';
+                    return;
+                }
+
+                list.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const time = new Date(data.createdAt.seconds * 1000);
+                    const dateStr = time.toLocaleString("ru-RU", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    });
+
+                    return `
+                        <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(161, 140, 209, 0.5); padding: 12px; border-radius: 4px;">
+                            <div style="font-size: 13px; font-weight: 600; color: #a18cd1; margin-bottom: 8px;">📅 День ${data.dayNumber}</div>
+                            <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${data.text}</div>
+                            <div style="font-size: 11px; color: #888;">${dateStr}</div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка загрузки отчетов:", error);
+                document.getElementById("myReportsList").innerHTML = '<div class="empty-state">Ошибка загрузки отчетов</div>';
+            }
         }
 
         // Загрузить профиль при входе
