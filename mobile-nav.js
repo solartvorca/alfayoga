@@ -3,8 +3,8 @@
         { icon: '🌙', label: 'Луна', path: 'index.html' },
         { icon: '🏃', label: 'Марафон', path: 'marathon.html' },
         { icon: '👤', label: 'Профиль', path: 'profile.html' },
-        { icon: '❤️', label: 'Привычки', path: 'habits.html' },
-        { icon: '🛒', label: 'Магазин', path: 'shop.html' }
+        { icon: '📅', label: 'Задачи', path: 'planner.html' },
+        { icon: '❤️', label: 'Привычки', path: 'habits.html' }
     ];
 
     function getCurrentPage() {
