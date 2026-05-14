@@ -699,7 +699,6 @@
         async function loadComments(reportId) {
             const snapshot = await db.collection("comments")
                 .where("reportId", "==", reportId)
-                .orderBy("createdAt", "desc")
                 .get();
 
             const list = document.getElementById(`comments-${reportId}`);
@@ -709,9 +708,15 @@
                 return;
             }
 
-            list.innerHTML = snapshot.docs.map(doc => {
-                const data = doc.data();
-                const commentId = doc.id;
+            // Сортировка на клиенте (по дате, новые сверху)
+            const comments = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            comments.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+
+            list.innerHTML = comments.map(data => {
+                const commentId = data.id;
                 return `
                     <div class="comment-item">
                         <a href="view-profile.html?uid=${data.uid}" class="comment-author">${data.nick}</a>
@@ -743,15 +748,14 @@
             });
 
             // Загрузить ответы для каждого комментария
-            snapshot.docs.forEach(doc => {
-                loadReplies(doc.id);
+            comments.forEach(comment => {
+                loadReplies(comment.id);
             });
         }
 
         async function loadReplies(commentId) {
             const snapshot = await db.collection("replies")
                 .where("commentId", "==", commentId)
-                .orderBy("createdAt", "asc")
                 .get();
 
             const list = document.getElementById(`replies-${commentId}`);
@@ -761,8 +765,14 @@
                 return;
             }
 
-            list.innerHTML = snapshot.docs.map(doc => {
-                const data = doc.data();
+            // Сортировка на клиенте (по дате, старые сверху)
+            const replies = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            replies.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+
+            list.innerHTML = replies.map(data => {
                 return `
                     <div class="reply-item" style="margin-bottom: 8px;">
                         <a href="view-profile.html?uid=${data.uid}" class="comment-author" style="font-size: 11px;">${data.nick}</a>
