@@ -307,6 +307,10 @@
             <div class="section-title">✨ Мой профиль</div>
             <form class="transfer-form" id="creativeProfileForm" onsubmit="saveCreativeProfile(event)">
                 <div class="form-group">
+                    <label>Ваше имя (ник)</label>
+                    <input type="text" id="nickField" placeholder="Введите ваше имя" required>
+                </div>
+                <div class="form-group">
                     <label>О себе и своем творчестве</label>
                     <textarea class="textarea-field" id="bioField" placeholder="Расскажите о себе, своем творчестве, интересах..."></textarea>
                 </div>
@@ -420,6 +424,7 @@
                 const userDoc = await db.collection("users").doc(user.uid).get();
                 const profile = userDoc.data().creativeProfile || {};
 
+                document.getElementById("nickField").value = user.nick || "";
                 document.getElementById("bioField").value = profile.bio || "";
                 document.getElementById("servicesField").value = profile.services || "";
                 creativeProfileLinks = profile.links || [];
@@ -459,11 +464,17 @@
             const user = window.currentUser;
             if (!user) return;
 
+            const nick = document.getElementById("nickField").value.trim();
             const bio = document.getElementById("bioField").value.trim();
             const services = document.getElementById("servicesField").value.trim();
 
+            if (!nick) {
+                alert("Введите ваше имя!");
+                return;
+            }
+
             if (!bio && !services && creativeProfileLinks.length === 0) {
-                alert("Заполните хотя бы одно поле!");
+                alert("Заполните хотя бы одно поле в профиле!");
                 return;
             }
 
@@ -472,6 +483,7 @@
                 const hasProfile = userDoc.data().creativeProfile && userDoc.data().creativeProfile.submittedAt;
 
                 const profileData = {
+                    nick,
                     creativeProfile: {
                         bio,
                         services,
@@ -491,9 +503,11 @@
                 alert(hasProfile ? "Профиль обновлен!" : "Профиль сохранен! +3 лучика");
                 checkProfileCompletion();
 
-                // Обновить отображение лучиков
+                // Обновить отображение
                 const updatedUser = await db.collection("users").doc(user.uid).get();
+                window.currentUser.nick = nick;
                 window.currentUser.rays = updatedUser.data().rays;
+                document.getElementById("profileNick").textContent = nick;
                 document.getElementById("raysCount").textContent = window.currentUser.rays;
             } catch (error) {
                 alert("Ошибка: " + error.message);
