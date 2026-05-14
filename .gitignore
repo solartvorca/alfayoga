@@ -3,6 +3,5 @@ node_modules/
 *.log
 budilnik-notifications-*.json
 firebase-config.js
-cloud-function/
 .firebaserc
 firebase.json
