@@ -717,13 +717,14 @@
             const videoUrl = document.getElementById("dayVideo").value;
 
             try {
-                await db.collection("lunar-yoga-tsarevich").doc(dayNum.toString()).set({
-                    title,
-                    content,
-                    videoUrl: videoUrl || null,
-                    dayNumber: dayNum,
-                    createdAt: new Date()
-                }, { merge: true });
+                await db.collection("marathons").doc("lunar-yoga-tsarevich")
+                    .collection("days").doc(dayNum.toString()).set({
+                        title,
+                        content,
+                        videoUrl: videoUrl || null,
+                        dayNumber: dayNum,
+                        createdAt: new Date()
+                    }, { merge: true });
 
                 alert("Задание сохранено!");
                 document.querySelector("#days-tab form").reset();
@@ -736,7 +737,7 @@
         // Загрузить все дни марафона
         async function loadAllDays() {
             try {
-                const snapshot = await db.collection("lunar-yoga-tsarevich")
+                const snapshot = await db.collection("marathons").doc("lunar-yoga-tsarevich").collection("days")
                     .orderBy("dayNumber").get();
                 const list = document.getElementById("daysList");
 
@@ -770,7 +771,7 @@
         // Быстрое редактирование дня
         async function editDayQuick(dayNumber) {
             try {
-                const doc = await db.collection("lunar-yoga-tsarevich").doc(dayNumber.toString()).get();
+                const doc = await db.collection("marathons").doc("lunar-yoga-tsarevich").collection("days").doc(dayNumber.toString()).get();
                 if (!doc.exists) {
                     alert("День не найден");
                     return;
@@ -796,7 +797,7 @@
             if (!confirm(`Удалить день ${dayNumber}?`)) return;
 
             try {
-                await db.collection("lunar-yoga-tsarevich").doc(dayNumber.toString()).delete();
+                await db.collection("marathons").doc("lunar-yoga-tsarevich").collection("days").doc(dayNumber.toString()).delete();
                 alert("День удален!");
                 loadAllDays();
             } catch (error) {
