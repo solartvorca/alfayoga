@@ -144,6 +144,37 @@
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
+        async function loadPublicHabits(uid) {
+            try {
+                const habitsDoc = await db.collection("habits").doc(uid).get();
+                if (!habitsDoc.exists) return;
+
+                const habits = (habitsDoc.data().habits || []).filter(h => h.isPublic);
+
+                if (habits.length === 0) return;
+
+                let habitsHTML = `
+                    <div class="section">
+                        <div class="section-title">📋 Публичные привычки</div>
+                `;
+
+                habits.forEach(habit => {
+                    habitsHTML += `
+                        <div style="margin-bottom: 10px; padding: 10px; background: rgba(180, 100, 255, 0.05); border-radius: 6px; border-left: 3px solid rgba(180, 100, 255, 0.3);">
+                            <div style="font-size: 13px; color: #c8d0db;">${habit.text}</div>
+                        </div>
+                    `;
+                });
+
+                habitsHTML += '</div>';
+
+                const profileSection = document.getElementById("profileSection");
+                profileSection.innerHTML += habitsHTML;
+            } catch (error) {
+                console.error("Ошибка при загрузке публичных привычек:", error);
+            }
+        }
+
         async function loadPublicUserWishes(uid) {
             try {
                 const snapshot = await db.collection("public_wishes")
@@ -244,7 +275,8 @@
 
                 document.getElementById("profileSection").innerHTML = profileHTML || '<div class="empty-state">Профиль не заполнен</div>';
 
-                // Загрузить публичные желания и сны
+                // Загрузить публичные желания, сны и привычки
+                loadPublicHabits(uid);
                 loadPublicDreams(uid);
                 loadPublicUserWishes(uid);
             } catch (error) {

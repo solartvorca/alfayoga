@@ -410,6 +410,7 @@
                 const newHabit = {
                     id: Date.now().toString(),
                     text,
+                    isPublic: false,
                     createdAt: new Date()
                 };
 
@@ -427,6 +428,36 @@
                 loadHabits();
             } catch (error) {
                 alert("Ошибка при добавлении привычки: " + error.message);
+            }
+        }
+
+        async function toggleHabitPublic(habitId) {
+            const user = window.currentUser;
+            if (!user) return;
+
+            try {
+                const docId = user.uid;
+                const doc = await db.collection("habits").doc(docId).get();
+
+                if (doc.exists) {
+                    let habits = doc.data().habits || [];
+                    const habit = habits.find(h => h.id === habitId);
+                    if (habit) {
+                        habit.isPublic = !habit.isPublic;
+                    }
+
+                    await db.collection("habits").doc(docId).set({
+                        uid: user.uid,
+                        nick: user.nick,
+                        email: user.email,
+                        habits,
+                        updatedAt: new Date()
+                    }, { merge: true });
+
+                    loadHabits();
+                }
+            } catch (error) {
+                alert("Ошибка: " + error.message);
             }
         }
 
@@ -525,14 +556,21 @@
 
                 list.innerHTML = habits.map(habit => {
                     const isCompleted = completions[habit.id];
+                    const isPublic = habit.isPublic || false;
                     return `
                         <div class="task-item">
                             <input type="checkbox" ${isCompleted ? 'checked disabled' : ''}
                                 onchange="toggleHabitCompletion('${habit.id}')">
                             <label class="task-label ${isCompleted ? 'completed' : ''}">
                                 ${habit.text}
+                                ${isPublic ? '<span style="margin-left: 8px; color: #ffd700;">👁️ публичная</span>' : ''}
                             </label>
                             ${!isCompleted ? `<span class="task-points">+1</span>` : ''}
+                            ${!isCompleted ? `
+                                <button class="delete-btn" style="background: rgba(0, 143, 204, 0.2); color: #00a3e0;" onclick="toggleHabitPublic('${habit.id}')" title="Сделать ${isPublic ? 'приватной' : 'публичной'}">
+                                    ${isPublic ? '🔓' : '🔒'}
+                                </button>
+                            ` : ''}
                             ${!isCompleted ? `<button class="delete-btn" onclick="deleteHabit('${habit.id}')">Удалить</button>` : ''}
                         </div>
                     `;
