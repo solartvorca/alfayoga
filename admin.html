@@ -501,7 +501,7 @@
             </div>
 
             <div class="admin-section">
-                <div class="section-title">📨 Рассылка сообщений участникам</div>
+                <div class="section-title">📨 Email адреса подписчиков</div>
 
                 <div class="form-grid">
                     <div class="form-group">
@@ -514,28 +514,16 @@
                         </select>
                     </div>
 
+                    <button onclick="loadEmailList()" style="padding: 12px; background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%); border: none; border-radius: 6px; color: #0a0e27; font-weight: 600; cursor: pointer; font-size: 14px;">📋 Показать список email</button>
+                </div>
+
+                <div id="emailListContainer" style="margin-top: 20px; display: none;">
                     <div class="form-group">
-                        <label>API URL (для отправки email)</label>
-                        <input type="text" id="cloudFunctionUrl" placeholder="https://functions.yandexcloud.net/d4edrq9quhstjjviscdk" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; width: 100%;" value="https://functions.yandexcloud.net/d4edrq9quhstjjviscdk">
+                        <label>Список email адресов (скопируй всё):</label>
+                        <textarea id="emailList" readonly style="min-height: 300px; padding: 12px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; font-family: monospace; font-size: 13px;"></textarea>
                     </div>
-
-                    <div class="form-group">
-                        <label>Текст сообщения</label>
-                        <textarea id="mailingText" placeholder="Введите текст сообщения..." style="min-height: 150px; padding: 12px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; font-family: inherit; resize: vertical;"></textarea>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <label style="display: flex; align-items: center; gap: 8px; color: #e0e6ed; font-size: 14px;">
-                            <input type="checkbox" id="mailingEmail" checked style="width: 20px; height: 20px;">
-                            Отправить по email
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; color: #e0e6ed; font-size: 14px;">
-                            <input type="checkbox" id="mailingInApp" checked style="width: 20px; height: 20px;">
-                            Отправить в приложение
-                        </label>
-                    </div>
-
-                    <button onclick="sendMailing()" style="padding: 12px; background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%); border: none; border-radius: 6px; color: #0a0e27; font-weight: 600; cursor: pointer; font-size: 14px;">📤 Отправить рассылку</button>
+                    <button onclick="copyEmailList()" style="padding: 10px 20px; background: rgba(0, 208, 132, 0.2); border: 1px solid rgba(0, 208, 132, 0.5); border-radius: 6px; color: #00d084; font-weight: 600; cursor: pointer;">📋 Скопировать все</button>
+                    <div id="copyStatus" style="margin-top: 10px; color: #00d084; display: none;"></div>
                 </div>
 
                 <div id="mailingStatus" style="margin-top: 20px; padding: 15px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 8px; display: none; color: #a18cd1;"></div>
@@ -664,25 +652,14 @@
             }
         }
 
-        // Отправить рассылку
-        async function sendMailing() {
+        // Загрузить список email
+        async function loadEmailList() {
             const tariff = document.getElementById("mailingTariff").value;
-            const text = document.getElementById("mailingText").value;
-            const sendEmail = document.getElementById("mailingEmail").checked;
-            const sendInApp = document.getElementById("mailingInApp").checked;
             const statusDiv = document.getElementById("mailingStatus");
-
-            if (!text.trim()) {
-                statusDiv.style.display = "block";
-                statusDiv.textContent = "❌ Напишите текст сообщения";
-                statusDiv.style.background = "rgba(255, 100, 100, 0.1)";
-                statusDiv.style.color = "#ff6464";
-                return;
-            }
 
             try {
                 statusDiv.style.display = "block";
-                statusDiv.textContent = "⏳ Отправляю рассылку...";
+                statusDiv.textContent = "⏳ Загружаю список...";
                 statusDiv.style.background = "rgba(180, 100, 255, 0.1)";
                 statusDiv.style.color = "#a18cd1";
 
@@ -697,80 +674,48 @@
                 }
 
                 const snapshot = await query.get();
-                let emailCount = 0;
-                let inAppCount = 0;
                 const emails = [];
 
                 for (const doc of snapshot.docs) {
                     const user = doc.data();
-
-                    // Отправить в приложение (уведомление в Firestore)
-                    if (sendInApp) {
-                        await db.collection("notifications").add({
-                            uid: doc.id,
-                            email: user.email,
-                            message: text,
-                            createdAt: new Date(),
-                            read: false,
-                            type: "admin-mailing"
-                        });
-                        inAppCount++;
-                    }
-
-                    // Собрать email для отправки
-                    if (sendEmail && user.email) {
+                    if (user.email) {
                         emails.push(user.email);
                     }
                 }
 
-                // Отправить все письма сразу через API
-                if (emails.length > 0) {
-                    const apiUrl = document.getElementById("cloudFunctionUrl").value;
-                    if (!apiUrl.trim()) {
-                        throw new Error("Укажите URL API для отправки email");
-                    }
+                const emailList = document.getElementById("emailList");
+                emailList.value = emails.join('\n');
+                document.getElementById("emailListContainer").style.display = "block";
 
-                    const response = await fetch(`${apiUrl}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            emails: emails,
-                            message: text
-                        })
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        emailCount = result.sent || emails.length;
-
-                        statusDiv.innerHTML = `✅ Рассылка отправлена!<br>
-                            В приложение: ${inAppCount} пользователям<br>
-                            По email: ${emailCount} пользователям`;
-                    } else {
-                        throw new Error("Ошибка при отправке email");
-                    }
-                } else {
-                    statusDiv.innerHTML = `✅ Рассылка отправлена!<br>
-                        В приложение: ${inAppCount} пользователям<br>
-                        По email: 0 пользователям`;
-                }
-
+                statusDiv.innerHTML = `✅ Загружено ${emails.length} email адресов`;
                 statusDiv.style.background = "rgba(0, 208, 132, 0.1)";
                 statusDiv.style.color = "#00d084";
 
-                document.getElementById("mailingText").value = "";
-
                 setTimeout(() => {
                     statusDiv.style.display = "none";
-                }, 5000);
+                }, 3000);
 
             } catch (error) {
                 statusDiv.style.display = "block";
                 statusDiv.textContent = "❌ Ошибка: " + error.message;
                 statusDiv.style.background = "rgba(255, 100, 100, 0.1)";
                 statusDiv.style.color = "#ff6464";
-                console.error("Ошибка при отправке рассылки:", error);
+                console.error("Ошибка:", error);
             }
+        }
+
+        function copyEmailList() {
+            const emailList = document.getElementById("emailList");
+            emailList.select();
+            document.execCommand("copy");
+
+            const copyStatus = document.getElementById("copyStatus");
+            copyStatus.textContent = "✅ Скопировано в буфер обмена!";
+            copyStatus.style.display = "block";
+
+            setTimeout(() => {
+                copyStatus.style.display = "none";
+            }, 3000);
         }
 
         // Проверить доступ администратора
