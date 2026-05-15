@@ -208,22 +208,20 @@
         .video-modal-wrapper {
             position: relative;
             width: 100%;
-            height: 0;
-            padding-bottom: 56.25%;
+            height: 500px;
             background-color: rgba(10, 14, 39, 0.5);
             border-radius: 6px;
             overflow: hidden;
             margin-bottom: 15px;
+            flex-shrink: 0;
         }
 
         .video-modal-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             border: none;
             border-radius: 6px;
+            display: block;
         }
 
         @media (max-width: 640px) {
