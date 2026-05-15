@@ -1,7 +1,6 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
-const admin = require('firebase-admin');
 
 const app = express();
 app.use(express.json());
@@ -10,14 +9,6 @@ app.use(cors({
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type']
 }));
-
-// Инициализация Firebase Admin SDK
-const serviceAccount = require('./firebase-key.json');
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://lunar-alarm-default-rtdb.europe-west1.firebasedatabase.app"
-});
-const db = admin.firestore();
 
 // Настройки Gmail (используй переменные окружения)
 const transporter = nodemailer.createTransport({
@@ -166,39 +157,35 @@ app.post('/sendMarathonTask', async (req, res) => {
     }
 });
 
-// Обработка очереди рассылки
-app.post('/processMailing', async (req, res) => {
+// Отправка рассылки сразу всем пользователям
+app.post('/sendMailingDirect', async (req, res) => {
     try {
-        const snapshot = await db.collection('mailing_queue')
-            .where('sent', '==', false)
-            .limit(50)
-            .get();
+        const { emails, message, subject } = req.body;
 
-        if (snapshot.empty) {
-            return res.status(200).json({
-                success: true,
-                message: 'Очередь пуста',
-                processed: 0
-            });
+        if (!emails || !Array.isArray(emails) || emails.length === 0) {
+            return res.status(400).json({ error: 'Email адреса не указаны' });
         }
 
-        let processed = 0;
+        if (!message) {
+            return res.status(400).json({ error: 'Сообщение не указано' });
+        }
+
+        let sent = 0;
         let failed = 0;
+        const errors = [];
 
-        for (const doc of snapshot.docs) {
-            const mail = doc.data();
-
+        for (const email of emails) {
             try {
                 const mailOptions = {
                     from: process.env.GMAIL_USER,
-                    to: mail.email,
-                    subject: mail.subject,
+                    to: email,
+                    subject: subject || '🌙 Сообщение от администратора — Лунный Будильник',
                     html: `
                         <div style="font-family: Arial, sans-serif; background: #0a0e27; color: #e0e6ed; padding: 20px;">
                             <div style="max-width: 600px; margin: 0 auto; background: rgba(180, 100, 255, 0.08); padding: 30px; border-radius: 12px; border: 1px solid rgba(180, 100, 255, 0.2);">
                                 <h2 style="color: #a18cd1; text-align: center;">🌙 Лунный Будильник</h2>
-                                <div style="color: #c8d0db; line-height: 1.6; white-space: pre-wrap;">
-                                    ${mail.message}
+                                <div style="color: #c8d0db; line-height: 1.6; white-space: pre-wrap; margin: 20px 0;">
+                                    ${message}
                                 </div>
                                 <p style="text-align: center; color: #888; font-size: 12px; margin-top: 30px;">
                                     © Йога Царевича — Марафон осознанности
@@ -209,35 +196,24 @@ app.post('/processMailing', async (req, res) => {
                 };
 
                 await transporter.sendMail(mailOptions);
-
-                // Обновить статус письма
-                await doc.ref.update({
-                    sent: true,
-                    sentAt: new Date()
-                });
-
-                processed++;
-                console.log(`✓ Письмо отправлено: ${mail.email}`);
+                sent++;
+                console.log(`✓ Письмо отправлено: ${email}`);
             } catch (error) {
                 failed++;
-                console.error(`✗ Ошибка отправки ${mail.email}:`, error.message);
-
-                // Обновить количество попыток
-                await doc.ref.update({
-                    attempts: (mail.attempts || 0) + 1,
-                    lastError: error.message
-                });
+                errors.push(`${email}: ${error.message}`);
+                console.error(`✗ Ошибка отправки ${email}:`, error.message);
             }
         }
 
         res.status(200).json({
             success: true,
-            message: `Обработано ${processed} писем, ошибок: ${failed}`,
-            processed,
-            failed
+            sent,
+            failed,
+            total: emails.length,
+            errors: failed > 0 ? errors : []
         });
     } catch (error) {
-        console.error('Ошибка обработки очереди:', error);
+        console.error('Ошибка отправки рассылки:', error);
         res.status(500).json({ error: error.message });
     }
 });

@@ -515,6 +515,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label>URL Cloud Function (для отправки email)</label>
+                        <input type="text" id="cloudFunctionUrl" placeholder="https://your-region-project.cloudfunctions.net" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; width: 100%;" value="https://europe-west1-lunar-alarm.cloudfunctions.net">
+                    </div>
+
+                    <div class="form-group">
                         <label>Текст сообщения</label>
                         <textarea id="mailingText" placeholder="Введите текст сообщения..." style="min-height: 150px; padding: 12px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; font-family: inherit; resize: vertical;"></textarea>
                     </div>
@@ -694,6 +699,7 @@
                 const snapshot = await query.get();
                 let emailCount = 0;
                 let inAppCount = 0;
+                const emails = [];
 
                 for (const doc of snapshot.docs) {
                     const user = doc.data();
@@ -711,24 +717,44 @@
                         inAppCount++;
                     }
 
-                    // Отправить по email
+                    // Собрать email для отправки
                     if (sendEmail && user.email) {
-                        await db.collection("mailing_queue").add({
-                            uid: doc.id,
-                            email: user.email,
-                            subject: "Лунный Будильник — важное сообщение",
-                            message: text,
-                            createdAt: new Date(),
-                            sent: false,
-                            sentAt: null
-                        });
-                        emailCount++;
+                        emails.push(user.email);
                     }
                 }
 
-                statusDiv.innerHTML = `✅ Рассылка отправлена!<br>
-                    В приложение: ${inAppCount} пользователям<br>
-                    По email: ${emailCount} пользователям`;
+                // Отправить все письма сразу через Cloud Function
+                if (emails.length > 0) {
+                    const cloudFunctionUrl = document.getElementById("cloudFunctionUrl").value;
+                    if (!cloudFunctionUrl.trim()) {
+                        throw new Error("Укажите URL Cloud Function для отправки email");
+                    }
+                    const response = await fetch(`${cloudFunctionUrl}/sendMailingDirect`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            emails: emails,
+                            message: text,
+                            subject: "🌙 Лунный Будильник — сообщение от администратора"
+                        })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        emailCount = result.sent;
+
+                        statusDiv.innerHTML = `✅ Рассылка отправлена!<br>
+                            В приложение: ${inAppCount} пользователям<br>
+                            По email: ${emailCount} пользователям`;
+                    } else {
+                        throw new Error("Ошибка при отправке email");
+                    }
+                } else {
+                    statusDiv.innerHTML = `✅ Рассылка отправлена!<br>
+                        В приложение: ${inAppCount} пользователям<br>
+                        По email: 0 пользователям`;
+                }
+
                 statusDiv.style.background = "rgba(0, 208, 132, 0.1)";
                 statusDiv.style.color = "#00d084";
 
