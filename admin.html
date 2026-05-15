@@ -730,7 +730,7 @@
                         throw new Error("Укажите URL API для отправки email");
                     }
 
-                    const response = await fetch(`${apiUrl}/api/email/mailing`, {
+                    const response = await fetch(`${apiUrl}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
