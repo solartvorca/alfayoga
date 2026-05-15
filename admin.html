@@ -515,8 +515,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>URL Cloud Function (для отправки email)</label>
-                        <input type="text" id="cloudFunctionUrl" placeholder="https://your-region-project.cloudfunctions.net" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; width: 100%;" value="https://europe-west1-lunar-alarm.cloudfunctions.net">
+                        <label>API URL (для отправки email)</label>
+                        <input type="text" id="cloudFunctionUrl" placeholder="https://lunar-alarm-email.username.repl.co" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; width: 100%;" value="https://lunar-alarm-email.username.repl.co">
                     </div>
 
                     <div class="form-group">
@@ -723,25 +723,25 @@
                     }
                 }
 
-                // Отправить все письма сразу через Cloud Function
+                // Отправить все письма сразу через API
                 if (emails.length > 0) {
-                    const cloudFunctionUrl = document.getElementById("cloudFunctionUrl").value;
-                    if (!cloudFunctionUrl.trim()) {
-                        throw new Error("Укажите URL Cloud Function для отправки email");
+                    const apiUrl = document.getElementById("cloudFunctionUrl").value;
+                    if (!apiUrl.trim()) {
+                        throw new Error("Укажите URL API для отправки email");
                     }
-                    const response = await fetch(`${cloudFunctionUrl}/sendMailingDirect`, {
+
+                    const response = await fetch(`${apiUrl}/api/email/mailing`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             emails: emails,
-                            message: text,
-                            subject: "🌙 Лунный Будильник — сообщение от администратора"
+                            message: text
                         })
                     });
 
                     if (response.ok) {
                         const result = await response.json();
-                        emailCount = result.sent;
+                        emailCount = result.sent || emails.length;
 
                         statusDiv.innerHTML = `✅ Рассылка отправлена!<br>
                             В приложение: ${inAppCount} пользователям<br>
