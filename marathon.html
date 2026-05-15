@@ -536,13 +536,14 @@
 
                     if (data.videoId) {
                         const videoId = data.videoId;
+                        const [oid, id] = videoId.split('_');
                         const vkLink = `https://vk.com/video-${videoId}`;
+                        const videoEmbedUrl = `https://vk.com/video_ext.php?oid=-${oid}&id=${id}`;
 
                         document.getElementById("dayVideo").innerHTML = `
                             <div class="video-wrapper">
                                 <iframe
-                                    src="${vkLink}?embed=1"
-                                    allowfullscreen
+                                    src="${videoEmbedUrl}"
                                     allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                                 ></iframe>
                             </div>
