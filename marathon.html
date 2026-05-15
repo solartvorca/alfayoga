@@ -626,6 +626,7 @@
 
             const dreamsSnapshot = await db.collection("dreams")
                 .where("isPublic", "==", true)
+                .where("dayNumber", "==", currentDayNum)
                 .get();
 
             const list = document.getElementById("reportsList");
