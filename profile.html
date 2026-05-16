@@ -775,27 +775,41 @@
 
         function renderReferralLink() {
             const user = window.currentUser;
-            if (!user || !user.referralCode) return;
+            if (!user) return;
 
             const referralCode = user.referralCode;
+            if (!referralCode) {
+                document.getElementById("referralLink").value = "⚠️ Код не загружен. Перезагрузи страницу.";
+                console.warn("referralCode not found:", user);
+                return;
+            }
+
             const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
             const referralLink = `${baseUrl}login.html?ref=${referralCode}`;
 
             document.getElementById("referralLink").value = referralLink;
+            console.log("Referral link generated:", referralLink);
         }
 
         function copyReferralLink() {
-            const referralLink = document.getElementById("referralLink");
-            referralLink.select();
+            const input = document.getElementById("referralLink");
+            const text = input.value;
+
+            // Используем более надёжный способ копирования
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
             document.execCommand("copy");
+            document.body.removeChild(textarea);
 
             const status = document.getElementById("referralStatus");
-            status.textContent = "✅ Ссылка скопирована!";
+            status.textContent = "✅ Ссылка скопирована: " + text;
             status.style.display = "block";
 
             setTimeout(() => {
                 status.style.display = "none";
-            }, 2000);
+            }, 3000);
         }
 
         function renderLinks() {
