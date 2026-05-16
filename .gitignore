@@ -5,3 +5,19 @@ budilnik-notifications-*.json
 firebase-config.js
 .firebaserc
 firebase.json
+
+# API Keys & Secrets
+*.env
+*.env.local
+*.env.*.local
+secretkeyapi.env
+*-secret*
+*-key*
+apikey*
+API_KEY*
+
+# Sensitive files
+app-passwords.txt
+секретный*
+*пароль*
+*ключ*
