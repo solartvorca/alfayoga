@@ -339,15 +339,27 @@
                 document.getElementById("profileAboutSection").innerHTML = aboutHTML || '<div class="empty-state">Информация не заполнена</div>';
 
                 // Заполнить вкладку "Услуги и товары"
-                if (profile.services) {
-                    document.getElementById("profileServicesSection").innerHTML = `
-                        <div class="section">
-                            <div class="section-title">🛍️ Услуги и товары</div>
-                            <div class="section-text">${profile.services}</div>
-                        </div>
-                    `;
+                if (profile.services || profile.gifts) {
+                    let servicesHtml = '';
+                    if (profile.services) {
+                        servicesHtml += `
+                            <div class="section">
+                                <div class="section-title">🛍️ Услуги и товары</div>
+                                <div class="section-text">${profile.services}</div>
+                            </div>
+                        `;
+                    }
+                    if (profile.gifts) {
+                        servicesHtml += `
+                            <div class="section">
+                                <div class="section-title">🎁 Дары и подарки</div>
+                                <div class="section-text">${profile.gifts}</div>
+                            </div>
+                        `;
+                    }
+                    document.getElementById("profileServicesSection").innerHTML = servicesHtml;
                 } else {
-                    document.getElementById("profileServicesSection").innerHTML = '<div class="empty-state">Услуги не указаны</div>';
+                    document.getElementById("profileServicesSection").innerHTML = '<div class="empty-state">Услуги и подарки не указаны</div>';
                 }
 
                 // Загрузить публичные желания, сны и привычки

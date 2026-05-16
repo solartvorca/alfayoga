@@ -486,7 +486,11 @@
                         <label>Описание услуг и товаров</label>
                         <textarea class="textarea-field" id="servicesField" placeholder="Описание услуг и товаров, которые вы предлагаете..."></textarea>
                     </div>
-                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить услуги</button>
+                    <div class="form-group">
+                        <label>Дары и подарки</label>
+                        <textarea class="textarea-field" id="giftsField" placeholder="Что вы готовы подарить или чем хотите поделиться..."></textarea>
+                    </div>
+                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить услуги и подарки</button>
                 </form>
             </div>
         </div>
@@ -736,6 +740,7 @@
                 document.getElementById("nickField").value = user.nick || "";
                 document.getElementById("bioField").value = profile.bio || "";
                 document.getElementById("servicesField").value = profile.services || "";
+                document.getElementById("giftsField").value = profile.gifts || "";
                 creativeProfileLinks = profile.links || [];
 
                 renderLinks();
@@ -776,6 +781,7 @@
             const nick = document.getElementById("nickField").value.trim();
             const bio = document.getElementById("bioField").value.trim();
             const services = document.getElementById("servicesField").value.trim();
+            const gifts = document.getElementById("giftsField").value.trim();
 
             if (!nick) {
                 alert("Введите ваше имя!");
@@ -785,7 +791,7 @@
             try {
                 const userDoc = await db.collection("users").doc(user.uid).get();
                 const hasProfile = userDoc.data().creativeProfile && userDoc.data().creativeProfile.submittedAt;
-                const hasProfileFields = bio || services || creativeProfileLinks.length > 0;
+                const hasProfileFields = bio || services || gifts || creativeProfileLinks.length > 0;
 
                 const profileData = {
                     nick
@@ -796,6 +802,7 @@
                     profileData.creativeProfile = {
                         bio,
                         services,
+                        gifts,
                         links: creativeProfileLinks,
                         submittedAt: new Date(),
                         raysEarned: !hasProfile ? 3 : 0
