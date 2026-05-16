@@ -434,6 +434,17 @@
             </form>
         </div>
 
+        <!-- Дневная практика из "Образа жизни" -->
+        <div class="report-section" id="dailyPracticeSection" style="background: linear-gradient(135deg, rgba(0, 208, 132, 0.1) 0%, rgba(161, 140, 209, 0.1) 100%); border: 1px solid rgba(0, 208, 132, 0.3); margin-bottom: 30px; display: none;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 20px;">🌿</span>
+                <h3 style="margin: 0; color: #00d084;">Практика дня</h3>
+            </div>
+            <div id="dailyPracticeContent" style="color: #c8d0db; font-size: 14px; line-height: 1.8;">
+                <p style="text-align: center; color: #888;">Загрузка...</p>
+            </div>
+        </div>
+
         <!-- Лента отчетов -->
         <div class="report-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -632,6 +643,7 @@
                 document.getElementById("submitBtn").disabled = true;
 
                 try {
+                    loadDailyPractice();
                     loadReports();
                 } catch (e) {
                     console.error("Ошибка загрузки отчетов:", e);
@@ -645,6 +657,62 @@
             } catch (error) {
                 alert("Ошибка при отправке: " + error.message);
                 console.error("submitReport error:", error);
+            }
+        }
+
+        // Загрузить практику дня из "Образа жизни"
+        async function loadDailyPractice() {
+            try {
+                const snapshot = await db.collection("lifestyle_practices").get();
+
+                if (snapshot.empty) {
+                    document.getElementById("dailyPracticeSection").style.display = "none";
+                    return;
+                }
+
+                // Получить все практики и выбрать первую
+                const practices = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Сортировать по названию для консистентности
+                practices.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+
+                const practice = practices[0]; // Показываем первую практику
+
+                const content = document.getElementById("dailyPracticeContent");
+                content.innerHTML = `
+                    <div style="padding: 15px; background: rgba(0, 208, 132, 0.05); border-radius: 8px; border-left: 3px solid #00d084;">
+                        <div style="margin-bottom: 12px;">
+                            <strong style="color: #00d084; font-size: 16px;">✦ ${practice.title || 'Практика'}</strong>
+                            <span style="color: #888; font-size: 12px; margin-left: 10px;">[${practice.category || 'Практика'}]</span>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <p style="margin: 0; color: #c8d0db;">${practice.description || ''}</p>
+                        </div>
+
+                        ${practice.howTo ? `
+                            <div style="background: rgba(180, 100, 255, 0.05); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                                <div style="font-size: 12px; color: #a18cd1; text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">📋 Как установить эту практику:</div>
+                                <div style="color: #c8d0db; font-size: 13px; white-space: pre-wrap;">${practice.howTo}</div>
+                            </div>
+                        ` : ''}
+
+                        ${practice.videoId ? `
+                            <div style="margin-top: 12px; padding: 12px; background: rgba(0, 143, 204, 0.1); border-radius: 6px; border: 1px solid rgba(0, 143, 204, 0.2);">
+                                <a href="https://vk.com/video${practice.videoId}" target="_blank" style="color: #00c5ff; text-decoration: underline; font-weight: 600;">▶️ Смотреть видео</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                document.getElementById("dailyPracticeSection").style.display = "block";
+
+            } catch (error) {
+                console.error("Ошибка загрузки практики дня:", error);
+                document.getElementById("dailyPracticeSection").style.display = "none";
             }
         }
 
@@ -926,6 +994,7 @@
         }
 
         function toggleOnlyReports() {
+            loadDailyPractice();
             loadReports();
         }
 
@@ -1230,6 +1299,7 @@
                             document.getElementById("dayNavigation").style.display = "flex";
                         }
 
+                        loadDailyPractice();
                         loadReports();
                         checkUserReport();
                         loadSocialRewardsStatus();
