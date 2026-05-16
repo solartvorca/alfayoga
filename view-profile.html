@@ -339,7 +339,7 @@
                 document.getElementById("profileAboutSection").innerHTML = aboutHTML || '<div class="empty-state">Информация не заполнена</div>';
 
                 // Заполнить вкладку "Услуги и товары"
-                if (profile.services || profile.gifts) {
+                if (profile.services || profile.gifts || profile.partnerLinks) {
                     let servicesHtml = '';
                     if (profile.services) {
                         servicesHtml += `
@@ -357,9 +357,21 @@
                             </div>
                         `;
                     }
+                    if (profile.partnerLinks && profile.partnerLinks.length > 0) {
+                        servicesHtml += `
+                            <div class="section">
+                                <div class="section-title">🤝 Партнёрские программы</div>
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    ${profile.partnerLinks.map(link => `
+                                        <a href="${link}" target="_blank" style="color: #a18cd1; text-decoration: none; word-break: break-all; padding: 10px; background: rgba(180, 100, 255, 0.1); border-radius: 6px; border: 1px solid rgba(180, 100, 255, 0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(180, 100, 255, 0.2)'" onmouseout="this.style.background='rgba(180, 100, 255, 0.1)'">🔗 ${link}</a>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
                     document.getElementById("profileServicesSection").innerHTML = servicesHtml;
                 } else {
-                    document.getElementById("profileServicesSection").innerHTML = '<div class="empty-state">Услуги и подарки не указаны</div>';
+                    document.getElementById("profileServicesSection").innerHTML = '<div class="empty-state">Услуги, подарки и партнёрские программы не указаны</div>';
                 }
 
                 // Загрузить публичные желания, сны и привычки

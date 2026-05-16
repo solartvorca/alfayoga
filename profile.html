@@ -479,6 +479,17 @@
 
         <!-- Вкладка "Услуги и товары" -->
         <div id="services-tab" class="tab-content">
+            <!-- Реферальная ссылка -->
+            <div class="section" style="background: rgba(0, 208, 132, 0.08); border: 1px solid rgba(0, 208, 132, 0.2);">
+                <div class="section-title">🎯 Твоя реферальная программа</div>
+                <p style="color: #c8d0db; margin-bottom: 15px; font-size: 13px;">Поделись этой ссылкой и получай <strong style="color: #ffd700;">100 лучиков</strong> за каждого приглашённого + <strong style="color: #ffd700;">10%</strong> от его активности</p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="referralLink" readonly style="flex: 1; background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); border-radius: 6px; padding: 10px; color: #00d084; font-size: 13px; font-family: monospace;">
+                    <button type="button" onclick="copyReferralLink()" class="btn" style="margin: 0; padding: 10px 20px; background: rgba(0, 208, 132, 0.2); border: 1px solid rgba(0, 208, 132, 0.5); color: #00d084;">📋 Скопировать</button>
+                </div>
+                <div id="referralStatus" style="margin-top: 10px; color: #00d084; display: none; font-size: 13px;"></div>
+            </div>
+
             <div class="section">
                 <div class="section-title">🛍️ Мои услуги и товары</div>
                 <form class="transfer-form" id="servicesForm" onsubmit="saveCreativeProfile(event)">
@@ -490,7 +501,15 @@
                         <label>Дары и подарки</label>
                         <textarea class="textarea-field" id="giftsField" placeholder="Что вы готовы подарить или чем хотите поделиться..."></textarea>
                     </div>
-                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить услуги и подарки</button>
+                    <div class="form-group">
+                        <label>🤝 Партнёрские программы и рефералы</label>
+                        <div id="partnerLinksList" style="margin-bottom: 15px;"></div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="text" id="partnerLinkInput" placeholder="Ссылка на партнерскую программу..." style="flex: 1; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; padding: 8px; color: #e0e6ed; font-size: 13px;">
+                            <button type="button" onclick="addPartnerLink()" class="btn" style="margin: 0; padding: 8px 16px;">Добавить</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить профиль</button>
                 </form>
             </div>
         </div>
@@ -618,6 +637,7 @@
     <script src="auth.js"></script>
     <script>
         let creativeProfileLinks = [];
+        let partnerLinks = [];
 
         // Глобальный кеш для данных
         let cachedDreams = [];
@@ -742,12 +762,40 @@
                 document.getElementById("servicesField").value = profile.services || "";
                 document.getElementById("giftsField").value = profile.gifts || "";
                 creativeProfileLinks = profile.links || [];
+                partnerLinks = profile.partnerLinks || [];
 
                 renderLinks();
+                renderPartnerLinks();
+                renderReferralLink();
                 checkProfileCompletion();
             } catch (error) {
                 console.error("Ошибка загрузки профиля:", error);
             }
+        }
+
+        function renderReferralLink() {
+            const user = window.currentUser;
+            if (!user || !user.referralCode) return;
+
+            const referralCode = user.referralCode;
+            const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+            const referralLink = `${baseUrl}login.html?ref=${referralCode}`;
+
+            document.getElementById("referralLink").value = referralLink;
+        }
+
+        function copyReferralLink() {
+            const referralLink = document.getElementById("referralLink");
+            referralLink.select();
+            document.execCommand("copy");
+
+            const status = document.getElementById("referralStatus");
+            status.textContent = "✅ Ссылка скопирована!";
+            status.style.display = "block";
+
+            setTimeout(() => {
+                status.style.display = "none";
+            }, 2000);
         }
 
         function renderLinks() {
@@ -773,6 +821,30 @@
             renderLinks();
         }
 
+        function renderPartnerLinks() {
+            const list = document.getElementById("partnerLinksList");
+            list.innerHTML = partnerLinks.map((link, i) => `
+                <div class="link-item">
+                    <span>${link}</span>
+                    <button type="button" class="remove-link-btn" onclick="removePartnerLink(${i})">Удалить</button>
+                </div>
+            `).join("");
+        }
+
+        function addPartnerLink() {
+            const url = document.getElementById("partnerLinkInput").value.trim();
+            if (url) {
+                partnerLinks.push(url);
+                document.getElementById("partnerLinkInput").value = "";
+                renderPartnerLinks();
+            }
+        }
+
+        function removePartnerLink(index) {
+            partnerLinks.splice(index, 1);
+            renderPartnerLinks();
+        }
+
         async function saveCreativeProfile(e) {
             e.preventDefault();
             const user = window.currentUser;
@@ -791,7 +863,7 @@
             try {
                 const userDoc = await db.collection("users").doc(user.uid).get();
                 const hasProfile = userDoc.data().creativeProfile && userDoc.data().creativeProfile.submittedAt;
-                const hasProfileFields = bio || services || gifts || creativeProfileLinks.length > 0;
+                const hasProfileFields = bio || services || gifts || creativeProfileLinks.length > 0 || partnerLinks.length > 0;
 
                 const profileData = {
                     nick
@@ -804,6 +876,7 @@
                         services,
                         gifts,
                         links: creativeProfileLinks,
+                        partnerLinks: partnerLinks,
                         submittedAt: new Date(),
                         raysEarned: !hasProfile ? 3 : 0
                     };

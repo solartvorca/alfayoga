@@ -214,21 +214,35 @@
                 const res = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = res.user.uid;
 
+                // Генерировать уникальный реферальный код (первые 8 символов UID)
+                const referralCode = uid.substring(0, 8).toUpperCase();
+
+                // Получить реферального партнера из URL параметров
+                const urlParams = new URLSearchParams(window.location.search);
+                const referrerId = urlParams.get('ref');
+
+                let initialRays = 0;
+
                 // Добавить в Firestore
-                await db.collection("users").doc(uid).set({
+                const userData = {
                     email,
                     nick,
-                    rays: 0,
+                    rays: initialRays,
                     dustAmount: 0,
                     status: "active",
                     subscription: "free",
                     joinedAt: new Date(),
                     lastReportDay: 0,
                     isAdmin: email === "wuallar@gmail.com",
+                    referralCode: referralCode,
+                    referredBy: referrerId || null,
+                    referralRays: 0,
                     creativeProfile: {
                         bio: "",
                         services: "",
+                        gifts: "",
                         links: [],
+                        partnerLinks: [],
                         submittedAt: null,
                         raysEarned: 0
                     },
@@ -242,7 +256,17 @@
                         frequency: "daily",
                         updatedAt: new Date()
                     }
-                });
+                };
+
+                await db.collection("users").doc(uid).set(userData);
+
+                // Если есть реферер, дать ему 100 лучиков
+                if (referrerId) {
+                    await db.collection("users").doc(referrerId).update({
+                        rays: firebase.firestore.FieldValue.increment(100),
+                        referralRays: firebase.firestore.FieldValue.increment(100)
+                    });
+                }
 
                 window.location.href = "marathon.html";
             } catch (error) {
