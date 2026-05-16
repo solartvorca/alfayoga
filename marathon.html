@@ -614,6 +614,19 @@
                     lastReportDay: currentDayNum
                 });
 
+                // Пассивный доход: если пользователь приглошён, дать реферреру 10%
+                if (user.referredBy) {
+                    const referralBonus = 0.1; // 10% от 1 лучика = 0.1
+                    try {
+                        await db.collection("users").doc(user.referredBy).update({
+                            rays: firebase.firestore.FieldValue.increment(referralBonus),
+                            referralRays: firebase.firestore.FieldValue.increment(referralBonus)
+                        });
+                    } catch (error) {
+                        console.warn("Ошибка при добавлении пассивного дохода:", error);
+                    }
+                }
+
                 document.getElementById("reportText").value = "";
                 hasSubmitted = true;
                 document.getElementById("submitBtn").disabled = true;
@@ -1176,6 +1189,7 @@
                             referralCode: referralCode,
                             referredBy: null,
                             referralRays: 0,
+                            totalReferrals: 0,
                             creativeProfile: {
                                 bio: "",
                                 services: "",

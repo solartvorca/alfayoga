@@ -407,6 +407,19 @@
                     rays: firebase.firestore.FieldValue.increment(1)
                 });
 
+                // Пассивный доход: если пользователь приглошён, дать реферреру 10%
+                if (user.referredBy) {
+                    const referralBonus = 0.1; // 10% от 1 лучика = 0.1
+                    try {
+                        await db.collection("users").doc(user.referredBy).update({
+                            rays: firebase.firestore.FieldValue.increment(referralBonus),
+                            referralRays: firebase.firestore.FieldValue.increment(referralBonus)
+                        });
+                    } catch (error) {
+                        console.warn("Ошибка при добавлении пассивного дохода:", error);
+                    }
+                }
+
                 window.currentUser.rays = (window.currentUser.rays || 0) + 1;
                 checkbox.disabled = true;
                 updateDailyCounter();
@@ -558,6 +571,19 @@
                 await db.collection("users").doc(user.uid).update({
                     rays: firebase.firestore.FieldValue.increment(1)
                 });
+
+                // Пассивный доход: если пользователь приглошён, дать реферреру 10%
+                if (user.referredBy) {
+                    const referralBonus = 0.1; // 10% от 1 лучика = 0.1
+                    try {
+                        await db.collection("users").doc(user.referredBy).update({
+                            rays: firebase.firestore.FieldValue.increment(referralBonus),
+                            referralRays: firebase.firestore.FieldValue.increment(referralBonus)
+                        });
+                    } catch (error) {
+                        console.warn("Ошибка при добавлении пассивного дохода:", error);
+                    }
+                }
 
                 window.currentUser.rays = (window.currentUser.rays || 0) + 1;
                 loadHabits();

@@ -319,6 +319,7 @@
             <button class="tab-btn" onclick="switchTab('subscriptions', this)">💳 Подписки</button>
             <button class="tab-btn" onclick="switchTab('author', this)">👨‍🎓 Автор & Товары</button>
             <button class="tab-btn" onclick="switchTab('users', this)">👥 Участники</button>
+            <button class="tab-btn" onclick="switchTab('referrals', this)">🤝 Рефералы</button>
             <button class="tab-btn" onclick="switchTab('mailing', this)">📨 Рассылка</button>
             <button class="tab-btn" onclick="switchTab('book', this)">📖 Книга</button>
         </div>
@@ -501,6 +502,48 @@
             </div>
         </div>
 
+        <!-- Рефералы -->
+        <div id="referrals-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">🤝 Статистика реферальной программы</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.2); border-radius: 8px; padding: 20px; text-align: center;">
+                        <div style="font-size: 32px; color: #00d084; margin-bottom: 5px;" id="totalReferralsCount">0</div>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase;">Всего приглошённых</div>
+                    </div>
+                    <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 8px; padding: 20px; text-align: center;">
+                        <div style="font-size: 32px; color: #ffd700; margin-bottom: 5px;" id="totalReferralRaysCount">0</div>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase;">Всего выдано лучиков</div>
+                    </div>
+                    <div style="background: rgba(161, 140, 209, 0.1); border: 1px solid rgba(161, 140, 209, 0.2); border-radius: 8px; padding: 20px; text-align: center;">
+                        <div style="font-size: 32px; color: #a18cd1; margin-bottom: 5px;" id="topReferrersCount">0</div>
+                        <div style="font-size: 12px; color: #888; text-transform: uppercase;">Активных рефераторов</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="referralSearch" placeholder="Поиск по нику или коду..." style="width: 100%; padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed; font-size: 14px;">
+                </div>
+
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Ник</th>
+                            <th>Реф. код</th>
+                            <th>Email</th>
+                            <th>Приглошённых</th>
+                            <th>Лучиков от рефералов</th>
+                            <th>Всего лучиков</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralsList">
+                        <tr><td colspan="7" style="text-align: center; color: #888;">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Рассылка -->
         <div id="mailing-tab" class="tab-content">
             <div class="admin-section">
@@ -612,12 +655,94 @@
                 loadAllDays();
             } else if (tabName === "users") {
                 loadUsers();
+            } else if (tabName === "referrals") {
+                loadReferrals();
             } else if (tabName === "author") {
                 loadAuthorInfo();
             } else if (tabName === "book") {
                 loadBookChapters();
             }
         }
+
+        // Загрузить данные рефералов
+        async function loadReferrals() {
+            try {
+                const snapshot = await db.collection("users")
+                    .where("totalReferrals", ">", 0)
+                    .orderBy("totalReferrals", "desc")
+                    .get();
+
+                const allUsers = await db.collection("users").get();
+                let totalReferrals = 0;
+                let totalReferralRays = 0;
+                let activeReferrers = 0;
+
+                const referralData = [];
+
+                allUsers.docs.forEach(doc => {
+                    const user = doc.data();
+                    if (user.totalReferrals > 0) {
+                        totalReferrals += user.totalReferrals;
+                        totalReferralRays += (user.referralRays || 0);
+                        activeReferrers++;
+                        referralData.push({
+                            uid: doc.id,
+                            nick: user.nick || "Unknown",
+                            referralCode: user.referralCode || "—",
+                            email: user.email || "—",
+                            totalReferrals: user.totalReferrals || 0,
+                            referralRays: user.referralRays || 0,
+                            rays: user.rays || 0,
+                            status: user.status || "active"
+                        });
+                    }
+                });
+
+                referralData.sort((a, b) => b.totalReferrals - a.totalReferrals);
+
+                // Обновить статистику
+                document.getElementById("totalReferralsCount").textContent = totalReferrals;
+                document.getElementById("totalReferralRaysCount").textContent = totalReferralRays;
+                document.getElementById("topReferrersCount").textContent = activeReferrers;
+
+                // Заполнить таблицу
+                const tbody = document.getElementById("referralsList");
+                tbody.innerHTML = referralData.map(user => `
+                    <tr>
+                        <td><a href="view-profile.html?uid=${user.uid}" class="user-nick-link">${user.nick}</a></td>
+                        <td style="font-family: monospace; font-size: 12px; color: #ffd700; font-weight: 600;">${user.referralCode}</td>
+                        <td style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${user.email}</td>
+                        <td style="text-align: center; color: #00d084; font-weight: 600;">${user.totalReferrals}</td>
+                        <td style="text-align: center; color: #ffd700; font-weight: 600;">${user.referralRays}</td>
+                        <td style="text-align: center; color: #a18cd1; font-weight: 600;">${user.rays}</td>
+                        <td><span class="status-${user.status === 'removed' ? 'removed' : 'active'}">${user.status === 'active' ? '✅ Активен' : '❌ Удален'}</span></td>
+                    </tr>
+                `).join("");
+
+                if (referralData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">Нет активных рефераторов</td></tr>';
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки рефералов:", error);
+                document.getElementById("referralsList").innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ff6464;">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        // Поиск в таблице рефералов
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("referralSearch");
+            if (searchInput) {
+                searchInput.addEventListener("keyup", function() {
+                    const filter = this.value.toLowerCase();
+                    const rows = document.getElementById("referralsList").getElementsByTagName("tr");
+
+                    for (let row of rows) {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(filter) ? "" : "none";
+                    }
+                });
+            }
+        });
 
         // Отправить напоминание о практике
         async function sendPracticeReminder() {

@@ -213,21 +213,34 @@
             try {
                 const res = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = res.user.uid;
-
-                // Генерировать уникальный реферальный код (первые 8 символов UID)
                 const referralCode = uid.substring(0, 8).toUpperCase();
 
-                // Получить реферального партнера из URL параметров
+                // Получить реферальный код из URL параметров
                 const urlParams = new URLSearchParams(window.location.search);
-                const referrerId = urlParams.get('ref');
+                const referrerCode = urlParams.get('ref');
+                let referrerId = null;
 
-                let initialRays = 0;
+                // Найти UID реферера по его коду
+                if (referrerCode) {
+                    try {
+                        const referrerSnapshot = await db.collection("users")
+                            .where("referralCode", "==", referrerCode.toUpperCase())
+                            .limit(1)
+                            .get();
 
-                // Добавить в Firestore
+                        if (!referrerSnapshot.empty) {
+                            referrerId = referrerSnapshot.docs[0].id;
+                        }
+                    } catch (error) {
+                        console.warn("Ошибка поиска реферера:", error);
+                    }
+                }
+
+                // Создать документ нового пользователя
                 const userData = {
                     email,
                     nick,
-                    rays: initialRays,
+                    rays: 0,
                     dustAmount: 0,
                     status: "active",
                     subscription: "free",
@@ -237,6 +250,7 @@
                     referralCode: referralCode,
                     referredBy: referrerId || null,
                     referralRays: 0,
+                    totalReferrals: 0,
                     creativeProfile: {
                         bio: "",
                         services: "",
@@ -258,19 +272,17 @@
                     }
                 };
 
-                console.log("Saving user with referralCode:", referralCode, "userData:", userData);
                 await db.collection("users").doc(uid).set(userData);
-                console.log("User saved successfully");
 
-                // Если есть реферер, дать ему 100 лучиков
+                // Дать награду реферету за новую регистрацию
                 if (referrerId) {
                     await db.collection("users").doc(referrerId).update({
                         rays: firebase.firestore.FieldValue.increment(100),
-                        referralRays: firebase.firestore.FieldValue.increment(100)
+                        referralRays: firebase.firestore.FieldValue.increment(100),
+                        totalReferrals: firebase.firestore.FieldValue.increment(1)
                     });
                 }
 
-                // Новый пользователь видит приветствие
                 window.location.href = "welcome.html";
             } catch (error) {
                 showError(error.message);
