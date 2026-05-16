@@ -755,7 +755,13 @@
 
             try {
                 const userDoc = await db.collection("users").doc(user.uid).get();
-                const profile = userDoc.data().creativeProfile || {};
+                const userData = userDoc.data();
+                const profile = userData.creativeProfile || {};
+
+                // Обновить window.currentUser с актуальными данными из Firestore
+                if (userData.referralCode) {
+                    window.currentUser.referralCode = userData.referralCode;
+                }
 
                 document.getElementById("nickField").value = user.nick || "";
                 document.getElementById("bioField").value = profile.bio || "";
