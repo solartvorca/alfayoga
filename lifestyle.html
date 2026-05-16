@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Образ жизни — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .lifestyle-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #a18cd1;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            color: #ffd700;
+        }
+
+        .logout-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #a18cd1;
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .admin-panel {
+            display: none;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .admin-panel.show {
+            display: block;
+        }
+
+        .add-practice-btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .add-practice-btn:hover {
+            opacity: 0.9;
+        }
+
+        .category-section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 25px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .category-header:hover {
+            background: rgba(180, 100, 255, 0.05);
+        }
+
+        .category-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a18cd1;
+        }
+
+        .category-count {
+            font-size: 12px;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        .category-arrow {
+            font-size: 14px;
+            color: #a18cd1;
+            transition: transform 0.2s;
+        }
+
+        .category-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .category-body {
+            display: none;
+            padding: 0 25px 20px;
+        }
+
+        .category-body.open {
+            display: block;
+        }
+
+        .practice-item {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .practice-header {
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .practice-header:hover {
+            background: rgba(180, 100, 255, 0.05);
+        }
+
+        .practice-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #a18cd1;
+            flex: 1;
+        }
+
+        .practice-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .practice-btn {
+            background: rgba(180, 100, 255, 0.2);
+            border: none;
+            color: #a18cd1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .practice-btn:hover {
+            background: rgba(180, 100, 255, 0.3);
+        }
+
+        .practice-btn.delete {
+            background: rgba(255, 100, 100, 0.2);
+            color: #ff6464;
+        }
+
+        .practice-btn.delete:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .practice-arrow {
+            margin-left: 10px;
+            font-size: 12px;
+            color: #a18cd1;
+            transition: transform 0.2s;
+        }
+
+        .practice-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .practice-body {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid rgba(180, 100, 255, 0.1);
+            background: rgba(180, 100, 255, 0.05);
+        }
+
+        .practice-body.open {
+            display: block;
+        }
+
+        .practice-section {
+            margin-bottom: 15px;
+        }
+
+        .practice-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .practice-text {
+            font-size: 13px;
+            color: #c8d0db;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .video-embed {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(180, 100, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: rgba(10, 14, 39, 0.5);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #0a0e27;
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 95%;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #a18cd1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            color: #e0e6ed;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: rgba(180, 100, 255, 0.7);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            flex: 1;
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            font-weight: 600;
+            color: #0a0e27;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            font-weight: 600;
+            color: #a18cd1;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(180, 100, 255, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 640px) {
+            .lifestyle-container {
+                padding: 15px;
+            }
+
+            .nav-bar {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lifestyle-container">
+        <!-- Навигация -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="index.html">🌙 Будильник</a>
+                <a href="marathon.html">📖 Марафон</a>
+                <a href="profile.html">👤 Профиль</a>
+                <a href="wishes.html">✨ Желания</a>
+                <a href="habits.html">📋 Привычки</a>
+                <a href="lifestyle.html" style="color: #ffd700; font-weight: 600;">🌿 Образ жизни</a>
+                <a href="planner.html">📅 Планировщик</a>
+                <a href="notifications.html">🔔 Уведомления</a>
+                <a href="admin.html" id="adminLink" style="display: none;">⚙️ Администратор</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+
+        <!-- Заголовок -->
+        <div class="page-header">
+            <div class="page-title">🌿 Образ жизни</div>
+            <div class="page-subtitle">База духовных практик и рекомендации по их установлению</div>
+        </div>
+
+        <!-- Панель администратора -->
+        <div class="admin-panel" id="adminPanel">
+            <button class="add-practice-btn" onclick="openAddModal()">✚ Добавить практику</button>
+        </div>
+
+        <!-- Список практик -->
+        <div id="practicesContainer">
+            <div class="empty-state">Загрузка практик...</div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования -->
+    <div class="modal" id="practiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalTitle">Добавить практику</span>
+                <button class="modal-close" onclick="closePracticeModal()">✕</button>
+            </div>
+            <form onsubmit="savePractice(event)">
+                <input type="hidden" id="practiceId">
+
+                <div class="form-group">
+                    <label>Название практики *</label>
+                    <input type="text" id="practiceTitle" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Описание *</label>
+                    <textarea id="practiceDescription" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Категория *</label>
+                    <select id="practiceCategory" required>
+                        <option value="">Выберите категорию...</option>
+                        <option value="Питание">Питание</option>
+                        <option value="Сон">Сон</option>
+                        <option value="Движение">Движение</option>
+                        <option value="Медитация">Медитация</option>
+                        <option value="Осознанность">Осознанность</option>
+                        <option value="Другое">Другое</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Как установить (шаги) *</label>
+                    <textarea id="practiceHowTo" placeholder="1. Первый шаг&#10;2. Второй шаг&#10;и т.д..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>VK видео ID (опционально)</label>
+                    <input type="text" id="practiceVideoId" placeholder="123456_789012">
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn-save">Сохранить</button>
+                    <button type="button" class="btn-cancel" onclick="closePracticeModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        let allPractices = [];
+        let isAdmin = false;
+
+        async function loadPractices() {
+            try {
+                const snapshot = await db.collection("lifestyle_practices")
+                    .orderBy("category")
+                    .get();
+
+                allPractices = snapshot.docs.map(d => ({
+                    id: d.id,
+                    ...d.data()
+                }));
+
+                renderPractices();
+            } catch (error) {
+                console.error("Ошибка загрузки практик:", error);
+                document.getElementById("practicesContainer").innerHTML =
+                    '<div class="empty-state">Ошибка загрузки практик</div>';
+            }
+        }
+
+        function renderPractices() {
+            const container = document.getElementById("practicesContainer");
+
+            if (allPractices.length === 0) {
+                container.innerHTML = '<div class="empty-state">Практики ещё не добавлены</div>';
+                return;
+            }
+
+            // Группировать по категориям
+            const byCategory = {};
+            allPractices.forEach(p => {
+                if (!byCategory[p.category]) byCategory[p.category] = [];
+                byCategory[p.category].push(p);
+            });
+
+            // Сортировать категории
+            const categories = Object.keys(byCategory).sort();
+
+            let html = '';
+            categories.forEach(category => {
+                const practices = byCategory[category];
+                html += `
+                    <div class="category-section">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <span class="category-title">
+                                ${category}
+                                <span class="category-count">(${practices.length})</span>
+                            </span>
+                            <span class="category-arrow open">▼</span>
+                        </div>
+                        <div class="category-body open">
+                `;
+
+                practices.forEach(practice => {
+                    html += `
+                        <div class="practice-item">
+                            <div class="practice-header" onclick="togglePractice(this)">
+                                <span class="practice-title">✦ ${practice.title}</span>
+                                <div class="practice-actions">
+                                    ${isAdmin ? `
+                                        <button type="button" class="practice-btn" onclick="editPractice('${practice.id}'); event.stopPropagation();">Редакт.</button>
+                                        <button type="button" class="practice-btn delete" onclick="deletePractice('${practice.id}'); event.stopPropagation();">Удалить</button>
+                                    ` : ''}
+                                </div>
+                                <span class="practice-arrow">▼</span>
+                            </div>
+                            <div class="practice-body">
+                                <div class="practice-section">
+                                    <div class="practice-label">Описание</div>
+                                    <div class="practice-text">${practice.description}</div>
+                                </div>
+
+                                ${practice.videoId ? `
+                                    <div class="video-embed">
+                                        <div class="practice-label">Видео</div>
+                                        <div class="video-wrapper">
+                                            <iframe src="https://vk.com/video_ext.php?oid=-${practice.videoId.split('_')[0]}&id=${practice.videoId.split('_')[1]}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+                                        </div>
+                                    </div>
+                                ` : ''}
+
+                                <div class="practice-section">
+                                    <div class="practice-label">📋 Как установить</div>
+                                    <div class="practice-text">${practice.howTo}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleCategory(header) {
+            header.querySelector('.category-arrow').classList.toggle('open');
+            header.nextElementSibling.classList.toggle('open');
+        }
+
+        function togglePractice(header) {
+            header.querySelector('.practice-arrow').classList.toggle('open');
+            header.nextElementSibling.classList.toggle('open');
+        }
+
+        function openAddModal() {
+            document.getElementById('practiceId').value = '';
+            document.getElementById('practiceTitle').value = '';
+            document.getElementById('practiceDescription').value = '';
+            document.getElementById('practiceCategory').value = '';
+            document.getElementById('practiceHowTo').value = '';
+            document.getElementById('practiceVideoId').value = '';
+            document.getElementById('modalTitle').textContent = 'Добавить практику';
+            document.getElementById('practiceModal').classList.add('show');
+        }
+
+        async function editPractice(id) {
+            const practice = allPractices.find(p => p.id === id);
+            if (!practice) return;
+
+            document.getElementById('practiceId').value = id;
+            document.getElementById('practiceTitle').value = practice.title;
+            document.getElementById('practiceDescription').value = practice.description;
+            document.getElementById('practiceCategory').value = practice.category;
+            document.getElementById('practiceHowTo').value = practice.howTo || '';
+            document.getElementById('practiceVideoId').value = practice.videoId || '';
+            document.getElementById('modalTitle').textContent = 'Редактировать практику';
+            document.getElementById('practiceModal').classList.add('show');
+        }
+
+        function closePracticeModal() {
+            document.getElementById('practiceModal').classList.remove('show');
+        }
+
+        async function savePractice(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('practiceId').value;
+            const title = document.getElementById('practiceTitle').value.trim();
+            const description = document.getElementById('practiceDescription').value.trim();
+            const category = document.getElementById('practiceCategory').value;
+            const howTo = document.getElementById('practiceHowTo').value.trim();
+            const videoId = document.getElementById('practiceVideoId').value.trim();
+
+            if (!title || !description || !category || !howTo) {
+                alert('Заполните все обязательные поля');
+                return;
+            }
+
+            try {
+                const data = {
+                    title,
+                    description,
+                    category,
+                    howTo,
+                    videoId: videoId || '',
+                    createdAt: id ? undefined : new Date()
+                };
+
+                if (id) {
+                    // Обновить
+                    await db.collection("lifestyle_practices").doc(id).update(data);
+                } else {
+                    // Добавить новую
+                    await db.collection("lifestyle_practices").add(data);
+                }
+
+                closePracticeModal();
+                loadPractices();
+            } catch (error) {
+                alert('Ошибка при сохранении: ' + error.message);
+            }
+        }
+
+        async function deletePractice(id) {
+            if (!confirm('Удалить практику?')) return;
+
+            try {
+                await db.collection("lifestyle_practices").doc(id).delete();
+                loadPractices();
+            } catch (error) {
+                alert('Ошибка при удалении: ' + error.message);
+            }
+        }
+
+        // Инициализация
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection("users").doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        window.currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            ...doc.data()
+                        };
+
+                        isAdmin = window.currentUser.isAdmin === true ||
+                                  window.currentUser.email === "wuallar@gmail.com";
+
+                        if (isAdmin) {
+                            document.getElementById("adminPanel").classList.add("show");
+                            document.getElementById("adminLink").style.display = "block";
+                        }
+
+                        loadPractices();
+                    }
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+    <script src="mobile-nav.js"></script>
+</body>
+</html>

@@ -202,15 +202,47 @@
             line-height: 1.6;
         }
 
+        .mobile-redirect-notice {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+
+        .mobile-redirect-notice > div:first-child {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .mobile-redirect-notice a {
+            color: #a18cd1;
+            font-weight: 600;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .mobile-redirect-notice a:hover {
+            color: #ffd700;
+        }
+
         @media (max-width: 640px) {
             .habits-container {
-                max-width: 100%;
-                padding: 15px;
+                display: none;
+            }
+
+            .mobile-redirect-notice {
+                display: block;
             }
         }
     </style>
 </head>
 <body>
+    <div class="mobile-redirect-notice">
+        <div>🌿</div>
+        <p>На мобильных устройствах используйте</p>
+        <a href="lifestyle.html">→ Образ жизни</a>
+    </div>
+
     <div class="habits-container">
         <!-- Навигация -->
         <div class="nav-bar">
@@ -219,6 +251,7 @@
                 <a href="marathon.html">📖 Марафон</a>
                 <a href="profile.html">👤 Профиль</a>
                 <a href="wishes.html">✨ Желания</a>
+                <a href="lifestyle.html">🌿 Образ жизни</a>
                 <a href="habits.html">📋 Привычки</a>
                 <a href="planner.html">📅 Планировщик</a>
                 <a href="notifications.html">🔔 Уведомления</a>
