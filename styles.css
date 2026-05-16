@@ -12,17 +12,16 @@ html, body {
 }
 
 body {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    display: block;
     min-height: 100vh;
-    padding: 20px 0;
+    padding: 20px;
 }
 
 .container {
     width: 100%;
-    max-width: 600px;
-    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -33,11 +32,12 @@ body {
 /* Луна */
 .moon-container {
     position: relative;
-    width: 400px;
-    height: 400px;
+    width: 300px;
+    height: 300px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
 }
 
 #moonCanvas {
