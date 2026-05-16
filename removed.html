@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лунный Будильник — Будильник для удалённых</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .removed-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #a18cd1;
+        }
+
+        .logout-btn {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: #ff6464;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 100, 100, 0.3);
+        }
+
+        .content {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .removal-message {
+            background: rgba(255, 100, 100, 0.15);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .removal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ff6464;
+            margin-bottom: 12px;
+        }
+
+        .removal-text {
+            font-size: 14px;
+            color: #c8d0db;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .next-marathon {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a18cd1;
+        }
+
+        .next-date {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffd700;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .moon-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .breathing-control {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .rhythm-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .rhythm-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rhythm-item label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .rhythm-item input {
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            border-radius: 6px;
+            padding: 8px;
+            color: #e0e6ed;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .alarm-section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .alarm-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .alarm-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #a18cd1;
+        }
+
+        .alarm-toggle label {
+            font-size: 14px;
+            color: #c8d0db;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .alarm-message {
+            font-size: 13px;
+            color: #a18cd1;
+            margin-top: 10px;
+        }
+
+        .alarm-notification {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(180, 100, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            z-index: 1000;
+            max-width: 90%;
+        }
+
+        .alarm-notification.show {
+            display: block;
+        }
+
+        .alarm-pulse {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .alarm-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0a0e27;
+        }
+
+        .practice-description {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .description-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a18cd1;
+            margin-bottom: 15px;
+        }
+
+        .description-content {
+            font-size: 14px;
+            color: #c8d0db;
+            line-height: 1.8;
+        }
+
+        .description-content p {
+            margin-bottom: 15px;
+        }
+
+        .highlight-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffd700;
+            font-style: italic;
+            margin: 20px 0;
+        }
+
+        .highlight {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                margin-bottom: 20px;
+            }
+
+            .header-title {
+                font-size: 18px;
+            }
+
+            .removed-container {
+                padding: 15px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Шапка -->
+    <div class="header">
+        <div class="header-title">🌙 Лунный Будильник</div>
+        <button class="logout-btn" onclick="logout()">Выход</button>
+    </div>
+
+    <div class="container">
+        <!-- Сообщение об удалении -->
+        <div class="removal-message">
+            <div class="removal-title">⚠️ Вы выведены из марафона</div>
+            <div class="removal-text">Пропустили день отчёта. Но вы всё ещё можете использовать будильник и практику осознавания.</div>
+            <div class="next-marathon">Следующий марафон начнётся:</div>
+            <div class="next-date" id="nextFullMoonDate">Загрузка...</div>
+        </div>
+
+        <!-- Луна с дыханием -->
+        <div class="moon-container">
+            <canvas id="moonCanvas" width="400" height="400"></canvas>
+            <div class="moon-info">
+                <div class="lunar-day">День <span id="lunarDay">15</span></div>
+                <div class="lunar-phase" id="lunarPhase">Полнолуние</div>
+            </div>
+        </div>
+
+        <!-- Контроль дыхания -->
+        <div class="breathing-control">
+            <div class="rhythm-display">
+                <div class="rhythm-item">
+                    <label>Вдох</label>
+                    <input type="number" id="inhale" min="1" max="10" value="4">
+                </div>
+                <div class="rhythm-item">
+                    <label>Задержка (вдох)</label>
+                    <input type="number" id="holdAfterInhale" min="0" max="10" value="0">
+                </div>
+                <div class="rhythm-item">
+                    <label>Выдох</label>
+                    <input type="number" id="exhale" min="1" max="10" value="4">
+                </div>
+                <div class="rhythm-item">
+                    <label>Задержка (выдох)</label>
+                    <input type="number" id="holdAfterExhale" min="0" max="10" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Будильник -->
+        <div class="alarm-section">
+            <div class="alarm-toggle">
+                <input type="checkbox" id="alarmToggle" checked>
+                <label for="alarmToggle">Будильник каждые 10 минут</label>
+            </div>
+            <div class="alarm-message" id="alarmMessage"></div>
+        </div>
+
+        <!-- Уведомление будильника -->
+        <div class="alarm-notification" id="alarmNotification">
+            <div class="alarm-pulse">⭕</div>
+            <div class="alarm-text">Что осознаёт этот сон?</div>
+        </div>
+
+        <!-- Описание практики -->
+        <div class="practice-description">
+            <div class="description-header">📿 Основное задание практики</div>
+            <div class="description-content">
+                <p><strong>Установите будильник так, чтобы он звенел каждые 10 минут.</strong> Каждый раз, когда звучит сигнал, делайте паузу и спрашивайте себя:</p>
+                <p class="highlight-text">«Что осознаёт этот сон?»</p>
+                <p>Не пытайтесь ответить на вопрос «Кто я?». Вместо этого сконцентрируйтесь на самом источнике внимания — на том, что осознаёт прямо сейчас.</p>
+                <p>Это то, что не имеет формы. Его невозможно постичь с помощью воображения, восприятия или чувств — только через прямое осознавание. Осознайте сейчас: то, что осознаёт, не является объектом. У него нет свойств или характеристик. Это — чистая <span class="highlight">«естьность»</span>.</p>
+                <p>Это и есть сама Жизнь и её вечный Источник. Ничто из того, на что возможно обратить внимание. Мы будем учиться держать внимание в этом источнике, осознавая настоящий момент, все чувства и осознавание себя в том, что есть как аспект пустотности на уровне восприятия и чувств.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Расчёт даты следующего полнолуния
+        function getNextFullMoon() {
+            const now = new Date();
+            const cycleMs = 29.5 * 24 * 60 * 60 * 1000;
+            const base = localStorage.getItem('fullMoonDate')
+                ? new Date(localStorage.getItem('fullMoonDate'))
+                : new Date(2026, 4, 2);
+            let next = new Date(base);
+            while (next <= now) {
+                next = new Date(next.getTime() + cycleMs);
+            }
+            return next;
+        }
+
+        // Инициализация страницы
+        window.addEventListener('load', () => {
+            const nextFullMoon = getNextFullMoon();
+            const dateStr = nextFullMoon.toLocaleString('ru-RU', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('nextFullMoonDate').textContent = dateStr;
+        });
+
+        // Проверка аутентификации — если не removed, перенаправить обратно
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.collection("users").doc(user.uid).get().then(doc => {
+                    if (doc.exists && doc.data().status !== 'removed') {
+                        window.location.href = 'index.html';
+                    } else if (!doc.exists) {
+                        window.location.href = 'login.html';
+                    }
+                });
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

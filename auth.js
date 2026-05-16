@@ -14,9 +14,18 @@ function checkAuth() {
                     email: user.email,
                     ...userDoc.data()
                 };
+
                 // Проверить статус на marathon.html
                 if (window.location.pathname.includes("marathon.html")) {
                     checkMarathonStatus();
+                }
+
+                // Если пользователь удалён - перенаправить на removed.html
+                const currentPath = window.location.pathname.split('/').pop();
+                const allowedForRemoved = ['removed.html', 'login.html'];
+                if (window.currentUser.status === 'removed' && !allowedForRemoved.includes(currentPath)) {
+                    window.location.href = 'removed.html';
+                    return;
                 }
             }
         } else {

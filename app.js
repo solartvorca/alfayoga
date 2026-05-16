@@ -14,8 +14,8 @@ let breathingState = {
 };
 
 let alarmState = {
-    enabled: false,
-    lastAlarmTime: 0,
+    enabled: true,
+    lastAlarmTime: Date.now(),
     alarmInterval: 10 * 60 * 1000,
 };
 
