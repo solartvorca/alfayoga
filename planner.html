@@ -524,11 +524,12 @@
             }
 
             tasksList.innerHTML = tasksToRender.map(task => {
-                const dueDate = new Date(task.dueDate);
-                const dateStr = dueDate.toLocaleDateString('ru-RU');
                 const today = getTodayDateString();
                 const isToday = task.dueDate === today;
                 const isPast = task.dueDate < today && !task.completed;
+
+                // Парсить дату из формата "ГГГГ-ММ-ДД"
+                const dateStr = new Date(task.dueDate + 'T00:00:00').toLocaleDateString('ru-RU');
 
                 return `
                     <div class="task-item ${task.priority}-priority">
