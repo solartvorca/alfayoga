@@ -210,6 +210,19 @@ function checkAlarm() {
 function triggerAlarm() {
     playAlarmSound();
     showAlarmMessage();
+
+    // Вибрация на мобильных (если доступна)
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 100]);
+    }
+
+    // Браузерное уведомление (если разрешено)
+    if (Notification && Notification.permission === 'granted') {
+        new Notification('🔔 Будильник', {
+            body: 'Что осознаёт этот сон?',
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" dy=".3em" font-size="80">🌙</text></svg>'
+        });
+    }
 }
 
 // Глобальный AudioContext (для мобильных)
@@ -230,9 +243,12 @@ function resumeAudioContext() {
     }
 }
 
-// Слушаем первое взаимодействие пользователя
-document.addEventListener('click', resumeAudioContext, { once: true });
-document.addEventListener('touchstart', resumeAudioContext, { once: true });
+// Слушаем первое взаимодействие пользователя (может быть несколько раз на мобильных)
+document.addEventListener('click', resumeAudioContext);
+document.addEventListener('touchstart', resumeAudioContext);
+
+// Пытаемся возобновить AudioContext при загрузке страницы
+window.addEventListener('focus', resumeAudioContext);
 
 // Звук будильника (Web Audio API)
 function playAlarmSound() {
@@ -301,7 +317,13 @@ updateBreathingParams();
 requestAnimationFrame(animate);
 
 // Подстраховка: проверка будильника через setInterval на мобильных (где requestAnimationFrame может тормозиться)
-setInterval(checkAlarm, 1000);
+// Проверяем каждые 500ms для более надежной работы на мобильных
+setInterval(checkAlarm, 500);
+
+// Запросить разрешение на браузерные уведомления
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
 
 // Получить текущий марафон
 async function getCurrentMarathon() {
