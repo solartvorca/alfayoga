@@ -258,7 +258,9 @@
                     }
                 };
 
+                console.log("Saving user with referralCode:", referralCode, "userData:", userData);
                 await db.collection("users").doc(uid).set(userData);
+                console.log("User saved successfully");
 
                 // Если есть реферер, дать ему 100 лучиков
                 if (referrerId) {
