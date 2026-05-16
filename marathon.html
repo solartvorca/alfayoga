@@ -389,6 +389,55 @@
             margin-top: 15px;
             text-align: center;
         }
+
+        .report-actions {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .like-btn {
+            background: none;
+            border: 1px solid rgba(255, 100, 100, 0.2);
+            color: rgba(255, 100, 100, 0.6);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .like-btn:hover {
+            background: rgba(255, 100, 100, 0.1);
+            border-color: rgba(255, 100, 100, 0.4);
+            color: rgba(255, 100, 100, 0.8);
+        }
+
+        .like-btn.liked {
+            background: rgba(255, 100, 100, 0.2);
+            border-color: rgba(255, 100, 100, 0.6);
+            color: #ff6464;
+        }
+
+        .like-btn-small {
+            background: none;
+            border: none;
+            color: rgba(255, 100, 100, 0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .like-btn-small:hover {
+            color: rgba(255, 100, 100, 0.8);
+            transform: scale(1.2);
+        }
+
+        .like-btn-small.liked {
+            color: #ff6464;
+        }
     </style>
 </head>
 <body>
@@ -883,6 +932,9 @@
                     </div>
                 `;
 
+                const reportLikes = data.likes || 0;
+                const likedByUser = data.likedBy && data.likedBy[window.currentUser?.uid];
+
                 return `
                     <div class="report-item">
                         <div class="report-header">
@@ -890,6 +942,13 @@
                             <span class="report-time">${timeStr}</span>
                         </div>
                         <div class="report-text">${data.text}</div>
+                        <div class="report-actions">
+                            <button class="like-btn ${likedByUser ? 'liked' : ''}"
+                                    onclick="toggleReportLike('${item.id}', '${data.uid}')"
+                                    title="Лайк">
+                                ❤️ ${reportLikes}
+                            </button>
+                        </div>
                         ${commentsSection}
                     </div>
                 `;
@@ -925,6 +984,9 @@
                 const isAdmin = window.currentUser && (window.currentUser.isAdmin === true || window.currentUser.email === "wuallar@gmail.com");
                 const canDelete = isOwner || isAdmin;
 
+                const commentLikes = data.likes || 0;
+                const likedByUser = data.likedBy && data.likedBy[window.currentUser?.uid];
+
                 return `
                     <div class="comment-item">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
@@ -932,6 +994,13 @@
                             ${canDelete ? `<button onclick="deleteComment('${reportId}', '${commentId}')" style="background: rgba(255, 100, 100, 0.2); border: none; color: #ff6464; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;">✕</button>` : ''}
                         </div>
                         <div class="comment-text">${data.text}</div>
+                        <div style="margin-top: 6px; display: flex; gap: 10px; align-items: center; font-size: 11px;">
+                            <button class="like-btn-small ${likedByUser ? 'liked' : ''}"
+                                    onclick="toggleCommentLike('${reportId}', '${commentId}', '${data.uid}')"
+                                    style="background: none; border: none; color: #a18cd1; cursor: pointer; padding: 0; font-size: 12px; transition: all 0.2s;">
+                                ❤️ ${commentLikes}
+                            </button>
+                        </div>
                         <div class="comment-replies" id="replies-${commentId}" style="margin-left: 20px; margin-top: 8px; border-left: 2px solid rgba(180, 100, 255, 0.2); padding-left: 12px;">
                             <div style="font-size: 11px; color: #666;">Загрузка ответов...</div>
                         </div>
@@ -1311,6 +1380,136 @@
                 loadAdminNotifications();
             } catch (error) {
                 console.error("Ошибка при отметке уведомления:", error);
+            }
+        }
+
+        // Лайк на отчет
+        async function toggleReportLike(reportId, reportAuthorId) {
+            const user = window.currentUser;
+            if (!user) {
+                alert("Необходимо авторизоваться");
+                return;
+            }
+
+            if (user.uid === reportAuthorId) {
+                alert("Нельзя лайкать свои отчеты");
+                return;
+            }
+
+            try {
+                const reportRef = db.collection("reports").doc(reportId);
+                const reportDoc = await reportRef.get();
+
+                if (!reportDoc.exists) return;
+
+                const currentData = reportDoc.data();
+                const likedBy = currentData.likedBy || {};
+                const isLiked = likedBy[user.uid];
+
+                if (isLiked) {
+                    // Убрать лайк
+                    delete likedBy[user.uid];
+                    await reportRef.update({
+                        likes: (currentData.likes || 1) - 1,
+                        likedBy: likedBy
+                    });
+
+                    // Убрать пыльцу у лайкнувшего и лучик у автора
+                    await db.collection("users").doc(user.uid).update({
+                        dust: firebase.firestore.FieldValue.increment(-1)
+                    });
+                    await db.collection("users").doc(reportAuthorId).update({
+                        rays: firebase.firestore.FieldValue.increment(-1)
+                    });
+                } else {
+                    // Добавить лайк
+                    likedBy[user.uid] = true;
+                    await reportRef.update({
+                        likes: (currentData.likes || 0) + 1,
+                        likedBy: likedBy
+                    });
+
+                    // Добавить пыльцу лайкнувшему и лучик автору
+                    await db.collection("users").doc(user.uid).update({
+                        dust: firebase.firestore.FieldValue.increment(1)
+                    });
+                    await db.collection("users").doc(reportAuthorId).update({
+                        rays: firebase.firestore.FieldValue.increment(1)
+                    });
+
+                    // Обновить локальные значения
+                    window.currentUser.dust = (window.currentUser.dust || 0) + 1;
+                }
+
+                loadReports();
+            } catch (error) {
+                console.error("Ошибка при лайке:", error);
+                alert("Ошибка при лайке: " + error.message);
+            }
+        }
+
+        // Лайк на комментарий
+        async function toggleCommentLike(reportId, commentId, commentAuthorId) {
+            const user = window.currentUser;
+            if (!user) {
+                alert("Необходимо авторизоваться");
+                return;
+            }
+
+            if (user.uid === commentAuthorId) {
+                alert("Нельзя лайкать свои комментарии");
+                return;
+            }
+
+            try {
+                const commentRef = db.collection("comments").doc(commentId);
+                const commentDoc = await commentRef.get();
+
+                if (!commentDoc.exists) return;
+
+                const currentData = commentDoc.data();
+                const likedBy = currentData.likedBy || {};
+                const isLiked = likedBy[user.uid];
+
+                if (isLiked) {
+                    // Убрать лайк
+                    delete likedBy[user.uid];
+                    await commentRef.update({
+                        likes: (currentData.likes || 1) - 1,
+                        likedBy: likedBy
+                    });
+
+                    // Убрать пыльцу и лучик
+                    await db.collection("users").doc(user.uid).update({
+                        dust: firebase.firestore.FieldValue.increment(-1)
+                    });
+                    await db.collection("users").doc(commentAuthorId).update({
+                        rays: firebase.firestore.FieldValue.increment(-1)
+                    });
+                } else {
+                    // Добавить лайк
+                    likedBy[user.uid] = true;
+                    await commentRef.update({
+                        likes: (currentData.likes || 0) + 1,
+                        likedBy: likedBy
+                    });
+
+                    // Добавить пыльцу лайкнувшему и лучик автору
+                    await db.collection("users").doc(user.uid).update({
+                        dust: firebase.firestore.FieldValue.increment(1)
+                    });
+                    await db.collection("users").doc(commentAuthorId).update({
+                        rays: firebase.firestore.FieldValue.increment(1)
+                    });
+
+                    // Обновить локальные значения
+                    window.currentUser.dust = (window.currentUser.dust || 0) + 1;
+                }
+
+                loadReports();
+            } catch (error) {
+                console.error("Ошибка при лайке комментария:", error);
+                alert("Ошибка при лайке: " + error.message);
             }
         }
 
