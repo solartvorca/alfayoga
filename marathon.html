@@ -1159,6 +1159,10 @@
                     console.log("onSnapshot сработал, doc.exists:", doc.exists);
                     if (!doc.exists) {
                         console.log("Документа пользователя нет, создаю его...");
+
+                        // Генерировать реферальный код для нового пользователя
+                        const referralCode = user.uid.substring(0, 8).toUpperCase();
+
                         userRef.set({
                             email: user.email,
                             nick: user.email.split('@')[0],
@@ -1169,10 +1173,15 @@
                             joinedAt: new Date(),
                             lastReportDay: 0,
                             isAdmin: user.email === "wuallar@gmail.com",
+                            referralCode: referralCode,
+                            referredBy: null,
+                            referralRays: 0,
                             creativeProfile: {
                                 bio: "",
                                 services: "",
+                                gifts: "",
                                 links: [],
+                                partnerLinks: [],
                                 submittedAt: null,
                                 raysEarned: 0
                             },
