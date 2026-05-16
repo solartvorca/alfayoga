@@ -130,6 +130,57 @@
             border-radius: 6px;
         }
 
+        .day-materials {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .materials-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffd700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .material-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 10px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 6px;
+            text-decoration: none;
+            color: #ffd700;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .material-link:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .material-icon {
+            font-size: 24px;
+        }
+
         @media (max-width: 640px) {
             .marathon-container {
                 max-width: 100%;
@@ -382,6 +433,9 @@
             <div class="day-content" id="dayContent"></div>
             <div class="day-video" id="dayVideo"></div>
 
+            <!-- Материалы к дню -->
+            <div class="day-materials" id="dayMaterials"></div>
+
             <!-- Навигация по дням (только для админа) -->
             <div id="dayNavigation" style="display: none; margin-top: 30px; gap: 10px; justify-content: center;">
                 <button onclick="previousDay()" style="padding: 10px 20px; background: rgba(180, 100, 255, 0.3); border: 1px solid rgba(180, 100, 255, 0.5); color: #a18cd1; border-radius: 6px; cursor: pointer;">← Предыдущий день</button>
@@ -549,6 +603,7 @@
                     document.getElementById("dayTitle").textContent = data.title || "День " + currentDayNum;
                     document.getElementById("dayContent").textContent = data.content || "";
 
+                    // Отображение видео
                     if (data.videoId) {
                         const videoId = data.videoId;
                         const [oid, id] = videoId.split('_');
@@ -565,10 +620,42 @@
                             <a href="${vkLink}" target="_blank" class="video-link-btn">💬 Открыть в ВК (комментируй и получай лучики)</a>
                         `;
                     }
+
+                    // Отображение материалов
+                    const materials = data.materials || {};
+                    const materialsArray = [
+                        { key: 'presentation', icon: '📊', label: 'Презентация' },
+                        { key: 'blog', icon: '📝', label: 'Блог' },
+                        { key: 'infographic', icon: '🎨', label: 'Инфографика' },
+                        { key: 'shortVideo', icon: '🎬', label: 'Видео' },
+                        { key: 'podcast', icon: '🎙️', label: 'Подкаст' },
+                        { key: 'whitepaper', icon: '📖', label: 'Книга' }
+                    ];
+
+                    const availableMaterials = materialsArray.filter(m => materials[m.key]);
+
+                    if (availableMaterials.length > 0) {
+                        const materialsHtml = availableMaterials.map(m => `
+                            <a href="${materials[m.key]}" target="_blank" class="material-link">
+                                <span class="material-icon">${m.icon}</span>
+                                <span>${m.label}</span>
+                            </a>
+                        `).join('');
+
+                        document.getElementById("dayMaterials").innerHTML = `
+                            <div class="materials-title">📚 Дополнительные материалы</div>
+                            <div class="materials-grid">
+                                ${materialsHtml}
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById("dayMaterials").innerHTML = '';
+                    }
                 } else {
                     console.log("День не найден в Firestore!");
                     document.getElementById("dayTitle").textContent = "Нет задания на этот день";
                     document.getElementById("dayVideo").innerHTML = "";
+                    document.getElementById("dayMaterials").innerHTML = "";
                 }
             } catch (error) {
                 console.error("Ошибка загрузки задания:", error);

@@ -371,10 +371,40 @@
                         <textarea id="dayContent" rows="5" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label>URL видео (опционально)</label>
+                        <label>📹 URL видео (опционально)</label>
                         <input type="url" id="dayVideo" placeholder="https://vkvideo.ru/video-...">
                     </div>
-                    <button type="submit" class="btn">Сохранить задание</button>
+
+                    <div style="grid-column: 1 / -1; border-top: 1px solid rgba(180, 100, 255, 0.1); padding-top: 20px; margin-top: 20px;">
+                        <h4 style="color: #a18cd1; margin-bottom: 15px;">📚 Дополнительные материалы</h4>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📊 Презентация (опционально)</label>
+                        <input type="url" id="dayPresentation" placeholder="https://docs.google.com/presentation/...">
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Запись в блоге (опционально)</label>
+                        <input type="url" id="dayBlog" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>🎨 Инфографика (опционально)</label>
+                        <input type="url" id="dayInfographic" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>🎬 Короткий ролик (опционально)</label>
+                        <input type="url" id="dayShortVideo" placeholder="https://youtube.com/... или https://tiktok.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label>🎙️ Аудиоподкаст (опционально)</label>
+                        <input type="url" id="dayPodcast" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>📖 Белая книга (опционально)</label>
+                        <input type="url" id="dayWhitepaper" placeholder="https://...">
+                    </div>
+
+                    <button type="submit" class="btn" style="grid-column: 1 / -1;">Сохранить задание</button>
                 </form>
             </div>
 
@@ -1070,6 +1100,16 @@
             const content = document.getElementById("dayContent").value;
             const videoUrl = document.getElementById("dayVideo").value;
 
+            // Дополнительные материалы
+            const materials = {
+                presentation: document.getElementById("dayPresentation").value || null,
+                blog: document.getElementById("dayBlog").value || null,
+                infographic: document.getElementById("dayInfographic").value || null,
+                shortVideo: document.getElementById("dayShortVideo").value || null,
+                podcast: document.getElementById("dayPodcast").value || null,
+                whitepaper: document.getElementById("dayWhitepaper").value || null
+            };
+
             try {
                 await db.collection("marathons").doc("lunar-yoga-tsarevich")
                     .collection("days").doc(dayNum.toString()).set({
@@ -1077,6 +1117,7 @@
                         content,
                         videoUrl: videoUrl || null,
                         dayNumber: dayNum,
+                        materials,
                         createdAt: new Date()
                     }, { merge: true });
 
@@ -1102,13 +1143,20 @@
 
                 list.innerHTML = snapshot.docs.map(doc => {
                     const day = doc.data();
+                    const materials = day.materials || {};
+
+                    // Подсчитать кол-во материалов
+                    const materialCount = Object.values(materials).filter(v => v).length;
+                    const materialsStr = materialCount > 0 ? `📚 ${materialCount} материал${materialCount > 1 ? 'ов' : ''}` : '❌ Материалы не добавлены';
+
                     return `
                         <div class="marathon-item">
                             <div class="marathon-header">
                                 <div class="marathon-name">🌙 День ${day.dayNumber}: ${day.title}</div>
                             </div>
                             <p style="font-size: 12px; color: #c8d0db; margin-bottom: 10px; line-height: 1.5;">${day.content.substring(0, 120)}...</p>
-                            ${day.videoUrl ? `<p style="font-size: 11px; color: #ffd700; margin-bottom: 10px;">📹 ${day.videoUrl}</p>` : '<p style="font-size: 11px; color: #888;">❌ Видео не добавлено</p>'}
+                            ${day.videoUrl ? `<p style="font-size: 11px; color: #ffd700; margin-bottom: 5px;">📹 Видео</p>` : ''}
+                            <p style="font-size: 11px; color: #a18cd1; margin-bottom: 10px;">${materialsStr}</p>
                             <div style="display: flex; gap: 10px;">
                                 <button class="btn btn-small" onclick="editDayQuick(${day.dayNumber})">✏️ Редактировать</button>
                                 <button class="btn btn-danger btn-small" onclick="deleteDay(${day.dayNumber})">🗑️ Удалить</button>
@@ -1132,12 +1180,21 @@
                 }
 
                 const day = doc.data();
+                const materials = day.materials || {};
 
                 // Заполнить форму текущими данными
                 document.getElementById("dayNum").value = day.dayNumber;
                 document.getElementById("dayTitle").value = day.title;
                 document.getElementById("dayContent").value = day.content;
                 document.getElementById("dayVideo").value = day.videoUrl || "";
+
+                // Заполнить дополнительные материалы
+                document.getElementById("dayPresentation").value = materials.presentation || "";
+                document.getElementById("dayBlog").value = materials.blog || "";
+                document.getElementById("dayInfographic").value = materials.infographic || "";
+                document.getElementById("dayShortVideo").value = materials.shortVideo || "";
+                document.getElementById("dayPodcast").value = materials.podcast || "";
+                document.getElementById("dayWhitepaper").value = materials.whitepaper || "";
 
                 // Прокрутить к форме
                 document.querySelector("#days-tab form").scrollIntoView({ behavior: 'smooth' });

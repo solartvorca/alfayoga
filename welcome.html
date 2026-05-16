@@ -173,37 +173,103 @@
 <body>
     <div class="welcome-container">
         <div class="welcome-content">
-            <div class="welcome-emoji">🌕</div>
-            <div class="welcome-title">Приветствую в пространстве «Йоги царевича»!</div>
+            <!-- Для неавторизованных пользователей -->
+            <div id="publicContent">
+                <div class="welcome-emoji">🌕</div>
+                <div class="welcome-title">Приветствую в пространстве «Йоги царевича»!</div>
 
-            <div class="welcome-text">
-                <p>Здравствуй, каждый, каждая из присутствующих здесь.</p>
+                <div class="welcome-text">
+                    <p>Здравствуй, каждый, каждая из присутствующих здесь.</p>
 
-                <p>Ближайшие 28 дней — от полнолуния до полнолуния — мы будем ежедневно проживать этот опыт и делиться рефлексией.</p>
+                    <p>Ближайшие 28 дней — от полнолуния до полнолуния — мы будем ежедневно проживать этот опыт и делиться рефлексией.</p>
 
-                <p>Все практики построены так, чтобы органично вплестись в твою жизнь, а не стать очередной скучной тренировкой. Поэтому выполнять задания на силе воли необязательно — всё определяется твоим внутренним откликом и поддерживающей синхронистичностью событий.</p>
+                    <p>Все практики построены так, чтобы органично вплестись в твою жизнь, а не стать очередной скучной тренировкой. Поэтому выполнять задания на силе воли необязательно — всё определяется твоим внутренним откликом и поддерживающей синхронистичностью событий.</p>
+                </div>
+
+                <div class="welcome-rule">
+                    ⚡ Но у нашего путешествия есть одно незыблемое правило:<br><br>
+                    Каждый день ты пишешь отчёт. Если отчёт не написан — ты выпадаешь из игры до следующего полнолуния. Здесь нет начальников, но есть ритм, который хорошо выдержать.
+                </div>
+
+                <div class="welcome-insight">
+                    <strong>Главный инсайт</strong>
+                    Экзистенциальный кризис ультра-успешных инвесторов и бизнесменов давно доказал: самое главное в жизни — держать внимание в самом источнике внимания. Всё остальное вторично. Оно приложится само, как только ты выставишь этот главный приоритет.
+                </div>
+
+                <div class="welcome-footer">
+                    В добрый путь! Внимание на источник. ✨
+                </div>
+
+                <div class="welcome-buttons">
+                    <a href="login.html" class="welcome-btn welcome-btn-primary">Войти в марафон</a>
+                    <a href="index.html" class="welcome-btn welcome-btn-secondary">Просмотр без входа</a>
+                </div>
             </div>
 
-            <div class="welcome-rule">
-                ⚡ Но у нашего путешествия есть одно незыблемое правило:<br><br>
-                Каждый день ты пишешь отчёт. Если отчёт не написан — ты выпадаешь из игры до следующего полнолуния. Здесь нет начальников, но есть ритм, который хорошо выдержать.
-            </div>
+            <!-- Для авторизованных пользователей (новая регистрация) -->
+            <div id="newUserContent" style="display: none;">
+                <div class="welcome-emoji">✨</div>
+                <div class="welcome-title" id="userGreeting">Добро пожаловать!</div>
 
-            <div class="welcome-insight">
-                <strong>Главный инсайт</strong>
-                Экзистенциальный кризис ультра-успешных инвесторов и бизнесменов давно доказал: самое главное в жизни — держать внимание в самом источнике внимания. Всё остальное вторично. Оно приложится само, как только ты выставишь этот главный приоритет.
-            </div>
+                <div class="welcome-text">
+                    <p id="userMessage">Ты успешно присоединился к марафону «Йога царевича».</p>
 
-            <div class="welcome-footer">
-                В добрый путь! Внимание на источник. ✨
-            </div>
+                    <p>Сейчас мы перенаправим тебя на главную страницу, где ты сможешь настроить будильник и начать свой путь трансформации.</p>
 
-            <div class="welcome-buttons">
-                <a href="login.html" class="welcome-btn welcome-btn-primary">Войти в марафон</a>
-                <a href="index.html" class="welcome-btn welcome-btn-secondary">Просмотр без входа</a>
+                    <p>Помни одно незыблемое правило: каждый день ты пишешь отчёт. Если отчёт не написан — ты выпадаешь из игры до следующего полнолуния.</p>
+                </div>
+
+                <div class="welcome-insight">
+                    <strong>Главное помни:</strong>
+                    Наша программа работает только если ты честен с собой в течение 28 дней. Не для галочки, не для галереи — для себя.
+                </div>
+
+                <div class="welcome-footer" id="redirectTimer">
+                    Перенаправление через 5 сек...
+                </div>
+
+                <div class="welcome-buttons">
+                    <a href="index.html" class="welcome-btn welcome-btn-primary">Начать сейчас →</a>
+                </div>
             </div>
         </div>
     </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // Пользователь авторизован - показать персональное приветствие
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    const nick = userData.nick || user.email;
+
+                    // Скрыть публичный контент и показать контент для новых пользователей
+                    document.getElementById("publicContent").style.display = "none";
+                    document.getElementById("newUserContent").style.display = "block";
+
+                    document.getElementById("userGreeting").textContent = `Приветствуем, ${nick}!`;
+
+                    // Обратный отсчёт
+                    let seconds = 5;
+                    const timer = setInterval(() => {
+                        seconds--;
+                        if (seconds > 0) {
+                            document.getElementById("redirectTimer").textContent = `Перенаправление через ${seconds} сек...`;
+                        } else {
+                            clearInterval(timer);
+                            window.location.href = "index.html";
+                        }
+                    }, 1000);
+                }
+            }
+            // Если не авторизован, показываем publicContent (по умолчанию)
+        });
+    </script>
 
 </body>
 </html>
