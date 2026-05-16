@@ -801,6 +801,16 @@
             const input = document.getElementById("referralLink");
             const text = input.value;
 
+            console.log("Copy button clicked. Input value:", text);
+            console.log("Current user:", window.currentUser);
+
+            if (!text || text.includes("Код не загружен")) {
+                const status = document.getElementById("referralStatus");
+                status.textContent = "❌ Ошибка: код не загружен. Перезагрузи страницу!";
+                status.style.display = "block";
+                return;
+            }
+
             // Используем более надёжный способ копирования
             const textarea = document.createElement("textarea");
             textarea.value = text;
