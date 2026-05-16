@@ -322,6 +322,7 @@
             <button class="tab-btn" onclick="switchTab('referrals', this)">🤝 Рефералы</button>
             <button class="tab-btn" onclick="switchTab('mailing', this)">📨 Рассылка</button>
             <button class="tab-btn" onclick="switchTab('book', this)">📖 Книга</button>
+            <button class="tab-btn" onclick="switchTab('zhiznetron', this)">⚡ Жизнетрон</button>
         </div>
 
         <!-- Марафоны -->
@@ -666,6 +667,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Жизнетрон (дневник практик) -->
+        <div id="zhiznetron-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">⚡ Добавить/редактировать практику</div>
+                <form onsubmit="saveZhiznetronEntry(event)" class="form-grid">
+                    <input type="hidden" id="zhiznetronEditId">
+                    <div class="form-group">
+                        <label>Название практики</label>
+                        <input type="text" id="zhiznetronTitle" placeholder="Осознанная прогулка" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Описание практики</label>
+                        <textarea id="zhiznetronContent" rows="8" placeholder="Описание того, как я внедрил(а) эту практику в свою жизнь..." required style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; padding: 10px; color: #e0e6ed; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">💾 Сохранить практику</button>
+                </form>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📚 Практики Жизнетрона</div>
+                <div id="zhiznetronList">
+                    <p style="text-align: center; color: #888;">Загрузка...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -698,6 +725,8 @@
                 loadAuthorInfo();
             } else if (tabName === "book") {
                 loadBookChapters();
+            } else if (tabName === "zhiznetron") {
+                loadZhiznetronEntries();
             }
         }
 
@@ -1618,6 +1647,133 @@
                 await db.collection("books").doc("main").collection("chapters").doc(id).delete();
                 alert("Глава удалена!");
                 loadBookChapters();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        // ========== ЖИЗНЕТРОН ==========
+
+        // Загрузить записи Жизнетрона
+        async function loadZhiznetronEntries() {
+            try {
+                const snapshot = await db.collection("books").doc("zhiznetron").collection("chapters").get();
+                const entries = [];
+
+                snapshot.docs.forEach(doc => {
+                    entries.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                entries.sort((a, b) => new Date(b.createdAt?.toDate?.() || b.createdAt) - new Date(a.createdAt?.toDate?.() || a.createdAt));
+
+                const list = document.getElementById("zhiznetronList");
+                if (entries.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: #888;">Практик пока нет</p>';
+                    return;
+                }
+
+                list.innerHTML = entries.map(entry => {
+                    const date = entry.createdAt?.toDate?.() ? new Date(entry.createdAt.toDate()) : new Date(entry.createdAt);
+                    const dateStr = date.toLocaleDateString("ru-RU", {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    return `
+                        <div style="background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <div style="font-weight: 600; color: #ffd700; margin-bottom: 4px;">${entry.title}</div>
+                                    <div style="font-size: 12px; color: #888;">${dateStr}</div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="editZhiznetronEntry('${entry.id}')" class="btn" style="padding: 6px 12px; font-size: 12px;">✏️ Редактировать</button>
+                                    <button onclick="deleteZhiznetronEntry('${entry.id}')" class="btn" style="padding: 6px 12px; font-size: 12px; background: rgba(255, 100, 100, 0.3);">🗑️ Удалить</button>
+                                </div>
+                            </div>
+                            <div style="color: #c8d0db; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${entry.content.substring(0, 200)}...</div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка при загрузке Жизнетрона:", error);
+                document.getElementById("zhiznetronList").innerHTML = '<p style="text-align: center; color: #ff6464;">Ошибка загрузки: ' + error.message + '</p>';
+            }
+        }
+
+        // Сохранить запись Жизнетрона
+        async function saveZhiznetronEntry(e) {
+            e.preventDefault();
+            const editId = document.getElementById("zhiznetronEditId").value;
+            const title = document.getElementById("zhiznetronTitle").value.trim();
+            const content = document.getElementById("zhiznetronContent").value.trim();
+
+            if (!title || !content) {
+                alert("Заполните все поля!");
+                return;
+            }
+
+            try {
+                const data = {
+                    title,
+                    content,
+                    createdAt: new Date()
+                };
+
+                if (editId) {
+                    // Обновить существующую запись
+                    await db.collection("books").doc("zhiznetron").collection("chapters").doc(editId).update(data);
+                    alert("Практика обновлена!");
+                } else {
+                    // Добавить новую запись
+                    await db.collection("books").doc("zhiznetron").collection("chapters").add(data);
+                    alert("Практика добавлена!");
+                }
+
+                document.getElementById("zhiznetronEditId").value = "";
+                document.getElementById("zhiznetronTitle").value = "";
+                document.getElementById("zhiznetronContent").value = "";
+
+                loadZhiznetronEntries();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+                console.error("Ошибка при сохранении:", error);
+            }
+        }
+
+        // Редактировать запись Жизнетрона
+        async function editZhiznetronEntry(id) {
+            try {
+                const doc = await db.collection("books").doc("zhiznetron").collection("chapters").doc(id).get();
+                if (!doc.exists) {
+                    alert("Запись не найдена");
+                    return;
+                }
+
+                const entry = doc.data();
+                document.getElementById("zhiznetronEditId").value = id;
+                document.getElementById("zhiznetronTitle").value = entry.title;
+                document.getElementById("zhiznetronContent").value = entry.content;
+
+                document.querySelector("#zhiznetron-tab form").scrollIntoView({ behavior: 'smooth' });
+                document.getElementById("zhiznetronTitle").focus();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        // Удалить запись Жизнетрона
+        async function deleteZhiznetronEntry(id) {
+            if (!confirm("Удалить эту практику?")) return;
+
+            try {
+                await db.collection("books").doc("zhiznetron").collection("chapters").doc(id).delete();
+                alert("Практика удалена!");
+                loadZhiznetronEntries();
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }

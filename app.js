@@ -218,8 +218,16 @@ function triggerAlarm() {
     showAlarmMessage();
 
     // Вибрация на мобильных (если доступна)
-    if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100, 50, 100]);
+    try {
+        if (navigator.vibrate) {
+            console.log('[Vibration] Attempting vibration pattern');
+            navigator.vibrate([200, 100, 200, 100, 200]);
+            console.log('[Vibration] Vibration triggered successfully');
+        } else {
+            console.warn('[Vibration] navigator.vibrate not available on this device/browser');
+        }
+    } catch (err) {
+        console.error('[Vibration] Error:', err);
     }
 
     // Браузерное уведомление (если разрешено)

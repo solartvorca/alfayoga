@@ -118,6 +118,7 @@
             color: #888;
             margin-top: 12px;
         }
+
     </style>
 </head>
 <body>
@@ -206,6 +207,13 @@
             <div class="book-title">📖 Альфа йога От Гамма до Эпсилон</div>
             <div class="chapters-list" id="chaptersList"></div>
         </div>
+
+        <!-- Жизнетрон - дневник практик автора (для тех кто набрал 1000+ лучиков) -->
+        <div class="book-section" id="zhiznetronSection" style="display:none;">
+            <div class="book-title">⚡ Жизнетрон — Дневник практик</div>
+            <div class="book-subtitle" style="font-size: 13px; color: #888; margin-bottom: 20px; font-style: italic;">Авторский дневник: как Иван Царевич внедряет полезные практики в жизнь</div>
+            <div class="chapters-list" id="zhiznetronList"></div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -232,6 +240,12 @@
                         };
                         if (doc.data().isAdmin) {
                             document.getElementById("adminLink").style.display = "block";
+                        }
+
+                        // Показать Жизнетрон если 1000+ лучиков
+                        const rays = doc.data().rays || 0;
+                        if (rays >= 1000) {
+                            loadZhiznetron();
                         }
                     }
                 });
@@ -372,6 +386,55 @@
             } catch (error) {
                 alert("Ошибка: " + error.message);
                 console.error("Ошибка при добавлении комментария:", error);
+            }
+        }
+
+        // Загрузить Жизнетрон
+        async function loadZhiznetron() {
+            try {
+                const snapshot = await db.collection("books").doc("zhiznetron").collection("chapters").get();
+                const chapters = [];
+
+                snapshot.docs.forEach(doc => {
+                    chapters.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                if (chapters.length === 0) {
+                    document.getElementById("zhiznetronSection").style.display = "none";
+                    return;
+                }
+
+                chapters.sort((a, b) => (a.number || 0) - (b.number || 0));
+
+                const list = document.getElementById("zhiznetronList");
+                list.innerHTML = chapters.map(ch => {
+                    const date = new Date(ch.createdAt.seconds * 1000);
+                    const dateStr = date.toLocaleDateString("ru-RU", {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    return `
+                        <div class="chapter-item">
+                            <div class="chapter-header" onclick="toggleChapter(this)">
+                                <span>📓 ${ch.title}</span>
+                                <span class="chapter-arrow">▼</span>
+                            </div>
+                            <div class="chapter-body">
+                                ${ch.content}
+                                <div class="chapter-date">Опубликовано: ${dateStr}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                document.getElementById("zhiznetronSection").style.display = "block";
+            } catch (error) {
+                console.error("Ошибка при загрузке Жизнетрона:", error);
             }
         }
 
