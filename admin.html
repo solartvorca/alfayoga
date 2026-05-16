@@ -523,9 +523,18 @@
 
                 <div class="form-grid">
                     <div class="form-group">
+                        <label>Фильтр по статусу</label>
+                        <select id="mailingStatusFilter" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed;">
+                            <option value="all">📧 Все пользователи</option>
+                            <option value="today">✅ В строю (написали отчёт сегодня)</option>
+                            <option value="nottoday">⚠️ Не в строю (не написали отчёт сегодня)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label>Выберите тариф получателей</label>
                         <select id="mailingTariff" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed;">
-                            <option value="all">📧 Все пользователи</option>
+                            <option value="all">💳 Все тарифы</option>
                             <option value="free">🆓 Бесплатный (с вылетом)</option>
                             <option value="basic">💳 Подписка за 300 лучиков</option>
                             <option value="premium">⭐ Безлимит за 3000 лучиков</option>
@@ -673,6 +682,7 @@
         // Загрузить список email
         async function loadEmailList() {
             const tariff = document.getElementById("mailingTariff").value;
+            const statusFilter = document.getElementById("mailingStatusFilter").value;
             const statusDiv = document.getElementById("mailingStatus");
 
             try {
@@ -693,19 +703,30 @@
 
                 const snapshot = await query.get();
                 const emails = [];
+                const todayLunarDay = getLunarDay();
 
                 for (const doc of snapshot.docs) {
                     const user = doc.data();
-                    if (user.email) {
-                        emails.push(user.email);
+                    if (!user.email) continue;
+
+                    // Применить фильтр по статусу (в строю / не в строю)
+                    if (statusFilter !== "all") {
+                        const lastReportDay = user.lastReportDay || 0;
+                        const isInLineup = lastReportDay === todayLunarDay;
+
+                        if (statusFilter === "today" && !isInLineup) continue;
+                        if (statusFilter === "nottoday" && isInLineup) continue;
                     }
+
+                    emails.push(user.email);
                 }
 
                 const emailList = document.getElementById("emailList");
                 emailList.value = emails.join('\n');
                 document.getElementById("emailListContainer").style.display = "block";
 
-                statusDiv.innerHTML = `✅ Загружено ${emails.length} email адресов`;
+                const filterText = statusFilter === "today" ? " (в строю)" : statusFilter === "nottoday" ? " (не в строю)" : "";
+                statusDiv.innerHTML = `✅ Загружено ${emails.length} email адресов${filterText}`;
                 statusDiv.style.background = "rgba(0, 208, 132, 0.1)";
                 statusDiv.style.color = "#00d084";
 

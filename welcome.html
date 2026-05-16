@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добро пожаловать — Йога Царевича</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .welcome-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(161, 140, 209, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+        }
+
+        .welcome-content {
+            max-width: 700px;
+            background: rgba(10, 14, 39, 0.8);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 16px;
+            padding: 50px 40px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .welcome-emoji {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #a18cd1;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .welcome-text {
+            font-size: 15px;
+            color: #c8d0db;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .welcome-text p {
+            margin-bottom: 20px;
+        }
+
+        .welcome-text strong {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .welcome-rule {
+            background: rgba(255, 100, 100, 0.1);
+            border-left: 3px solid rgba(255, 100, 100, 0.5);
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #ff9999;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .welcome-insight {
+            background: rgba(180, 100, 255, 0.1);
+            border-left: 3px solid rgba(180, 100, 255, 0.5);
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #c8d0db;
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        .welcome-insight strong {
+            color: #a18cd1;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .welcome-footer {
+            font-size: 16px;
+            color: #ffd700;
+            margin-top: 30px;
+            font-weight: 600;
+        }
+
+        .welcome-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .welcome-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .welcome-btn-primary {
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            color: #0a0e27;
+        }
+
+        .welcome-btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .welcome-btn-secondary {
+            background: rgba(161, 140, 209, 0.2);
+            border: 1px solid rgba(161, 140, 209, 0.5);
+            color: #a18cd1;
+        }
+
+        .welcome-btn-secondary:hover {
+            background: rgba(161, 140, 209, 0.3);
+        }
+
+        @media (max-width: 640px) {
+            .welcome-content {
+                padding: 30px 20px;
+            }
+
+            .welcome-emoji {
+                font-size: 60px;
+                margin-bottom: 20px;
+            }
+
+            .welcome-title {
+                font-size: 22px;
+                margin-bottom: 15px;
+            }
+
+            .welcome-text {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+
+            .welcome-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .welcome-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="welcome-content">
+            <div class="welcome-emoji">🌕</div>
+            <div class="welcome-title">Приветствую в пространстве «Йоги царевича»!</div>
+
+            <div class="welcome-text">
+                <p>Здравствуй, каждый, каждая из присутствующих здесь.</p>
+
+                <p>Ближайшие 28 дней — от полнолуния до полнолуния — мы будем ежедневно проживать этот опыт и делиться рефлексией.</p>
+
+                <p>Все практики построены так, чтобы органично вплестись в твою жизнь, а не стать очередной скучной тренировкой. Поэтому выполнять задания на силе воли необязательно — всё определяется твоим внутренним откликом и поддерживающей синхронистичностью событий.</p>
+            </div>
+
+            <div class="welcome-rule">
+                ⚡ Но у нашего путешествия есть одно незыблемое правило:<br><br>
+                Каждый день ты пишешь отчёт. Если отчёт не написан — ты выпадаешь из игры до следующего полнолуния. Здесь нет начальников, но есть ритм, который хорошо выдержать.
+            </div>
+
+            <div class="welcome-insight">
+                <strong>Главный инсайт</strong>
+                Экзистенциальный кризис ультра-успешных инвесторов и бизнесменов давно доказал: самое главное в жизни — держать внимание в самом источнике внимания. Всё остальное вторично. Оно приложится само, как только ты выставишь этот главный приоритет.
+            </div>
+
+            <div class="welcome-footer">
+                В добрый путь! Внимание на источник. ✨
+            </div>
+
+            <div class="welcome-buttons">
+                <a href="login.html" class="welcome-btn welcome-btn-primary">Войти в марафон</a>
+                <a href="index.html" class="welcome-btn welcome-btn-secondary">Просмотр без входа</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        // Если пользователь уже авторизован, перенаправить на главную
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
