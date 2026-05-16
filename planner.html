@@ -613,7 +613,17 @@
         // Загрузка при входе
         auth.onAuthStateChanged(user => {
             if (user) {
-                loadTasks();
+                // Загрузить данные пользователя из Firestore
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                    if (doc.exists) {
+                        window.currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            ...doc.data()
+                        };
+                        loadTasks();
+                    }
+                });
             } else {
                 window.location.href = "login.html";
             }
