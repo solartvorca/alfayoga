@@ -66,7 +66,22 @@ function showRemovalNotice() {
 
 // Выход
 function logout() {
-    auth.signOut().then(() => {
-        window.location.href = "login.html";
-    });
+    console.log("Logout function called");
+
+    if (typeof auth === 'undefined') {
+        console.error("Firebase auth not initialized");
+        alert("Ошибка: Firebase не инициализирован. Перезагрузи страницу.");
+        return;
+    }
+
+    auth.signOut()
+        .then(() => {
+            console.log("Logged out successfully");
+            // Очистить localStorage/sessionStorage если нужно
+            window.location.href = "login.html";
+        })
+        .catch(error => {
+            console.error("Logout error:", error);
+            alert("Ошибка выхода: " + error.message + ". Попробуй перезагрузить страницу.");
+        });
 }
