@@ -291,6 +291,28 @@
             text-transform: uppercase;
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
         @media (max-width: 640px) {
             .planner-container {
                 max-width: 100%;
@@ -564,10 +586,53 @@
                     completed: completed,
                     completedAt: completed ? new Date() : null
                 });
+
+                // Если задача отмечена как выполненная, начислить лучики
+                if (completed) {
+                    try {
+                        await db.collection("users").doc(user.uid).update({
+                            rays: firebase.firestore.FieldValue.increment(5)
+                        });
+
+                        // Обновить локальное значение
+                        window.currentUser.rays = (window.currentUser.rays || 0) + 5;
+
+                        // Показать уведомление
+                        showNotification("✨ +5 лучиков за выполненную задачу!", "success");
+                    } catch (error) {
+                        console.error("Ошибка при начислении лучиков:", error);
+                    }
+                }
+
                 loadTasks();
             } catch (error) {
                 console.error("Ошибка при обновлении задачи:", error);
             }
+        }
+
+        // Функция уведомления
+        function showNotification(message, type = "info") {
+            const notification = document.createElement("div");
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${type === "success" ? "rgba(0, 208, 132, 0.2)" : "rgba(180, 100, 255, 0.2)"};
+                border: 1px solid ${type === "success" ? "rgba(0, 208, 132, 0.5)" : "rgba(180, 100, 255, 0.5)"};
+                color: ${type === "success" ? "#00d084" : "#a18cd1"};
+                border-radius: 8px;
+                z-index: 9999;
+                font-weight: 600;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = "slideOut 0.3s ease-out";
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         async function deleteTask(taskId) {
