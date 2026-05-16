@@ -200,7 +200,13 @@ function checkAlarm() {
     const now = Date.now();
     const timeSinceLastAlarm = now - alarmState.lastAlarmTime;
 
+    // Отладка: логируем каждые 60 секунд
+    if (now % 60000 < 500) {
+        console.log(`[Alarm Check] Time since last: ${Math.floor(timeSinceLastAlarm / 1000)}s / ${Math.floor(alarmState.alarmInterval / 1000)}s`);
+    }
+
     if (timeSinceLastAlarm >= alarmState.alarmInterval) {
+        console.log(`[Alarm Triggered] Time since last: ${Math.floor(timeSinceLastAlarm / 1000)}s`);
         triggerAlarm();
         alarmState.lastAlarmTime = now;
     }
@@ -298,10 +304,28 @@ function playAlarmSoundInternal(audioContext) {
 // Показ сообщения будильника
 function showAlarmMessage() {
     if (!alarmNotification) return;
+
+    // Показать уведомление
     alarmNotification.classList.add('show');
+
+    // Обновить время последнего срабатывания
+    const timeEl = document.getElementById('alarmMessage');
+    if (timeEl) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        timeEl.textContent = `⏰ Будильник сработал в ${timeStr}`;
+        timeEl.style.color = '#ffd700';
+    }
+
+    // Убрать через 3 сек
     setTimeout(() => {
         alarmNotification.classList.remove('show');
     }, 3000);
+
+    // Убрать сообщение через 5 сек
+    setTimeout(() => {
+        if (timeEl) timeEl.textContent = '';
+    }, 5000);
 }
 
 // Основной цикл анимации
@@ -316,9 +340,25 @@ function animate(timestamp) {
 updateBreathingParams();
 requestAnimationFrame(animate);
 
-// Подстраховка: проверка будильника через setInterval на мобильных (где requestAnimationFrame может тормозиться)
-// Проверяем каждые 500ms для более надежной работы на мобильных
-setInterval(checkAlarm, 500);
+// Очень частая проверка будильника на мобильных (каждые 100ms для надежности)
+setInterval(() => {
+    try {
+        checkAlarm();
+    } catch (err) {
+        console.error('[Alarm] Error in checkAlarm:', err);
+    }
+}, 100);
+
+// Логирование статуса будильника каждые 10 секунд
+setInterval(() => {
+    if (!alarmState.enabled) return;
+
+    const now = Date.now();
+    const timeSinceLastAlarm = now - alarmState.lastAlarmTime;
+    const timeRemaining = alarmState.alarmInterval - timeSinceLastAlarm;
+
+    console.log(`[Alarm Monitor] Enabled: true, Time remaining: ${Math.floor(timeRemaining / 1000)}s, Last trigger: ${new Date(alarmState.lastAlarmTime).toLocaleTimeString('ru-RU')}`);
+}, 10000);
 
 // Запросить разрешение на браузерные уведомления
 if ('Notification' in window && Notification.permission === 'default') {
