@@ -505,6 +505,13 @@
         <!-- Рефералы -->
         <div id="referrals-tab" class="tab-content">
             <div class="admin-section">
+                <div class="section-title">⚙️ Управление реферальным кодом администратора</div>
+                <p style="color: #c8d0db; margin-bottom: 15px; font-size: 13px;">Если у админа нет реферального кода, добавьте его вручную:</p>
+                <button onclick="initializeAdminReferralCode()" class="btn" style="background: rgba(0, 208, 132, 0.2); border: 1px solid rgba(0, 208, 132, 0.5); color: #00d084;">🔧 Инициализировать реферальный код администратора</button>
+                <div id="adminCodeStatus" style="margin-top: 15px; padding: 12px; background: rgba(180, 100, 255, 0.1); border-left: 3px solid #a18cd1; border-radius: 4px; display: none; font-size: 13px; color: #c8d0db;"></div>
+            </div>
+
+            <div class="admin-section">
                 <div class="section-title">🤝 Статистика реферальной программы</div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
                     <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.2); border-radius: 8px; padding: 20px; text-align: center;">
@@ -661,6 +668,69 @@
                 loadAuthorInfo();
             } else if (tabName === "book") {
                 loadBookChapters();
+            }
+        }
+
+        // Инициализировать реферальный код администратора
+        async function initializeAdminReferralCode() {
+            const statusDiv = document.getElementById("adminCodeStatus");
+
+            try {
+                statusDiv.style.display = "block";
+                statusDiv.textContent = "⏳ Инициализирую реферальный код...";
+                statusDiv.style.background = "rgba(180, 100, 255, 0.1)";
+                statusDiv.style.color = "#a18cd1";
+
+                // Получить текущего пользователя
+                const user = window.currentUser;
+                if (!user || user.email !== "wuallar@gmail.com") {
+                    statusDiv.textContent = "❌ Ошибка: Вы не администратор!";
+                    statusDiv.style.background = "rgba(255, 100, 100, 0.1)";
+                    statusDiv.style.color = "#ff6464";
+                    return;
+                }
+
+                const adminUid = user.uid;
+                const referralCode = adminUid.substring(0, 8).toUpperCase();
+
+                // Обновить документ админа
+                await db.collection("users").doc(adminUid).update({
+                    referralCode: referralCode,
+                    referredBy: null,
+                    referralRays: 0,
+                    totalReferrals: 0
+                });
+
+                // Обновить window.currentUser
+                window.currentUser.referralCode = referralCode;
+                window.currentUser.referralRays = 0;
+                window.currentUser.totalReferrals = 0;
+
+                const baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                const referralLink = `${baseUrl}login.html?ref=${referralCode}`;
+
+                statusDiv.innerHTML = `
+                    <div style="margin-bottom: 12px;">
+                        <strong style="color: #00d084;">✅ Реферальный код успешно добавлен!</strong>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <strong>Реф. код:</strong> <span style="color: #ffd700; font-family: monospace; font-weight: 600;">${referralCode}</span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <strong>Реферальная ссылка:</strong><br>
+                        <span style="color: #a18cd1; font-family: monospace; font-size: 12px; word-break: break-all;">${referralLink}</span>
+                    </div>
+                `;
+                statusDiv.style.background = "rgba(0, 208, 132, 0.1)";
+                statusDiv.style.color = "#00d084";
+                statusDiv.style.borderLeftColor = "#00d084";
+
+            } catch (error) {
+                statusDiv.textContent = "❌ Ошибка: " + error.message;
+                statusDiv.style.background = "rgba(255, 100, 100, 0.1)";
+                statusDiv.style.color = "#ff6464";
+                statusDiv.style.borderLeftColor = "#ff6464";
+                console.error("Ошибка:", error);
             }
         }
 
