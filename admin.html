@@ -526,8 +526,8 @@
                         <label>Фильтр по статусу</label>
                         <select id="mailingStatusFilter" style="padding: 10px; background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; color: #e0e6ed;">
                             <option value="all">📧 Все пользователи</option>
-                            <option value="today">✅ В строю (написали отчёт сегодня)</option>
-                            <option value="nottoday">⚠️ Не в строю (не написали отчёт сегодня)</option>
+                            <option value="today">✅ В строю (могут ещё писать до полночи)</option>
+                            <option value="nottoday">⚠️ Вывалены (пропустили срок)</option>
                         </select>
                     </div>
 
@@ -711,8 +711,9 @@
 
                     // Применить фильтр по статусу (в строю / не в строю)
                     if (statusFilter !== "all") {
-                        const lastReportDay = user.lastReportDay || 0;
-                        const isInLineup = lastReportDay === todayLunarDay;
+                        // в строю = те, кого не вывели (статус !== 'removed') = могут ещё писать до полночи
+                        // не в строю = те, кого вывели (статус === 'removed') = пропустили срок
+                        const isInLineup = user.status !== "removed";
 
                         if (statusFilter === "today" && !isInLineup) continue;
                         if (statusFilter === "nottoday" && isInLineup) continue;
