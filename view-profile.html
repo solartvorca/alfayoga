@@ -108,6 +108,45 @@
             padding: 20px;
         }
 
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #a18cd1;
+        }
+
+        .tab-btn.active {
+            color: #a18cd1;
+            border-bottom-color: #ffd700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         @media (max-width: 640px) {
             .profile-container {
                 max-width: 100%;
@@ -135,7 +174,27 @@
             </div>
         </div>
 
-        <div id="profileSection"></div>
+        <!-- Навигация вкладок -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('about')">👤 Об авторе</button>
+            <button class="tab-btn" onclick="switchTab('services')">🛍️ Услуги и товары</button>
+            <button class="tab-btn" onclick="switchTab('dreams')">🌙 Сновидения</button>
+        </div>
+
+        <!-- Вкладка "Об авторе" -->
+        <div id="about-tab" class="tab-content active">
+            <div id="profileAboutSection"></div>
+        </div>
+
+        <!-- Вкладка "Услуги и товары" -->
+        <div id="services-tab" class="tab-content">
+            <div id="profileServicesSection"></div>
+        </div>
+
+        <!-- Вкладка "Сновидения" -->
+        <div id="dreams-tab" class="tab-content">
+            <div id="profileDreamsSection"></div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -144,6 +203,18 @@
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
         async function loadPublicHabits(uid) {
             try {
                 const habitsDoc = await db.collection("habits").doc(uid).get();
@@ -168,7 +239,7 @@
 
                 habitsHTML += '</div>';
 
-                const profileSection = document.getElementById("profileSection");
+                const profileSection = document.getElementById("profileAboutSection");
                 profileSection.innerHTML += habitsHTML;
             } catch (error) {
                 console.error("Ошибка при загрузке публичных привычек:", error);
@@ -211,8 +282,8 @@
 
                 wishesHTML += '</div>';
 
-                // Append wishes to profileSection
-                const profileSection = document.getElementById("profileSection");
+                // Append wishes to profileAboutSection
+                const profileSection = document.getElementById("profileAboutSection");
                 profileSection.innerHTML += wishesHTML;
             } catch (error) {
                 console.error("Ошибка при загрузке публичных желаний:", error);
@@ -243,9 +314,10 @@
 
                 const profile = user.creativeProfile || {};
 
-                let profileHTML = '';
+                // Заполнить вкладку "Об авторе"
+                let aboutHTML = '';
                 if (profile.bio) {
-                    profileHTML += `
+                    aboutHTML += `
                         <div class="section">
                             <div class="section-title">✨ О себе</div>
                             <div class="section-text">${profile.bio}</div>
@@ -253,17 +325,8 @@
                     `;
                 }
 
-                if (profile.services) {
-                    profileHTML += `
-                        <div class="section">
-                            <div class="section-title">💼 Услуги</div>
-                            <div class="section-text">${profile.services}</div>
-                        </div>
-                    `;
-                }
-
                 if (profile.links && profile.links.length > 0) {
-                    profileHTML += `
+                    aboutHTML += `
                         <div class="section">
                             <div class="section-title">🔗 Ссылки</div>
                             <div class="links-list">
@@ -273,7 +336,19 @@
                     `;
                 }
 
-                document.getElementById("profileSection").innerHTML = profileHTML || '<div class="empty-state">Профиль не заполнен</div>';
+                document.getElementById("profileAboutSection").innerHTML = aboutHTML || '<div class="empty-state">Информация не заполнена</div>';
+
+                // Заполнить вкладку "Услуги и товары"
+                if (profile.services) {
+                    document.getElementById("profileServicesSection").innerHTML = `
+                        <div class="section">
+                            <div class="section-title">🛍️ Услуги и товары</div>
+                            <div class="section-text">${profile.services}</div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById("profileServicesSection").innerHTML = '<div class="empty-state">Услуги не указаны</div>';
+                }
 
                 // Загрузить публичные желания, сны и привычки
                 loadPublicHabits(uid);
@@ -304,7 +379,8 @@
                 dreams.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 if (dreams.length === 0) {
-                    return; // No public dreams
+                    document.getElementById("profileDreamsSection").innerHTML = '<div class="empty-state">Сновидений не опубликовано</div>';
+                    return;
                 }
 
                 let dreamsHTML = `
@@ -330,9 +406,9 @@
 
                 dreamsHTML += '</div>';
 
-                // Append dreams to profileSection
-                const profileSection = document.getElementById("profileSection");
-                profileSection.innerHTML += dreamsHTML;
+                // Append dreams to profileDreamsSection
+                const profileSection = document.getElementById("profileDreamsSection");
+                profileSection.innerHTML = dreamsHTML;
             } catch (error) {
                 console.error("Ошибка при загрузке публичных снов:", error);
             }

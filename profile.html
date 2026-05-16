@@ -261,6 +261,45 @@
             margin-top: 10px;
         }
 
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.2);
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #a18cd1;
+        }
+
+        .tab-btn.active {
+            color: #a18cd1;
+            border-bottom-color: #ffd700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         @media (max-width: 640px) {
             .profile-container {
                 max-width: 100%;
@@ -302,95 +341,120 @@
             </div>
         </div>
 
-        <!-- Творческий профиль -->
-        <div class="section">
-            <div class="section-title">✨ Мой профиль</div>
-            <form class="transfer-form" id="creativeProfileForm" onsubmit="saveCreativeProfile(event)">
-                <div class="form-group">
-                    <label>Ваше имя (ник)</label>
-                    <input type="text" id="nickField" placeholder="Введите ваше имя" required>
-                </div>
-                <div class="form-group">
-                    <label>О себе и своем творчестве</label>
-                    <textarea class="textarea-field" id="bioField" placeholder="Расскажите о себе, своем творчестве, интересах..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Мои услуги</label>
-                    <textarea class="textarea-field" id="servicesField" placeholder="Описание услуг, которые вы предлагаете..."></textarea>
-                </div>
-                <div style="margin-top: 15px;">
-                    <label style="font-size: 12px; color: #888; text-transform: uppercase; display: block; margin-bottom: 10px;">Ссылки на социальные сети и сайты</label>
-                    <div class="links-list" id="linksList"></div>
-                    <button type="button" class="add-link-btn" onclick="addLinkField()">+ Добавить ссылку</button>
-                </div>
-                <button type="submit" class="btn" style="margin-top: 15px;">Сохранить профиль</button>
-            </form>
-            <div id="profileCompletionStatus"></div>
+        <!-- Навигация вкладок -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('about')">👤 Об авторе</button>
+            <button class="tab-btn" onclick="switchTab('services')">🛍️ Услуги и товары</button>
+            <button class="tab-btn" onclick="switchTab('dreams')">🌙 Сновидения</button>
+            <button class="tab-btn" onclick="switchTab('other')">📊 Остальное</button>
         </div>
 
-        <!-- Администраторская панель -->
-        <div class="section" id="adminSection" style="display: none; border-left: 3px solid #ffd700; background: rgba(255, 215, 0, 0.08);">
-            <div class="section-title" style="color: #ffd700;">⚙️ Администраторская панель</div>
-            <a href="admin.html" class="btn" style="text-decoration: none; display: block; text-align: center;">
-                Перейти в администратор
-            </a>
-        </div>
+        <!-- Вкладка "Об авторе" -->
+        <div id="about-tab" class="tab-content active">
+            <div class="section">
+                <div class="section-title">✨ Мой профиль</div>
+                <form class="transfer-form" id="creativeProfileForm" onsubmit="saveCreativeProfile(event)">
+                    <div class="form-group">
+                        <label>Ваше имя (ник)</label>
+                        <input type="text" id="nickField" placeholder="Введите ваше имя" required>
+                    </div>
+                    <div class="form-group">
+                        <label>О себе и своем творчестве</label>
+                        <textarea class="textarea-field" id="bioField" placeholder="Расскажите о себе, своем творчестве, интересах..."></textarea>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label style="font-size: 12px; color: #888; text-transform: uppercase; display: block; margin-bottom: 10px;">Ссылки на социальные сети и сайты</label>
+                        <div class="links-list" id="linksList"></div>
+                        <button type="button" class="add-link-btn" onclick="addLinkField()">+ Добавить ссылку</button>
+                    </div>
+                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить профиль</button>
+                </form>
+                <div id="profileCompletionStatus"></div>
+            </div>
 
-        <!-- Передача лучиков -->
-        <div class="section">
-            <div class="section-title">🎁 Передать лучик</div>
-            <form class="transfer-form" onsubmit="transferRays(event)">
-                <div class="form-group">
-                    <label>Email или ник участника</label>
-                    <input type="text" id="recipientInput" placeholder="email@example.com или ник" required>
-                </div>
-                <div class="form-group">
-                    <label>Количество лучиков</label>
-                    <input type="number" id="raysAmount" min="1" value="1" required>
-                </div>
-                <button type="submit" class="btn">Передать</button>
-            </form>
-        </div>
-
-        <!-- История транзакций -->
-        <div class="section">
-            <div class="section-title">📜 История лучиков</div>
-            <div class="transaction-list" id="transactionsList">
-                <div class="empty-state">Нет транзакций</div>
+            <!-- Администраторская панель -->
+            <div class="section" id="adminSection" style="display: none; border-left: 3px solid #ffd700; background: rgba(255, 215, 0, 0.08);">
+                <div class="section-title" style="color: #ffd700;">⚙️ Администраторская панель</div>
+                <a href="admin.html" class="btn" style="text-decoration: none; display: block; text-align: center;">
+                    Перейти в администратор
+                </a>
             </div>
         </div>
 
-        <!-- Мои отчеты -->
-        <div class="section">
-            <div class="section-title">📝 Мои отчеты</div>
-            <div id="myReportsList" style="display: flex; flex-direction: column; gap: 12px;">
-                <div class="empty-state">Нет отчетов</div>
+        <!-- Вкладка "Услуги и товары" -->
+        <div id="services-tab" class="tab-content">
+            <div class="section">
+                <div class="section-title">🛍️ Мои услуги и товары</div>
+                <form class="transfer-form" id="servicesForm" onsubmit="saveCreativeProfile(event)">
+                    <div class="form-group">
+                        <label>Описание услуг и товаров</label>
+                        <textarea class="textarea-field" id="servicesField" placeholder="Описание услуг и товаров, которые вы предлагаете..."></textarea>
+                    </div>
+                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить услуги</button>
+                </form>
             </div>
         </div>
 
-        <!-- Мои публичные желания -->
-        <div class="section">
-            <div class="section-title">✨ Мои публичные желания</div>
-            <div id="myPublicWishesList" style="display: flex; flex-direction: column; gap: 12px;">
-                <div class="empty-state">Нет публичных желаний</div>
+        <!-- Вкладка "Сновидения" -->
+        <div id="dreams-tab" class="tab-content">
+            <div class="section">
+                <div class="section-title">🌙 Дневник сновидений</div>
+                <form onsubmit="addDream(event)" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="form-group">
+                        <textarea id="dreamText" placeholder="Опишите ваше сновидение..." required style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; padding: 10px; color: #e0e6ed; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px;"></textarea>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="dreamPublic" checked>
+                        <label for="dreamPublic" style="font-size: 13px; color: #c8d0db; margin: 0;">Сделать публичным (виден всем)</label>
+                    </div>
+                    <button type="submit" class="btn">Сохранить сновидение (+1 лучик)</button>
+                </form>
+                <div id="myDreamsList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                    <div class="empty-state">Нет сновидений</div>
+                </div>
             </div>
         </div>
 
-        <!-- Дневник сновидений -->
-        <div class="section">
-            <div class="section-title">🌙 Дневник сновидений</div>
-            <form onsubmit="addDream(event)" style="display: flex; flex-direction: column; gap: 15px;">
-                <div class="form-group">
-                    <textarea id="dreamText" placeholder="Опишите ваше сновидение..." required style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; padding: 10px; color: #e0e6ed; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px;"></textarea>
+        <!-- Вкладка "Остальное" -->
+        <div id="other-tab" class="tab-content">
+            <!-- Передача лучиков -->
+            <div class="section">
+                <div class="section-title">🎁 Передать лучик</div>
+                <form class="transfer-form" onsubmit="transferRays(event)">
+                    <div class="form-group">
+                        <label>Email или ник участника</label>
+                        <input type="text" id="recipientInput" placeholder="email@example.com или ник" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Количество лучиков</label>
+                        <input type="number" id="raysAmount" min="1" value="1" required>
+                    </div>
+                    <button type="submit" class="btn">Передать</button>
+                </form>
+            </div>
+
+            <!-- История транзакций -->
+            <div class="section">
+                <div class="section-title">📜 История лучиков</div>
+                <div class="transaction-list" id="transactionsList">
+                    <div class="empty-state">Нет транзакций</div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="dreamPublic" checked>
-                    <label for="dreamPublic" style="font-size: 13px; color: #c8d0db; margin: 0;">Сделать публичным (виден всем)</label>
+            </div>
+
+            <!-- Мои отчеты -->
+            <div class="section">
+                <div class="section-title">📝 Мои отчеты</div>
+                <div id="myReportsList" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="empty-state">Нет отчетов</div>
                 </div>
-                <button type="submit" class="btn">Сохранить сновидение (+1 лучик)</button>
-            </form>
-            <div id="myDreamsList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-                <div class="empty-state">Нет сновидений</div>
+            </div>
+
+            <!-- Мои публичные желания -->
+            <div class="section">
+                <div class="section-title">✨ Мои публичные желания</div>
+                <div id="myPublicWishesList" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="empty-state">Нет публичных желаний</div>
+                </div>
             </div>
         </div>
     </div>
@@ -403,6 +467,18 @@
     <script src="auth.js"></script>
     <script>
         let creativeProfileLinks = [];
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
 
         async function loadProfile() {
             const user = window.currentUser;
@@ -731,6 +807,7 @@
                     email: user.email,
                     text,
                     isPublic,
+                    dayNumber: getLunarDay(),
                     createdAt: new Date()
                 });
 
