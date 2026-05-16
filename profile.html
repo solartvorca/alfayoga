@@ -300,6 +300,101 @@
             display: block;
         }
 
+        .accordion-section {
+            background: rgba(180, 100, 255, 0.08);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 25px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .accordion-header:hover {
+            background: rgba(180, 100, 255, 0.05);
+        }
+
+        .accordion-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #a18cd1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .accordion-count {
+            font-size: 12px;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .accordion-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .month-filter {
+            background: rgba(180, 100, 255, 0.15);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            color: #a18cd1;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .accordion-arrow {
+            color: #a18cd1;
+            font-size: 14px;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .accordion-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .accordion-body {
+            display: none;
+            padding: 0 25px 20px;
+        }
+
+        .accordion-body.open {
+            display: block;
+        }
+
+        .show-more-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px;
+            background: rgba(180, 100, 255, 0.1);
+            border: 1px solid rgba(180, 100, 255, 0.3);
+            color: #a18cd1;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .show-more-btn:hover {
+            background: rgba(180, 100, 255, 0.2);
+        }
+
+        .show-more-btn.hidden {
+            display: none;
+        }
+
         @media (max-width: 640px) {
             .profile-container {
                 max-width: 100%;
@@ -397,8 +492,9 @@
 
         <!-- Вкладка "Сновидения" -->
         <div id="dreams-tab" class="tab-content">
+            <!-- Форма добавления нового сновидения -->
             <div class="section">
-                <div class="section-title">🌙 Дневник сновидений</div>
+                <div class="section-title">📝 Добавить сновидение</div>
                 <form onsubmit="addDream(event)" style="display: flex; flex-direction: column; gap: 15px;">
                     <div class="form-group">
                         <textarea id="dreamText" placeholder="Опишите ваше сновидение..." required style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 6px; padding: 10px; color: #e0e6ed; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px;"></textarea>
@@ -409,8 +505,28 @@
                     </div>
                     <button type="submit" class="btn">Сохранить сновидение (+1 лучик)</button>
                 </form>
-                <div id="myDreamsList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-                    <div class="empty-state">Нет сновидений</div>
+            </div>
+
+            <!-- Аккордион сновидений -->
+            <div class="accordion-section" id="dreamsAccordion">
+                <div class="accordion-header" onclick="toggleAccordion('dreams')">
+                    <div class="accordion-title">
+                        🌙 Дневник сновидений
+                        <span class="accordion-count" id="dreamsCount"></span>
+                    </div>
+                    <div class="accordion-right">
+                        <select class="month-filter" id="dreamsMonthFilter"
+                                onchange="filterDreamsByMonth(this.value)"
+                                onclick="event.stopPropagation()">
+                        </select>
+                        <span class="accordion-arrow open" id="dreamsArrow">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body open" id="dreamsBody">
+                    <div id="myDreamsList" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="empty-state">Нет сновидений</div>
+                    </div>
+                    <button type="button" class="show-more-btn hidden" id="dreamsShowMore">Показать ещё</button>
                 </div>
             </div>
         </div>
@@ -441,19 +557,49 @@
                 </div>
             </div>
 
-            <!-- Мои отчеты -->
-            <div class="section">
-                <div class="section-title">📝 Мои отчеты</div>
-                <div id="myReportsList" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="empty-state">Нет отчетов</div>
+            <!-- Аккордион отчетов -->
+            <div class="accordion-section" id="reportsAccordion">
+                <div class="accordion-header" onclick="toggleAccordion('reports')">
+                    <div class="accordion-title">
+                        📝 Мои отчеты
+                        <span class="accordion-count" id="reportsCount"></span>
+                    </div>
+                    <div class="accordion-right">
+                        <select class="month-filter" id="reportsMonthFilter"
+                                onchange="filterReportsByMonth(this.value)"
+                                onclick="event.stopPropagation()">
+                        </select>
+                        <span class="accordion-arrow" id="reportsArrow">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body" id="reportsBody">
+                    <div id="myReportsList" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="empty-state">Нет отчетов</div>
+                    </div>
+                    <button type="button" class="show-more-btn hidden" id="reportsShowMore">Показать ещё</button>
                 </div>
             </div>
 
-            <!-- Мои публичные желания -->
-            <div class="section">
-                <div class="section-title">✨ Мои публичные желания</div>
-                <div id="myPublicWishesList" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="empty-state">Нет публичных желаний</div>
+            <!-- Аккордион публичных желаний -->
+            <div class="accordion-section" id="wishesAccordion">
+                <div class="accordion-header" onclick="toggleAccordion('wishes')">
+                    <div class="accordion-title">
+                        ✨ Мои публичные желания
+                        <span class="accordion-count" id="wishesCount"></span>
+                    </div>
+                    <div class="accordion-right">
+                        <select class="month-filter" id="wishesMonthFilter"
+                                onchange="filterWishesByMonth(this.value)"
+                                onclick="event.stopPropagation()">
+                        </select>
+                        <span class="accordion-arrow" id="wishesArrow">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body" id="wishesBody">
+                    <div id="myPublicWishesList" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="empty-state">Нет публичных желаний</div>
+                    </div>
+                    <button type="button" class="show-more-btn hidden" id="wishesShowMore">Показать ещё</button>
                 </div>
             </div>
         </div>
@@ -468,6 +614,83 @@
     <script>
         let creativeProfileLinks = [];
 
+        // Глобальный кеш для данных
+        let cachedDreams = [];
+        let cachedReports = [];
+        let cachedWishes = [];
+
+        // ============ Управление аккордионом ============
+        function toggleAccordion(id) {
+            const body = document.getElementById(id + 'Body');
+            const arrow = document.getElementById(id + 'Arrow');
+            if (body && arrow) {
+                const isOpen = body.classList.toggle('open');
+                arrow.classList.toggle('open', isOpen);
+            }
+        }
+
+        // ============ Утилиты для фильтра по месяцам ============
+        function buildMonthOptions(items) {
+            const months = new Set();
+            const now = new Date();
+            const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            months.add(currentMonth);
+
+            items.forEach(item => {
+                if (item.createdAt && item.createdAt.seconds) {
+                    const d = new Date(item.createdAt.seconds * 1000);
+                    const monthStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    months.add(monthStr);
+                }
+            });
+
+            return [...months].sort().reverse().map(m => {
+                const [y, mo] = m.split('-').map(Number);
+                const label = new Date(y, mo - 1).toLocaleString('ru-RU', { year: 'numeric', month: 'long' });
+                return { value: m, label };
+            });
+        }
+
+        function filterByMonth(items, monthStr) {
+            if (!monthStr) return items;
+            const [y, m] = monthStr.split('-').map(Number);
+            return items.filter(item => {
+                if (!item.createdAt || !item.createdAt.seconds) return false;
+                const d = new Date(item.createdAt.seconds * 1000);
+                return d.getFullYear() === y && d.getMonth() + 1 === m;
+            });
+        }
+
+        function renderWithLimit(items, renderFn, containerId, showMoreBtnId, limit = 3) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const visible = items.slice(0, limit);
+            if (visible.length === 0) {
+                container.innerHTML = '<div class="empty-state">Нет записей</div>';
+                const btn = document.getElementById(showMoreBtnId);
+                if (btn) btn.classList.add('hidden');
+                return;
+            }
+
+            container.innerHTML = visible.map(renderFn).join('');
+
+            const showMoreBtn = document.getElementById(showMoreBtnId);
+            if (showMoreBtn) {
+                if (items.length > limit) {
+                    showMoreBtn.classList.remove('hidden');
+                    showMoreBtn.textContent = `Показать ещё ${items.length - limit}`;
+                    showMoreBtn.onclick = () => {
+                        container.innerHTML = items.map(renderFn).join('');
+                        showMoreBtn.classList.add('hidden');
+                    };
+                } else {
+                    showMoreBtn.classList.add('hidden');
+                }
+            }
+        }
+
+        // ============ Переключение вкладок ============
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -753,38 +976,49 @@
                     .where("uid", "==", user.uid)
                     .get();
 
-                const list = document.getElementById("myReportsList");
+                cachedReports = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })).sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
 
-                if (snapshot.empty) {
-                    list.innerHTML = '<div class="empty-state">Нет отчетов</div>';
-                    return;
-                }
+                document.getElementById('reportsCount').textContent = `(${cachedReports.length})`;
 
-                const sortedDocs = snapshot.docs.sort((a, b) => b.data().createdAt - a.data().createdAt);
+                const months = buildMonthOptions(cachedReports);
+                const sel = document.getElementById('reportsMonthFilter');
+                sel.innerHTML = months.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
 
-                list.innerHTML = sortedDocs.map(doc => {
-                    const data = doc.data();
-                    const time = new Date(data.createdAt.seconds * 1000);
-                    const dateStr = time.toLocaleString("ru-RU", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    });
-
-                    return `
-                        <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(161, 140, 209, 0.5); padding: 12px; border-radius: 4px;">
-                            <div style="font-size: 13px; font-weight: 600; color: #a18cd1; margin-bottom: 8px;">📅 День ${data.dayNumber}</div>
-                            <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${data.text}</div>
-                            <div style="font-size: 11px; color: #888;">${dateStr}</div>
-                        </div>
-                    `;
-                }).join("");
+                renderReports(months[0]?.value);
             } catch (error) {
                 console.error("Ошибка загрузки отчетов:", error);
                 document.getElementById("myReportsList").innerHTML = '<div class="empty-state">Ошибка загрузки отчетов</div>';
             }
+        }
+
+        function renderReports(monthStr) {
+            const filtered = filterByMonth(cachedReports, monthStr);
+            const renderFn = (doc) => {
+                const time = new Date(doc.createdAt.seconds * 1000);
+                const dateStr = time.toLocaleString("ru-RU", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+                return `
+                    <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(161, 140, 209, 0.5); padding: 12px; border-radius: 4px;">
+                        <div style="font-size: 13px; font-weight: 600; color: #a18cd1; margin-bottom: 8px;">📅 День ${doc.dayNumber}</div>
+                        <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${doc.text}</div>
+                        <div style="font-size: 11px; color: #888;">${dateStr}</div>
+                    </div>
+                `;
+            };
+            renderWithLimit(filtered, renderFn, 'myReportsList', 'reportsShowMore');
+        }
+
+        function filterReportsByMonth(monthStr) {
+            renderReports(monthStr);
         }
 
         async function addDream(e) {
@@ -801,13 +1035,15 @@
             }
 
             try {
+                const dayNum = getLunarDay();
+                console.log("Добавляю сновидение с dayNumber:", dayNum);
                 await db.collection("dreams").add({
                     uid: user.uid,
                     nick: user.nick,
                     email: user.email,
                     text,
                     isPublic,
-                    dayNumber: getLunarDay(),
+                    dayNumber: dayNum,
                     createdAt: new Date()
                 });
 
@@ -835,43 +1071,54 @@
                     .where("uid", "==", user.uid)
                     .get();
 
-                const list = document.getElementById("myDreamsList");
+                cachedDreams = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })).sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
 
-                if (snapshot.empty) {
-                    list.innerHTML = '<div class="empty-state">Нет сновидений</div>';
-                    return;
-                }
+                document.getElementById('dreamsCount').textContent = `(${cachedDreams.length})`;
 
-                const sortedDocs = snapshot.docs.sort((a, b) => b.data().createdAt - a.data().createdAt);
+                const months = buildMonthOptions(cachedDreams);
+                const sel = document.getElementById('dreamsMonthFilter');
+                sel.innerHTML = months.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
 
-                list.innerHTML = sortedDocs.map(doc => {
-                    const data = doc.data();
-                    const time = new Date(data.createdAt.seconds * 1000);
-                    const dateStr = time.toLocaleString("ru-RU", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    });
-
-                    const statusText = data.isPublic ? "🌐 Публичное" : "🔒 Приватное";
-                    const statusColor = data.isPublic ? "#00d084" : "#a18cd1";
-
-                    return `
-                        <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(200, 150, 255, 0.5); padding: 12px; border-radius: 4px;">
-                            <div style="font-size: 13px; color: ${statusColor}; font-weight: 600; margin-bottom: 8px;">🌙 ${statusText}</div>
-                            <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${data.text}</div>
-                            <div style="font-size: 11px; color: #888;">${dateStr}</div>
-                            <button onclick="toggleDreamPublic('${doc.id}', ${!data.isPublic})" style="margin-top: 8px; background: rgba(180, 100, 255, 0.2); border: none; color: #a18cd1; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
-                                ${data.isPublic ? "Сделать приватным" : "Сделать публичным"}
-                            </button>
-                        </div>
-                    `;
-                }).join("");
+                renderDreams(months[0]?.value);
             } catch (error) {
                 console.error("Ошибка загрузки снов:", error);
             }
+        }
+
+        function renderDreams(monthStr) {
+            const filtered = filterByMonth(cachedDreams, monthStr);
+            const renderFn = (doc) => {
+                const time = new Date(doc.createdAt.seconds * 1000);
+                const dateStr = time.toLocaleString("ru-RU", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+                const statusText = doc.isPublic ? "🌐 Публичное" : "🔒 Приватное";
+                const statusColor = doc.isPublic ? "#00d084" : "#a18cd1";
+
+                return `
+                    <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(200, 150, 255, 0.5); padding: 12px; border-radius: 4px;">
+                        <div style="font-size: 13px; color: ${statusColor}; font-weight: 600; margin-bottom: 8px;">🌙 ${statusText}</div>
+                        <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${doc.text}</div>
+                        <div style="font-size: 11px; color: #888;">${dateStr}</div>
+                        <button onclick="toggleDreamPublic('${doc.id}', ${!doc.isPublic})" style="margin-top: 8px; background: rgba(180, 100, 255, 0.2); border: none; color: #a18cd1; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                            ${doc.isPublic ? "Сделать приватным" : "Сделать публичным"}
+                        </button>
+                    </div>
+                `;
+            };
+            renderWithLimit(filtered, renderFn, 'myDreamsList', 'dreamsShowMore');
+        }
+
+        function filterDreamsByMonth(monthStr) {
+            renderDreams(monthStr);
         }
 
         async function toggleDreamPublic(dreamId, isPublic) {
@@ -891,34 +1138,41 @@
                     .where("uid", "==", uid)
                     .get();
 
-                const list = document.getElementById("myPublicWishesList");
-
-                if (snapshot.empty) {
-                    list.innerHTML = '<div class="empty-state">Нет публичных желаний</div>';
-                    return;
-                }
-
-                // Сортировка на клиенте (по дате)
-                const wishes = snapshot.docs.map(doc => ({
+                cachedWishes = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
-                }));
-                wishes.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+                })).sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
 
-                list.innerHTML = wishes.map(wish => {
-                    return `
-                        <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(180, 100, 255, 0.5); padding: 12px; border-radius: 4px;">
-                            <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${wish.text}</div>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <span style="font-size: 12px; color: #ffd700; font-weight: 600;">💛 ${wish.votes} ✨</span>
-                                <span style="font-size: 11px; color: #888;">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join("");
+                document.getElementById('wishesCount').textContent = `(${cachedWishes.length})`;
+
+                const months = buildMonthOptions(cachedWishes);
+                const sel = document.getElementById('wishesMonthFilter');
+                sel.innerHTML = months.map(m => `<option value="${m.value}">${m.label}</option>`).join('');
+
+                renderWishes(months[0]?.value);
             } catch (error) {
                 console.error("Ошибка загрузки публичных желаний:", error);
             }
+        }
+
+        function renderWishes(monthStr) {
+            const filtered = filterByMonth(cachedWishes, monthStr);
+            const renderFn = (wish) => {
+                return `
+                    <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(180, 100, 255, 0.5); padding: 12px; border-radius: 4px;">
+                        <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${wish.text}</div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span style="font-size: 12px; color: #ffd700; font-weight: 600;">💛 ${wish.votes} ✨</span>
+                            <span style="font-size: 11px; color: #888;">${new Date(wish.createdAt.seconds * 1000).toLocaleDateString("ru-RU")}</span>
+                        </div>
+                    </div>
+                `;
+            };
+            renderWithLimit(filtered, renderFn, 'myPublicWishesList', 'wishesShowMore');
+        }
+
+        function filterWishesByMonth(monthStr) {
+            renderWishes(monthStr);
         }
 
         // Загрузить профиль при входе

@@ -635,6 +635,7 @@
         }
 
         async function loadReports() {
+            console.log("Загружаю отчеты для дня:", currentDayNum);
             const reportsSnapshot = await db.collection("reports")
                 .where("dayNumber", "==", currentDayNum)
                 .get();
@@ -643,6 +644,8 @@
                 .where("isPublic", "==", true)
                 .where("dayNumber", "==", currentDayNum)
                 .get();
+
+            console.log("Найдено снов:", dreamsSnapshot.docs.length);
 
             const list = document.getElementById("reportsList");
             const onlyReports = document.getElementById("onlyReportsFilter").checked;
