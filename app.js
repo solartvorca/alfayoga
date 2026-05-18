@@ -17,6 +17,7 @@ let alarmState = {
     enabled: true,
     lastAlarmTime: Date.now(),
     alarmInterval: (parseInt(localStorage.getItem('alarmIntervalSeconds')) || 600) * 1000,
+    soundDuration: parseFloat(localStorage.getItem('alarmSoundDuration')) || 3,
     isSoundPlaying: false,
 };
 
@@ -34,6 +35,7 @@ const alarmToggle = document.getElementById('alarmToggle');
 const alarmMessage = document.getElementById('alarmMessage');
 const alarmIntervalInput = document.getElementById('alarmInterval');
 const alarmIntervalDisplay = document.getElementById('alarmIntervalDisplay');
+const alarmDurationInput = document.getElementById('alarmDuration');
 const lunarDaySpan = document.getElementById('lunarDay');
 const lunarPhaseSpan = document.getElementById('lunarPhase');
 const alarmNotification = document.getElementById('alarmNotification');
@@ -59,19 +61,37 @@ function updateAlarmInterval() {
     console.log(`[Alarm] Интервал обновлен: ${seconds}с`);
 }
 
+// Обновление длительности звука будильника
+function updateAlarmDuration() {
+    if (!alarmDurationInput) return;
+    const duration = parseFloat(alarmDurationInput.value) || 3;
+    alarmState.soundDuration = duration;
+    localStorage.setItem('alarmSoundDuration', duration);
+    console.log(`[Alarm] Длительность звука обновлена: ${duration}с`);
+}
+
 if (inhalInput) inhalInput.addEventListener('change', updateBreathingParams);
 if (holdAfterInhaleInput) holdAfterInhaleInput.addEventListener('change', updateBreathingParams);
 if (exhaleInput) exhaleInput.addEventListener('change', updateBreathingParams);
 if (holdAfterExhaleInput) holdAfterExhaleInput.addEventListener('change', updateBreathingParams);
 if (alarmIntervalInput) alarmIntervalInput.addEventListener('change', updateAlarmInterval);
 if (alarmIntervalInput) alarmIntervalInput.addEventListener('input', updateAlarmInterval);
+if (alarmDurationInput) alarmDurationInput.addEventListener('change', updateAlarmDuration);
+if (alarmDurationInput) alarmDurationInput.addEventListener('input', updateAlarmDuration);
 
-// Загрузить сохраненный интервал будильника из localStorage
+// Загрузить сохраненные настройки будильника из localStorage
 if (alarmIntervalInput) {
     const savedInterval = localStorage.getItem('alarmIntervalSeconds');
     if (savedInterval) {
         alarmIntervalInput.value = savedInterval;
         updateAlarmInterval();
+    }
+}
+if (alarmDurationInput) {
+    const savedDuration = localStorage.getItem('alarmSoundDuration');
+    if (savedDuration) {
+        alarmDurationInput.value = savedDuration;
+        updateAlarmDuration();
     }
 }
 
@@ -240,7 +260,7 @@ function checkAlarm() {
 
 // Триггер будильника
 function triggerAlarm() {
-    // Защита от дублирующихся срабатываний (звук может воспроизводиться до 1.5 сек)
+    // Защита от дублирующихся срабатываний
     if (alarmState.isSoundPlaying) {
         console.log('[Alarm] Sound already playing, ignoring duplicate trigger');
         return;
@@ -250,10 +270,14 @@ function triggerAlarm() {
     playAlarmSound();
     showAlarmMessage();
 
-    // Разрешить следующее срабатывание через 2 секунды
+    // Очень длинный cooldown на мобильных (10 сек), на десктопе достаточно 3 сек
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const cooldown = isMobile ? 10000 : 3000;
+
     setTimeout(() => {
         alarmState.isSoundPlaying = false;
-    }, 2000);
+        console.log(`[Alarm] Cooldown завершен (${cooldown}ms), разрешено новое срабатывание`);
+    }, cooldown);
 
     // Вибрация на мобильных (если доступна)
     try {
@@ -322,6 +346,9 @@ function playAlarmSound() {
 
 function playAlarmSoundInternal(audioContext) {
     const now = audioContext.currentTime;
+    const duration = alarmState.soundDuration;
+    const halfDuration = duration / 2;
+
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
 
@@ -332,19 +359,19 @@ function playAlarmSoundInternal(audioContext) {
     osc.frequency.setValueAtTime(528, now + 0.1);
 
     gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + halfDuration);
 
     osc.start(now);
-    osc.stop(now + 0.5);
+    osc.stop(now + halfDuration);
 
-    // Вторая волна
+    // Вторая волна (вторая половина)
     const osc2 = audioContext.createOscillator();
     osc2.connect(gain);
-    osc2.frequency.setValueAtTime(432, now + 0.6);
-    gain.gain.setValueAtTime(0.3, now + 0.6);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.1);
-    osc2.start(now + 0.6);
-    osc2.stop(now + 1.1);
+    osc2.frequency.setValueAtTime(432, now + halfDuration + 0.1);
+    gain.gain.setValueAtTime(0.3, now + halfDuration + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    osc2.start(now + halfDuration + 0.1);
+    osc2.stop(now + duration);
 }
 
 // Показ сообщения будильника
