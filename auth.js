@@ -15,10 +15,8 @@ function checkAuth() {
                     ...userDoc.data()
                 };
 
-                // Проверить статус на marathon.html
-                if (window.location.pathname.includes("marathon.html")) {
-                    checkMarathonStatus();
-                }
+                // Проверить статус марафона на всех страницах
+                checkMarathonStatus();
 
                 // Если пользователь удалён - перенаправить на removed.html
                 const currentPath = window.location.pathname.split('/').pop();
@@ -43,11 +41,37 @@ async function checkMarathonStatus() {
     const user = window.currentUser;
     if (!user) return;
 
+    // Администраторов не исключаем
+    if (user.isAdmin || user.email === "wuallar@gmail.com") return;
+
+    // Уже исключён — не проверяем
+    if (user.status === "removed") return;
+
     const today = getLunarDay();
     const lastReport = user.lastReportDay || 0;
 
-    // Если пропустил день - вывести из марафона
-    if (today > lastReport + 1) {
+    let shouldRemove = false;
+
+    if (lastReport === 0) {
+        // Пользователь ещё не писал отчётов — проверяем по дате регистрации
+        const joinedAt = user.joinedAt?.toDate ? user.joinedAt.toDate() : (user.joinedAt ? new Date(user.joinedAt) : null);
+        if (joinedAt) {
+            const fullMoonDate = new Date(localStorage.getItem('fullMoonDate') || new Date(2026, 4, 2));
+            const daysSinceFullMoon = (joinedAt - fullMoonDate) / (1000 * 60 * 60 * 24);
+            const joinedLunarDay = Math.floor(Math.abs(daysSinceFullMoon) % 29.5) + 1;
+            // Если прошло больше 1 дня с регистрации и отчёт так и не написан
+            if (today > joinedLunarDay + 1) {
+                shouldRemove = true;
+            }
+        }
+    } else {
+        // Если пропустил день — вывести из марафона
+        if (today > lastReport + 1) {
+            shouldRemove = true;
+        }
+    }
+
+    if (shouldRemove) {
         await db.collection("users").doc(user.uid).update({
             status: "removed"
         });

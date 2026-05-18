@@ -264,17 +264,26 @@ app.post('/checkAndRemoveUsersWithoutReport', async (req, res) => {
                 return;
             }
 
-            // Не исключать новых пользователей (у которых lastReportDay = 0)
-            // Они должны написать первый отчёт в день регистрации
+            // Новые пользователи без отчётов — проверяем по дате регистрации
             if (lastReportDay === 0) {
-                console.log(`[Daily Check] Skipping new user ${user.email} - no reports yet`);
-                activeCount++;
-                return;
+                const joinedAt = user.joinedAt?.toDate?.() || null;
+                if (!joinedAt) {
+                    activeCount++;
+                    return;
+                }
+                const fullMoonDate = new Date(2026, 4, 2);
+                const daysSinceFullMoon = (joinedAt - fullMoonDate) / (1000 * 60 * 60 * 24);
+                const joinedLunarDay = Math.floor(Math.abs(daysSinceFullMoon) % 29.5) + 1;
+                // Если прошло больше 1 дня с регистрации и отчёт так и не написан
+                if (currentLunarDay <= joinedLunarDay + 1) {
+                    activeCount++;
+                    return;
+                }
+                // Иначе исключаем
             }
 
             // Если пользователь активен и пропустил отчёт за ВЧЕРАШНИЙ день
-            // (т.е. lastReportDay < currentDay - 1, значит пропустил день)
-            if (currentStatus === "active" && lastReportDay < currentLunarDay - 1) {
+            if (currentStatus === "active" && (lastReportDay === 0 || lastReportDay < currentLunarDay - 1)) {
                 console.log(`[Daily Check] Removing ${user.nick || user.email} (last report: ${lastReportDay}, current day: ${currentLunarDay})`);
 
                 batch.update(doc.ref, {
