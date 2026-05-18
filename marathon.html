@@ -895,6 +895,12 @@
                 return;
             }
 
+            // Не исключать новых пользователей (lastReportDay = 0)
+            if (lastReportDay === 0) {
+                console.log(`[Auto-removal check] Skipping new user - no reports yet`);
+                return;
+            }
+
             // Если последний отчёт пропущен за вчерашний день - пользователь должен выпасть
             // (lastReportDay < currentDay - 1 означает что он пропустил день)
             if (lastReportDay < currentDay - 1) {

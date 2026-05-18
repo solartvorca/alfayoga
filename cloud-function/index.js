@@ -264,6 +264,14 @@ app.post('/checkAndRemoveUsersWithoutReport', async (req, res) => {
                 return;
             }
 
+            // Не исключать новых пользователей (у которых lastReportDay = 0)
+            // Они должны написать первый отчёт в день регистрации
+            if (lastReportDay === 0) {
+                console.log(`[Daily Check] Skipping new user ${user.email} - no reports yet`);
+                activeCount++;
+                return;
+            }
+
             // Если пользователь активен и пропустил отчёт за ВЧЕРАШНИЙ день
             // (т.е. lastReportDay < currentDay - 1, значит пропустил день)
             if (currentStatus === "active" && lastReportDay < currentLunarDay - 1) {
