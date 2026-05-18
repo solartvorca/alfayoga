@@ -464,14 +464,44 @@
 
         <!-- Уведомление о вывале -->
         <div class="removal-notice" id="removalNotice">
-            <p>⚠️ Вы выведены из марафона</p>
-            <p id="removalReason" style="font-size: 13px; margin-top: 8px; font-weight: 400;">Не написали отчёт вовремя</p>
-            <p style="font-size: 12px; margin-top: 12px; color: #ff9999;">Вернитесь в следующее полнолуние или обратитесь к администратору</p>
-            <p style="font-size: 12px; margin-top: 8px; font-weight: 400;">Можете использовать будильник и дыхательную практику</p>
+            <div style="max-width: 600px; margin: 0 auto; padding: 40px 30px; text-align: center;">
+                <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+
+                <h2 style="color: #ff6464; font-size: 28px; margin: 0 0 20px 0;">Вы выведены из марафона</h2>
+
+                <p style="color: #c8d0db; font-size: 16px; margin: 0 0 15px 0; line-height: 1.6;">
+                    Вы не написали отчёт вовремя (до 00:00 по московскому времени)
+                </p>
+
+                <div style="background: rgba(255, 100, 100, 0.1); border: 1px solid rgba(255, 100, 100, 0.3); border-radius: 8px; padding: 20px; margin: 30px 0;">
+                    <p style="color: #ff9999; margin: 0 0 10px 0; font-weight: 600;">
+                        ❌ Доступ закрыт до следующего полнолуния
+                    </p>
+                    <p style="color: #c8d0db; margin: 0; font-size: 14px;">
+                        Регулярность — это основной принцип марафона. 28 дней от полнолуния до полнолуния — один непрерывный ритм.
+                    </p>
+                </div>
+
+                <div style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.2); border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <p style="color: #a18cd1; margin: 0 0 8px 0; font-weight: 600;">📅 Что дальше?</p>
+                    <ul style="color: #c8d0db; margin: 0; text-align: left; font-size: 14px;">
+                        <li style="margin-bottom: 8px;">Вернитесь на <strong>следующее полнолуние</strong> — доступ восстановится автоматически</li>
+                        <li>Или обратитесь к администратору для восстановления в этом марафоне</li>
+                    </ul>
+                </div>
+
+                <p style="color: #888; font-size: 13px; margin-top: 30px;">
+                    💡 Вы можете использовать будильник и практиковать дыхательные упражнения на главной странице
+                </p>
+
+                <a href="index.html" style="display: inline-block; margin-top: 20px; padding: 12px 30px; background: rgba(180, 100, 255, 0.2); border: 1px solid rgba(180, 100, 255, 0.5); color: #a18cd1; text-decoration: none; border-radius: 6px; font-weight: 600; transition: all 0.2s;">
+                    ← Вернуться на главную
+                </a>
+            </div>
         </div>
 
         <!-- Информация о марафоне -->
-        <div class="marathon-info">
+        <div class="marathon-info" id="marathonInfo">
             <p><strong>Лунный марафон «Йога царевича» (28 дней)</strong></p>
             <p>28 дней — от полнолуния до полнолуния — тебе предстоит вести отчёт о практике дня. Каждое утро задание будет меняться.</p>
             <button class="btn-read-more" onclick="showMarathonInfo()">Просмотреть описание полностью</button>
@@ -551,7 +581,7 @@
         </div>
 
         <!-- Лента отчетов -->
-        <div class="report-section">
+        <div class="report-section" id="reportsSection">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin: 0;">Отчёты участников</h3>
                 <label style="font-size: 12px; color: #888; display: flex; align-items: center; gap: 8px;">
@@ -1636,11 +1666,22 @@
                         updateAdminLink();
                         checkTotalRays();
 
-                        // Показать уведомление только если статус = removed
+                        // Если статус = removed - скрыть весь контент марафона
                         if (window.currentUser.status === "removed") {
                             document.getElementById("removalNotice").style.display = "block";
+
+                            // Скрыть весь контент марафона
+                            document.getElementById("marathonInfo").style.display = "none";
+                            document.getElementById("dayAssignment").style.display = "none";
                             document.getElementById("reportSection").style.display = "none";
                             document.getElementById("socialRewards").style.display = "none";
+                            document.getElementById("reportsSection").style.display = "none";
+                            document.getElementById("dailyPracticeSection").style.display = "none";
+
+                            // Не загружать данные
+                            return;
+                        } else {
+                            document.getElementById("removalNotice").style.display = "none";
                         }
                     }
                 });
