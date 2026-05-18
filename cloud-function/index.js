@@ -264,8 +264,9 @@ app.post('/checkAndRemoveUsersWithoutReport', async (req, res) => {
                 return;
             }
 
-            // Если пользователь активен и не написал отчёт за сегодня
-            if (currentStatus === "active" && lastReportDay < currentLunarDay) {
+            // Если пользователь активен и пропустил отчёт за ВЧЕРАШНИЙ день
+            // (т.е. lastReportDay < currentDay - 1, значит пропустил день)
+            if (currentStatus === "active" && lastReportDay < currentLunarDay - 1) {
                 console.log(`[Daily Check] Removing ${user.nick || user.email} (last report: ${lastReportDay}, current day: ${currentLunarDay})`);
 
                 batch.update(doc.ref, {

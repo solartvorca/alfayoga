@@ -895,8 +895,9 @@
                 return;
             }
 
-            // Если последний отчёт не за сегодняшний день - пользователь должен выпасть
-            if (lastReportDay < currentDay) {
+            // Если последний отчёт пропущен за вчерашний день - пользователь должен выпасть
+            // (lastReportDay < currentDay - 1 означает что он пропустил день)
+            if (lastReportDay < currentDay - 1) {
                 try {
                     console.log(`[Auto-removal] Removing user because missed report. Current day: ${currentDay}, Last report: ${lastReportDay}`);
 
