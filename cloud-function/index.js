@@ -1,8 +1,14 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
+const admin = require('firebase-admin');
 
 const app = express();
+
+// Инициализация Firebase Admin
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 app.use(express.json());
 app.use(cors({
     origin: '*',
@@ -215,6 +221,77 @@ app.post('/sendMailingDirect', async (req, res) => {
     } catch (error) {
         console.error('Ошибка отправки рассылки:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Ежедневная проверка и удаление пользователей без отчёта (в 00:00 MSK = 21:00 UTC)
+app.post('/checkAndRemoveUsersWithoutReport', async (req, res) => {
+    try {
+        console.log('[Daily Check] Starting daily report check...');
+
+        const db = admin.firestore();
+
+        // Вычисляем текущий лунный день
+        const fullMoonDateStr = await db.collection("settings").doc("lunar").get()
+            .then(doc => doc?.data()?.fullMoonDate?.toDate?.() || new Date(2026, 4, 2))
+            .catch(() => new Date(2026, 4, 2));
+
+        const lunarCycleDays = 29.5;
+        const now = new Date();
+        const daysSinceFullMoon = (now - fullMoonDateStr) / (1000 * 60 * 60 * 24);
+        const cycleDays = daysSinceFullMoon % lunarCycleDays;
+        const currentLunarDay = Math.floor(cycleDays) + 1;
+
+        console.log(`[Daily Check] Current lunar day: ${currentLunarDay}`);
+
+        // Получить всех пользователей
+        const usersSnapshot = await db.collection("users").get();
+        let removedCount = 0;
+        let activeCount = 0;
+        const batch = db.batch();
+
+        // Проверить каждого пользователя
+        usersSnapshot.docs.forEach(doc => {
+            const user = doc.data();
+            const lastReportDay = user.lastReportDay || 0;
+            const currentStatus = user.status || "active";
+
+            // Если пользователь активен и не написал отчёт за сегодня
+            if (currentStatus === "active" && lastReportDay < currentLunarDay) {
+                console.log(`[Daily Check] Removing ${user.nick || user.email} (last report: ${lastReportDay}, current day: ${currentLunarDay})`);
+
+                batch.update(doc.ref, {
+                    status: "removed",
+                    removedAt: new Date(),
+                    removedReason: "missed_daily_report",
+                    removedDay: currentLunarDay
+                });
+                removedCount++;
+            } else if (currentStatus === "active") {
+                activeCount++;
+            }
+        });
+
+        // Выполнить все обновления
+        await batch.commit();
+
+        const message = `✓ Daily check completed! Removed: ${removedCount}, Active: ${activeCount}`;
+        console.log(`[Daily Check] ${message}`);
+
+        res.status(200).json({
+            success: true,
+            message,
+            removedCount,
+            activeCount,
+            currentLunarDay,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Daily Check] Error:', error);
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
     }
 });
 
