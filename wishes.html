@@ -426,7 +426,7 @@
                     text,
                     rays,
                     fulfilled: false,
-                    createdAt: new Date(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     fulfilledAt: null
                 });
 
@@ -493,7 +493,7 @@
             try {
                 await db.collection("wishes").doc(wishId).update({
                     fulfilled,
-                    fulfilledAt: fulfilled ? new Date() : null
+                    fulfilledAt: fulfilled ? firebase.firestore.FieldValue.serverTimestamp() : null
                 });
                 loadWishes();
             } catch (error) {
@@ -518,7 +518,7 @@
                     nick: user.nick,
                     text,
                     votes: 0,
-                    createdAt: new Date()
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById("publicWishText").value = "";
