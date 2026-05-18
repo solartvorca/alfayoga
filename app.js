@@ -17,6 +17,7 @@ let alarmState = {
     enabled: true,
     lastAlarmTime: Date.now(),
     alarmInterval: (parseInt(localStorage.getItem('alarmIntervalSeconds')) || 600) * 1000,
+    isSoundPlaying: false,
 };
 
 let lunarState = {
@@ -239,8 +240,20 @@ function checkAlarm() {
 
 // Триггер будильника
 function triggerAlarm() {
+    // Защита от дублирующихся срабатываний (звук может воспроизводиться до 1.5 сек)
+    if (alarmState.isSoundPlaying) {
+        console.log('[Alarm] Sound already playing, ignoring duplicate trigger');
+        return;
+    }
+
+    alarmState.isSoundPlaying = true;
     playAlarmSound();
     showAlarmMessage();
+
+    // Разрешить следующее срабатывание через 2 секунды
+    setTimeout(() => {
+        alarmState.isSoundPlaying = false;
+    }, 2000);
 
     // Вибрация на мобильных (если доступна)
     try {
@@ -372,14 +385,14 @@ function animate(timestamp) {
 updateBreathingParams();
 requestAnimationFrame(animate);
 
-// Проверка будильника отдельно (каждые 500ms для надежности на мобильных)
+// Проверка будильника отдельно (каждые 1000ms = 1 сек для надежности на мобильных)
 setInterval(() => {
     try {
         checkAlarm();
     } catch (err) {
         console.error('[Alarm] Error in checkAlarm:', err);
     }
-}, 500);
+}, 1000);
 
 // Логирование статуса будильника каждые 10 секунд
 setInterval(() => {
