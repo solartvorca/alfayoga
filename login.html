@@ -173,6 +173,14 @@
     <script src="firebase-config.js"></script>
 
     <script>
+        // КРИТИЧНО: Сохранить реф-код ДО всех проверок авторизации
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+            localStorage.setItem('pendingReferralCode', refCode);
+            console.log('[Referral STORAGE] Код сохранен в localStorage:', refCode);
+        }
+
         const errorDiv = document.getElementById("authError");
 
         function showError(msg) {
@@ -215,14 +223,20 @@
                 const uid = res.user.uid;
                 const referralCode = uid.substring(0, 8).toUpperCase();
 
-                // Получить реферальный код из URL параметров
+                // Получить реферальный код из URL параметров ИЛИ из localStorage
                 const urlParams = new URLSearchParams(window.location.search);
-                const referrerCode = urlParams.get('ref');
+                let referrerCode = urlParams.get('ref');
+
+                // Если в URL нет ref, попробовать из localStorage
+                if (!referrerCode) {
+                    referrerCode = localStorage.getItem('pendingReferralCode');
+                    console.log('[Referral] Код получен из localStorage:', referrerCode);
+                }
+
                 let referrerId = null;
 
-                // DEBUG: показать параметры URL
-                console.log(`[Referral DEBUG] window.location.search: ${window.location.search}`);
-                console.log(`[Referral DEBUG] Параметр ref из URL: ${referrerCode}`);
+                // DEBUG: показать откуда взялся код
+                console.log(`[Referral DEBUG] Полученный код: ${referrerCode}`);
 
                 // Найти UID реферера по его коду
                 if (referrerCode) {
@@ -299,6 +313,10 @@
                 } else if (referrerCode) {
                     console.warn(`[Referral] Реферер не найден, лучики не добавлены`);
                 }
+
+                // Очистить код из localStorage после успешной регистрации
+                localStorage.removeItem('pendingReferralCode');
+                console.log('[Referral] Код удален из localStorage');
 
                 window.location.href = "welcome.html";
             } catch (error) {
