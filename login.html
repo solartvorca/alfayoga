@@ -199,31 +199,16 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // КРИТИЧНО: Сохранить реф-код ДО всех проверок авторизации
+        // Сохранить реф-код ДО всех проверок авторизации
         const urlParams = new URLSearchParams(window.location.search);
         const refCode = urlParams.get('ref');
         if (refCode) {
             localStorage.setItem('pendingReferralCode', refCode);
-            console.log('[Referral STORAGE] Код сохранен в localStorage:', refCode);
-            confirm('✓ Реферальный код сохранен: ' + refCode + '\n\nНажми OK чтобы продолжить');
-        } else {
-            const stored = localStorage.getItem('pendingReferralCode');
-            if (stored) {
-                console.log('[Referral STORAGE] Код найден в localStorage:', stored);
-                confirm('✓ Используем сохраненный код из localStorage: ' + stored + '\n\nНажми OK чтобы продолжить');
-            }
+            console.log('[Referral] Реф-код сохранен:', refCode);
         }
 
         const errorDiv = document.getElementById("authError");
         let registrationInProgress = false;
-
-        // Данные регистрации во время процесса проверки email
-        let pendingRegistrationData = {
-            email: null,
-            password: null,
-            nick: null,
-            referrerCode: null
-        };
 
         function showError(msg) {
             errorDiv.textContent = msg;
@@ -262,120 +247,42 @@
             const password = document.getElementById("registerPassword").value;
 
             try {
-                console.log('[Registration] Отправляю ссылку для входа на:', email);
+                console.log('[Registration] Создаю аккаунт для:', email);
 
-                // Сохраняем данные регистрации
-                pendingRegistrationData = {
-                    email,
-                    password,
-                    nick,
-                    referrerCode: new URLSearchParams(window.location.search).get('ref') || localStorage.getItem('pendingReferralCode')
-                };
+                // Создаем аккаунт в Firebase
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+                console.log('[Registration] ✓ Аккаунт создан, uid:', uid);
 
-                // Настройки для ссылки входа по email
-                const actionCodeSettings = {
-                    url: window.location.origin + window.location.pathname + '?register=1',
-                    handleCodeInApp: true
-                };
+                // Получаем реф-код реферера если есть
+                const referrerCode = urlParams.get('ref') || localStorage.getItem('pendingReferralCode');
+                const referralCode = uid.substring(0, 8).toUpperCase();
+                let referrerId = null;
 
-                // Отправляем ссылку для входа
-                await auth.sendSignInLinkToEmail(email, actionCodeSettings);
-                console.log('[Registration] ✓ Ссылка отправлена на email:', email);
-
-                // Сохраняем email в localStorage для использования после перехода по ссылке
-                localStorage.setItem('pendingRegistrationEmail', email);
-                localStorage.setItem('pendingRegistrationData', JSON.stringify(pendingRegistrationData));
-
-                // Показываем сообщение
-                document.getElementById("registerForm").style.display = "none";
-                showError('✓ Ссылка для входа отправлена на ' + email + '. Проверьте почту!');
-
-                // Показываем кнопку для возврата
-                const backBtn = document.createElement('button');
-                backBtn.textContent = '← Вернуться';
-                backBtn.style.marginTop = '10px';
-                backBtn.style.width = '100%';
-                backBtn.onclick = () => {
-                    document.getElementById("registerForm").style.display = "block";
-                    backBtn.remove();
-                    showError('');
-                };
-                document.querySelector('.auth-container').appendChild(backBtn);
-
-                registrationInProgress = false;
-            } catch (error) {
-                console.error('[Registration] Ошибка:', error);
-                showError(error.message || 'Ошибка отправки ссылки. Попробуй позже.');
-                registrationInProgress = false;
-            }
-        }
-
-        // Обработка ссылки входа по email при загрузке страницы
-        async function handleEmailLinkSignIn() {
-            if (auth.isSignInWithEmailLink(window.location.href)) {
-                console.log('[EmailLink] Обнаружена ссылка входа');
-
-                let email = localStorage.getItem('pendingRegistrationEmail');
-                let registrationDataStr = localStorage.getItem('pendingRegistrationData');
-
-                if (!email) {
-                    email = prompt('Введи свой email для подтверждения:');
-                }
-
-                if (!email) {
-                    console.error('[EmailLink] Email не введен');
-                    return;
-                }
-
-                try {
-                    console.log('[EmailLink] Завершаю вход по ссылке...');
-                    const result = await auth.signInWithEmailLink(email, window.location.href);
-                    const uid = result.user.uid;
-
-                    console.log('[EmailLink] ✓ Вход завершен, uid:', uid);
-
-                    // Получаем данные регистрации
-                    let registrationData = registrationDataStr ? JSON.parse(registrationDataStr) : null;
-
-                    if (registrationData) {
-                        console.log('[Registration] Создаю профиль пользователя...');
-                        const referralCode = uid.substring(0, 8).toUpperCase();
-                        let referrerId = null;
-                        let referrerCode = registrationData.referrerCode;
-
-                        console.log(`[Referral DEBUG] Итоговый код для поиска: "${referrerCode}"`);
-
-                // Найти UID реферера по его коду
+                // Ищем реферера по коду
                 if (referrerCode) {
-                    console.log(`[Referral] Ищу реферера с кодом: ${referrerCode.toUpperCase()}`);
+                    console.log('[Referral] Ищу реферера с кодом:', referrerCode);
                     try {
-                        console.log('[Referral] Запускаю запрос к Firestore...');
                         const referrerSnapshot = await db.collection("users")
                             .where("referralCode", "==", referrerCode.toUpperCase())
                             .limit(1)
                             .get();
 
-                        console.log(`[Referral] Результат запроса: ${referrerSnapshot.size} документ(ов)`);
                         if (!referrerSnapshot.empty) {
                             referrerId = referrerSnapshot.docs[0].id;
-                            const referrerData = referrerSnapshot.docs[0].data();
-                            console.log(`[Referral] ✓ Реферер найден: ${referrerData.nick || referrerData.email}`);
-                            console.log(`[Referral] UID: ${referrerId}`);
-                            console.log(`[Referral] Текущие лучики реферера: ${referrerData.rays}`);
+                            console.log('[Referral] ✓ Реферер найден');
                         } else {
-                            console.warn(`[Referral] ✗ Код ${referrerCode} не найден в базе`);
+                            console.warn('[Referral] Код не найден');
                         }
                     } catch (error) {
-                        console.error("[Referral] Ошибка поиска реферера:", error);
+                        console.error('[Referral] Ошибка поиска:', error);
                     }
-                } else {
-                    console.log("[Referral] Параметр ref не указан");
                 }
 
-                // Создать документ нового пользователя
+                // Создаем профиль пользователя в Firestore
                 const userData = {
                     email,
-                    nick: registrationData.nick,
+                    nick,
                     rays: 0,
                     dustAmount: 0,
                     status: "active",
@@ -408,66 +315,50 @@
                     }
                 };
 
-                console.log('[Registration] Сохраняю данные нового пользователя в Firestore...');
                 await db.collection("users").doc(uid).set(userData);
-                console.log('[Registration] ✓ Данные пользователя сохранены');
+                console.log('[Registration] ✓ Профиль создан');
 
-                // Дать награду реферету за новую регистрацию
+                // Даем награду реферету
                 if (referrerId) {
                     try {
-                        console.log(`[Referral] Добавляю 100 лучиков реферету ${referrerId}...`);
+                        console.log('[Referral] Добавляю 100 лучиков реферету');
                         await db.collection("users").doc(referrerId).update({
                             rays: firebase.firestore.FieldValue.increment(100),
                             referralRays: firebase.firestore.FieldValue.increment(100),
                             totalReferrals: firebase.firestore.FieldValue.increment(1)
                         });
-                        console.log(`[Referral] ✓ Успешно добавлено 100 лучиков реферету ${referrerId}`);
+                        console.log('[Referral] ✓ 100 лучиков добавлено');
                     } catch (error) {
-                        console.error("[Referral] ✗ Ошибка при добавлении лучиков:", error);
+                        console.error('[Referral] Ошибка добавления лучиков:', error);
                     }
-                } else if (referrerCode) {
-                    console.warn(`[Referral] ✗ Реферер с кодом ${referrerCode} не найден, лучики не добавлены`);
                 }
 
-                // Очистить код из localStorage после успешной регистрации
+                // Очищаем код из localStorage
                 localStorage.removeItem('pendingReferralCode');
-                console.log('[Referral] Код удален из localStorage');
-                console.log('[Registration] ✓ Регистрация завершена успешно, перенаправляю на marathon.html');
 
-                // Небольшая задержка чтобы убедиться что все Firestore операции завершились
+                // Небольшая задержка перед редиректом
                 setTimeout(() => {
                     registrationInProgress = false;
                     window.location.href = "marathon.html";
-                        }, 500);
-                    }
-                } catch (error) {
-                    console.error('[EmailLink] Ошибка:', error);
-                    showError(error.message || 'Ошибка при входе по ссылке. Попробуй позже.');
-                }
+                }, 500);
+
+            } catch (error) {
+                console.error('[Registration] Ошибка:', error);
+                showError(error.message || 'Ошибка регистрации. Попробуй позже.');
+                registrationInProgress = false;
             }
         }
 
-        // Вызываем обработку ссылки входа при загрузке страницы
-        handleEmailLinkSignIn();
-
-        // Вернуться на форму регистрации
-        function backToRegister() {
-            document.getElementById("verifyEmailForm").style.display = "none";
-            document.getElementById("registerForm").style.display = "block";
-            document.getElementById("verificationCode").value = '';
-            pendingRegistrationData = { email: null, password: null, nick: null, referrerCode: null };
-        }
-
-        // Проверить состояние (но не перенаправлять во время регистрации)
+        // Проверить состояние авторизации
         auth.onAuthStateChanged(user => {
             if (user && !registrationInProgress) {
                 window.location.href = "marathon.html";
             }
         });
 
-        // Debug функция для проверки реферальных кодов (вызывать из консоли)
+        // Debug функция
         window.debugReferralCode = async (code) => {
-            console.log(`Проверяю реферальный код: ${code}`);
+            console.log(`Проверяю код: ${code}`);
             try {
                 const snapshot = await db.collection("users")
                     .where("referralCode", "==", code.toUpperCase())
@@ -476,19 +367,14 @@
 
                 if (!snapshot.empty) {
                     const user = snapshot.docs[0].data();
-                    console.log(`✓ Код найден! Пользователь:`, user);
-                    console.log(`  Email: ${user.email}`);
-                    console.log(`  Ник: ${user.nick}`);
-                    console.log(`  Текущие лучики: ${user.rays}`);
-                    console.log(`  Лучики от рефералов: ${user.referralRays}`);
-                    console.log(`  Количество приведенных: ${user.totalReferrals}`);
+                    console.log(`✓ Код найден!`, user);
                     return user;
                 } else {
-                    console.error(`✗ Код ${code} не найден в базе`);
+                    console.error(`✗ Код ${code} не найден`);
                     return null;
                 }
             } catch (error) {
-                console.error("Ошибка при проверке кода:", error);
+                console.error("Ошибка:", error);
                 return null;
             }
         };
