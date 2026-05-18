@@ -364,7 +364,6 @@ function showAlarmMessage() {
 // Основной цикл анимации
 function animate(timestamp) {
     updateBreathingAnimation(timestamp);
-    checkAlarm();
     drawMoon();
     requestAnimationFrame(animate);
 }
@@ -373,14 +372,14 @@ function animate(timestamp) {
 updateBreathingParams();
 requestAnimationFrame(animate);
 
-// Очень частая проверка будильника на мобильных (каждые 100ms для надежности)
+// Проверка будильника отдельно (каждые 500ms для надежности на мобильных)
 setInterval(() => {
     try {
         checkAlarm();
     } catch (err) {
         console.error('[Alarm] Error in checkAlarm:', err);
     }
-}, 100);
+}, 500);
 
 // Логирование статуса будильника каждые 10 секунд
 setInterval(() => {
