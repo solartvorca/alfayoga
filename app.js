@@ -16,7 +16,7 @@ let breathingState = {
 let alarmState = {
     enabled: true,
     lastAlarmTime: Date.now(),
-    alarmInterval: 10 * 60 * 1000,
+    alarmInterval: (parseInt(localStorage.getItem('alarmIntervalSeconds')) || 600) * 1000,
 };
 
 let lunarState = {
@@ -31,6 +31,8 @@ const exhaleInput = document.getElementById('exhale');
 const holdAfterExhaleInput = document.getElementById('holdAfterExhale');
 const alarmToggle = document.getElementById('alarmToggle');
 const alarmMessage = document.getElementById('alarmMessage');
+const alarmIntervalInput = document.getElementById('alarmInterval');
+const alarmIntervalDisplay = document.getElementById('alarmIntervalDisplay');
 const lunarDaySpan = document.getElementById('lunarDay');
 const lunarPhaseSpan = document.getElementById('lunarPhase');
 const alarmNotification = document.getElementById('alarmNotification');
@@ -44,10 +46,33 @@ function updateBreathingParams() {
     breathingState.holdAfterExhale = parseInt(holdAfterExhaleInput.value) || 0;
 }
 
+// Обновление интервала будильника из input
+function updateAlarmInterval() {
+    if (!alarmIntervalInput) return;
+    const seconds = parseInt(alarmIntervalInput.value) || 600;
+    alarmState.alarmInterval = seconds * 1000;
+    if (alarmIntervalDisplay) {
+        alarmIntervalDisplay.textContent = seconds;
+    }
+    localStorage.setItem('alarmIntervalSeconds', seconds);
+    console.log(`[Alarm] Интервал обновлен: ${seconds}с`);
+}
+
 if (inhalInput) inhalInput.addEventListener('change', updateBreathingParams);
 if (holdAfterInhaleInput) holdAfterInhaleInput.addEventListener('change', updateBreathingParams);
 if (exhaleInput) exhaleInput.addEventListener('change', updateBreathingParams);
 if (holdAfterExhaleInput) holdAfterExhaleInput.addEventListener('change', updateBreathingParams);
+if (alarmIntervalInput) alarmIntervalInput.addEventListener('change', updateAlarmInterval);
+if (alarmIntervalInput) alarmIntervalInput.addEventListener('input', updateAlarmInterval);
+
+// Загрузить сохраненный интервал будильника из localStorage
+if (alarmIntervalInput) {
+    const savedInterval = localStorage.getItem('alarmIntervalSeconds');
+    if (savedInterval) {
+        alarmIntervalInput.value = savedInterval;
+        updateAlarmInterval();
+    }
+}
 
 // Будильник
 if (alarmToggle) alarmToggle.addEventListener('change', (e) => {

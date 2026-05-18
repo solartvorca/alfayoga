@@ -179,7 +179,11 @@
         <div class="alarm-section">
             <div class="alarm-toggle">
                 <input type="checkbox" id="alarmToggle" checked>
-                <label for="alarmToggle">Будильник каждые 10 минут</label>
+                <label for="alarmToggle">Будильник каждые <span id="alarmIntervalDisplay">600</span> секунд</label>
+            </div>
+            <div class="form-group">
+                <label for="alarmInterval">Интервал будильника (секунды):</label>
+                <input type="number" id="alarmInterval" min="5" step="5" value="600">
             </div>
             <div class="alarm-message" id="alarmMessage"></div>
         </div>
