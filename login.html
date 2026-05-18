@@ -179,12 +179,12 @@
         if (refCode) {
             localStorage.setItem('pendingReferralCode', refCode);
             console.log('[Referral STORAGE] Код сохранен в localStorage:', refCode);
-            alert('✓ Реферальный код сохранен: ' + refCode);
+            confirm('✓ Реферальный код сохранен: ' + refCode + '\n\nНажми OK чтобы продолжить');
         } else {
             const stored = localStorage.getItem('pendingReferralCode');
             if (stored) {
                 console.log('[Referral STORAGE] Код найден в localStorage:', stored);
-                alert('✓ Используем сохраненный код из localStorage: ' + stored);
+                confirm('✓ Используем сохраненный код из localStorage: ' + stored + '\n\nНажми OK чтобы продолжить');
             }
         }
 
@@ -245,7 +245,7 @@
 
                 // DEBUG: показать откуда взялся код
                 console.log(`[Referral DEBUG] Итоговый код для поиска: "${referrerCode}"`);
-                alert('Поиск реферера с кодом: ' + (referrerCode || 'НЕТ КОДА'));
+                confirm('📍 Поиск реферера с кодом: ' + (referrerCode || 'НЕТ КОДА') + '\n\nНажми OK чтобы продолжить');
 
                 // Найти UID реферера по его коду
                 if (referrerCode) {
