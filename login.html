@@ -189,6 +189,7 @@
         }
 
         const errorDiv = document.getElementById("authError");
+        let registrationInProgress = false;
 
         function showError(msg) {
             errorDiv.textContent = msg;
@@ -221,6 +222,7 @@
 
         async function handleRegister(e) {
             e.preventDefault();
+            registrationInProgress = true;
             const nick = document.getElementById("registerNick").value;
             const email = document.getElementById("registerEmail").value;
             const password = document.getElementById("registerPassword").value;
@@ -249,24 +251,29 @@
 
                 // Найти UID реферера по его коду
                 if (referrerCode) {
-                    console.log(`[Referral] Код реферера найден: ${referrerCode}`);
+                    console.log(`[Referral] Ищу реферера с кодом: ${referrerCode.toUpperCase()}`);
                     try {
+                        console.log('[Referral] Запускаю запрос к Firestore...');
                         const referrerSnapshot = await db.collection("users")
                             .where("referralCode", "==", referrerCode.toUpperCase())
                             .limit(1)
                             .get();
 
+                        console.log(`[Referral] Результат запроса: ${referrerSnapshot.size} документ(ов)`);
                         if (!referrerSnapshot.empty) {
                             referrerId = referrerSnapshot.docs[0].id;
-                            console.log(`[Referral] UID реферера найден: ${referrerId}`);
+                            const referrerData = referrerSnapshot.docs[0].data();
+                            console.log(`[Referral] ✓ Реферер найден: ${referrerData.nick || referrerData.email}`);
+                            console.log(`[Referral] UID: ${referrerId}`);
+                            console.log(`[Referral] Текущие лучики реферера: ${referrerData.rays}`);
                         } else {
-                            console.warn(`[Referral] Код ${referrerCode} не найден в базе. Проверьте корректность кода.`);
+                            console.warn(`[Referral] ✗ Код ${referrerCode} не найден в базе`);
                         }
                     } catch (error) {
                         console.error("[Referral] Ошибка поиска реферера:", error);
                     }
                 } else {
-                    console.log("[Referral] Параметр ref не найден в URL");
+                    console.log("[Referral] Параметр ref не указан");
                 }
 
                 // Создать документ нового пользователя
@@ -305,37 +312,47 @@
                     }
                 };
 
+                console.log('[Registration] Сохраняю данные нового пользователя в Firestore...');
                 await db.collection("users").doc(uid).set(userData);
+                console.log('[Registration] ✓ Данные пользователя сохранены');
 
                 // Дать награду реферету за новую регистрацию
                 if (referrerId) {
                     try {
+                        console.log(`[Referral] Добавляю 100 лучиков реферету ${referrerId}...`);
                         await db.collection("users").doc(referrerId).update({
                             rays: firebase.firestore.FieldValue.increment(100),
                             referralRays: firebase.firestore.FieldValue.increment(100),
                             totalReferrals: firebase.firestore.FieldValue.increment(1)
                         });
-                        console.log(`[Referral] ✓ Добавлено 100 лучиков реферету ${referrerId}`);
+                        console.log(`[Referral] ✓ Успешно добавлено 100 лучиков реферету ${referrerId}`);
                     } catch (error) {
-                        console.error("[Referral] Ошибка при добавлении лучиков:", error);
+                        console.error("[Referral] ✗ Ошибка при добавлении лучиков:", error);
                     }
                 } else if (referrerCode) {
-                    console.warn(`[Referral] Реферер не найден, лучики не добавлены`);
+                    console.warn(`[Referral] ✗ Реферер с кодом ${referrerCode} не найден, лучики не добавлены`);
                 }
 
                 // Очистить код из localStorage после успешной регистрации
                 localStorage.removeItem('pendingReferralCode');
                 console.log('[Referral] Код удален из localStorage');
+                console.log('[Registration] ✓ Регистрация завершена успешно, перенаправляю на marathon.html');
 
-                window.location.href = "marathon.html";
+                // Небольшая задержка чтобы убедиться что все Firestore операции завершились
+                setTimeout(() => {
+                    registrationInProgress = false;
+                    window.location.href = "marathon.html";
+                }, 500);
             } catch (error) {
+                console.error('[Registration] Ошибка:', error);
                 showError(error.message);
+                registrationInProgress = false;
             }
         }
 
-        // Проверить состояние
+        // Проверить состояние (но не перенаправлять во время регистрации)
         auth.onAuthStateChanged(user => {
-            if (user) {
+            if (user && !registrationInProgress) {
                 window.location.href = "marathon.html";
             }
         });
