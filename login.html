@@ -449,23 +449,6 @@
 
         // Вызываем обработку ссылки входа при загрузке страницы
         handleEmailLinkSignIn();
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка отправки кода');
-                }
-
-                showError('✓ Новый код отправлен на ' + email);
-                document.getElementById("verificationCode").value = '';
-                document.getElementById("verificationCode").focus();
-            } catch (error) {
-                console.error('[Resend] Ошибка:', error);
-                showError(error.message || 'Ошибка при отправке кода');
-            }
-        }
 
         // Вернуться на форму регистрации
         function backToRegister() {
