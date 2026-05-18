@@ -220,6 +220,10 @@
                 const referrerCode = urlParams.get('ref');
                 let referrerId = null;
 
+                // DEBUG: показать параметры URL
+                console.log(`[Referral DEBUG] window.location.search: ${window.location.search}`);
+                console.log(`[Referral DEBUG] Параметр ref из URL: ${referrerCode}`);
+
                 // Найти UID реферера по его коду
                 if (referrerCode) {
                     console.log(`[Referral] Код реферера найден: ${referrerCode}`);
