@@ -7,7 +7,9 @@ const app = express();
 
 // Инициализация Firebase Admin
 if (!admin.apps.length) {
-    admin.initializeApp();
+    admin.initializeApp({
+        projectId: 'yog-ava-tho'
+    });
 }
 app.use(express.json());
 app.use(cors({
