@@ -85,3 +85,35 @@ function logout() {
             alert("Ошибка выхода: " + error.message + ". Попробуй перезагрузить страницу.");
         });
 }
+
+// Debug функция для проверки реферальных кодов (вызывать из консоли)
+window.debugReferralCode = async (code) => {
+    if (!code) {
+        console.error("Укажи код: debugReferralCode('R844MNVW')");
+        return null;
+    }
+    console.log(`Проверяю реферальный код: ${code}`);
+    try {
+        const snapshot = await db.collection("users")
+            .where("referralCode", "==", code.toUpperCase())
+            .limit(1)
+            .get();
+
+        if (!snapshot.empty) {
+            const user = snapshot.docs[0].data();
+            console.log(`✓ Код найден! Пользователь:`, user);
+            console.log(`  Email: ${user.email}`);
+            console.log(`  Ник: ${user.nick}`);
+            console.log(`  Текущие лучики: ${user.rays}`);
+            console.log(`  Лучики от рефералов: ${user.referralRays}`);
+            console.log(`  Количество приведенных: ${user.totalReferrals}`);
+            return user;
+        } else {
+            console.error(`✗ Код ${code} не найден в базе`);
+            return null;
+        }
+    } catch (error) {
+        console.error("[Referral Debug] Ошибка:", error);
+        return null;
+    }
+};

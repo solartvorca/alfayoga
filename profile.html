@@ -743,7 +743,7 @@
             }
 
             loadCreativeProfile();
-            loadTransactions();
+            // loadTransactions();  // Отключено - требуется создание индекса в Firebase
             loadMyReports();
             loadMyDreams();
             loadUserPublicWishes(user.uid);
@@ -1066,64 +1066,77 @@
 
         async function loadTransactions() {
             const user = window.currentUser;
-            const snapshot = await db.collection("ray_transactions")
-                .where("fromUid", "==", user.uid)
-                .orderBy("createdAt", "desc")
-                .limit(20)
-                .get();
+            try {
+                // Запросить без orderBy (это требует индекс), сортировку сделаем в памяти
+                const snapshot = await db.collection("ray_transactions")
+                    .where("fromUid", "==", user.uid)
+                    .get();
 
-            const snapshot2 = await db.collection("ray_transactions")
-                .where("toUid", "==", user.uid)
-                .orderBy("createdAt", "desc")
-                .limit(20)
-                .get();
+                const snapshot2 = await db.collection("ray_transactions")
+                    .where("toUid", "==", user.uid)
+                    .get();
 
-            const transactions = [];
-            snapshot.docs.forEach(doc => {
-                transactions.push({
-                    ...doc.data(),
-                    direction: "sent"
+                const transactions = [];
+                snapshot.docs.forEach(doc => {
+                    transactions.push({
+                        ...doc.data(),
+                        direction: "sent"
+                    });
                 });
-            });
 
-            snapshot2.docs.forEach(doc => {
-                transactions.push({
-                    ...doc.data(),
-                    direction: "received"
+                snapshot2.docs.forEach(doc => {
+                    transactions.push({
+                        ...doc.data(),
+                        direction: "received"
+                    });
                 });
-            });
 
-            transactions.sort((a, b) => b.createdAt - a.createdAt);
+                // Отсортировать в памяти - от новых к старым
+                transactions.sort((a, b) => {
+                    const aTime = a.createdAt?.seconds || a.createdAt || 0;
+                    const bTime = b.createdAt?.seconds || b.createdAt || 0;
+                    return bTime - aTime;
+                });
 
-            const list = document.getElementById("transactionsList");
+                // Оставить только последние 40
+                transactions.splice(40);
 
-            if (transactions.length === 0) {
-                list.innerHTML = '<div class="empty-state">Нет транзакций</div>';
-                return;
+                const list = document.getElementById("transactionsList");
+
+                if (transactions.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Нет транзакций</div>';
+                    return;
+                }
+
+                list.innerHTML = transactions.map(t => {
+                    const time = new Date(t.createdAt.seconds * 1000);
+                    const timeStr = time.toLocaleString("ru-RU", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    });
+
+                    const icon = t.direction === "sent" ? "➡️" : "⬅️";
+                    const counterparty = t.direction === "sent" ? t.toEmail : t.fromEmail;
+                    const verb = t.direction === "sent" ? "отправлено" : "получено";
+
+                    return `
+                        <div class="transaction-item ${t.direction}">
+                            <span class="transaction-type ${t.direction}">
+                                ${icon} ${t.amount}✨ ${verb} ${counterparty}
+                            </span>
+                            <div class="transaction-time">${timeStr}</div>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                console.error("Ошибка загрузки транзакций:", error);
+                const list = document.getElementById("transactionsList");
+                if (list) {
+                    list.innerHTML = '<div class="empty-state">Ошибка загрузки транзакций</div>';
+                }
             }
-
-            list.innerHTML = transactions.map(t => {
-                const time = new Date(t.createdAt.seconds * 1000);
-                const timeStr = time.toLocaleString("ru-RU", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-
-                const icon = t.direction === "sent" ? "➡️" : "⬅️";
-                const counterparty = t.direction === "sent" ? t.toEmail : t.fromEmail;
-                const verb = t.direction === "sent" ? "отправлено" : "получено";
-
-                return `
-                    <div class="transaction-item ${t.direction}">
-                        <span class="transaction-type ${t.direction}">
-                            ${icon} ${t.amount}✨ ${verb} ${counterparty}
-                        </span>
-                        <div class="transaction-time">${timeStr}</div>
-                    </div>
-                `;
-            }).join("");
         }
 
         async function loadMyReports() {
