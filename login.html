@@ -179,6 +179,13 @@
         if (refCode) {
             localStorage.setItem('pendingReferralCode', refCode);
             console.log('[Referral STORAGE] Код сохранен в localStorage:', refCode);
+            alert('✓ Реферальный код сохранен: ' + refCode);
+        } else {
+            const stored = localStorage.getItem('pendingReferralCode');
+            if (stored) {
+                console.log('[Referral STORAGE] Код найден в localStorage:', stored);
+                alert('✓ Используем сохраненный код из localStorage: ' + stored);
+            }
         }
 
         const errorDiv = document.getElementById("authError");
