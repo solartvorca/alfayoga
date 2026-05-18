@@ -233,17 +233,19 @@
                 // Получить реферальный код из URL параметров ИЛИ из localStorage
                 const urlParams = new URLSearchParams(window.location.search);
                 let referrerCode = urlParams.get('ref');
+                console.log(`[Referral] Код из URL: ${referrerCode}`);
 
                 // Если в URL нет ref, попробовать из localStorage
                 if (!referrerCode) {
                     referrerCode = localStorage.getItem('pendingReferralCode');
-                    console.log('[Referral] Код получен из localStorage:', referrerCode);
+                    console.log('[Referral] Код из localStorage:', referrerCode);
                 }
 
                 let referrerId = null;
 
                 // DEBUG: показать откуда взялся код
-                console.log(`[Referral DEBUG] Полученный код: ${referrerCode}`);
+                console.log(`[Referral DEBUG] Итоговый код для поиска: "${referrerCode}"`);
+                alert('Поиск реферера с кодом: ' + (referrerCode || 'НЕТ КОДА'));
 
                 // Найти UID реферера по его коду
                 if (referrerCode) {
