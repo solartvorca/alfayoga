@@ -80,6 +80,25 @@
             cursor: not-allowed;
         }
 
+        .btn-google {
+            width: 100%;
+            background: rgba(66, 133, 244, 0.2);
+            border: 1px solid rgba(66, 133, 244, 0.5);
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e6ed;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-google:hover {
+            background: rgba(66, 133, 244, 0.3);
+            border-color: rgba(66, 133, 244, 0.8);
+            transform: translateY(-2px);
+        }
+
         .toggle-form {
             text-align: center;
             font-size: 13px;
@@ -139,6 +158,12 @@
                 </div>
                 <button type="submit" class="btn">Войти</button>
             </form>
+            <div style="margin-top: 20px; text-align: center;">
+                <p style="color: #888; font-size: 13px; margin-bottom: 15px;">или</p>
+                <button type="button" class="btn-google" onclick="handleGoogleSignIn()">
+                    <span style="margin-right: 8px;">🔵</span> Войти через Google
+                </button>
+            </div>
             <div class="toggle-form">
                 Нет аккаунта? <a onclick="showRegister()">Зарегистрироваться</a>
             </div>
@@ -236,6 +261,115 @@
                 window.location.href = "marathon.html";
             } catch (error) {
                 showError(error.message);
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            try {
+                console.log('[Google] Начинаю вход через Google');
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                const uid = user.uid;
+
+                console.log('[Google] ✓ Вход успешен, uid:', uid);
+
+                // Проверяем есть ли уже профиль
+                const userDoc = await db.collection("users").doc(uid).get();
+
+                if (userDoc.exists) {
+                    console.log('[Google] Профиль уже существует');
+                    window.location.href = "marathon.html";
+                } else {
+                    console.log('[Google] Создаю новый профиль');
+
+                    // Получаем реф-код если есть
+                    const referrerCode = urlParams.get('ref') || localStorage.getItem('pendingReferralCode');
+                    const referralCode = uid.substring(0, 8).toUpperCase();
+                    let referrerId = null;
+
+                    // Ищем реферера
+                    if (referrerCode) {
+                        try {
+                            const referrerSnapshot = await db.collection("users")
+                                .where("referralCode", "==", referrerCode.toUpperCase())
+                                .limit(1)
+                                .get();
+
+                            if (!referrerSnapshot.empty) {
+                                referrerId = referrerSnapshot.docs[0].id;
+                                console.log('[Referral] ✓ Реферер найден');
+                            }
+                        } catch (error) {
+                            console.error('[Referral] Ошибка поиска:', error);
+                        }
+                    }
+
+                    // Создаем профиль
+                    const userData = {
+                        email: user.email,
+                        nick: user.displayName || user.email.split('@')[0],
+                        photoURL: user.photoURL || null,
+                        rays: 0,
+                        dustAmount: 0,
+                        status: "active",
+                        subscription: "free",
+                        joinedAt: new Date(),
+                        lastReportDay: 0,
+                        isAdmin: user.email === "wuallar@gmail.com",
+                        referralCode: referralCode,
+                        referredBy: referrerId || null,
+                        referralRays: 0,
+                        totalReferrals: 0,
+                        creativeProfile: {
+                            bio: "",
+                            services: "",
+                            gifts: "",
+                            links: [],
+                            partnerLinks: [],
+                            submittedAt: null,
+                            raysEarned: 0
+                        },
+                        notificationSettings: {
+                            practiceEnabled: true,
+                            marathonEnabled: true,
+                            commentsEnabled: true,
+                            rayEnabled: true,
+                            reportsEnabled: true,
+                            reminderTime: "07:00",
+                            frequency: "daily",
+                            updatedAt: new Date()
+                        }
+                    };
+
+                    await db.collection("users").doc(uid).set(userData);
+                    console.log('[Google] ✓ Профиль создан');
+
+                    // Даем награду реферету если есть
+                    if (referrerId) {
+                        try {
+                            await db.collection("users").doc(referrerId).update({
+                                rays: firebase.firestore.FieldValue.increment(100),
+                                referralRays: firebase.firestore.FieldValue.increment(100),
+                                totalReferrals: firebase.firestore.FieldValue.increment(1)
+                            });
+                            console.log('[Referral] ✓ 100 лучиков добавлено');
+                        } catch (error) {
+                            console.error('[Referral] Ошибка добавления лучиков:', error);
+                        }
+                    }
+
+                    // Очищаем код
+                    localStorage.removeItem('pendingReferralCode');
+
+                    // Переходим на марафон
+                    setTimeout(() => {
+                        window.location.href = "marathon.html";
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('[Google] Ошибка:', error);
+                showError(error.message || 'Ошибка входа через Google. Попробуй позже.');
             }
         }
 
