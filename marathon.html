@@ -464,8 +464,10 @@
 
         <!-- Уведомление о вывале -->
         <div class="removal-notice" id="removalNotice">
-            <p>⚠️ Вы выведены из марафона (пропустили день задания)</p>
-            <p style="font-size: 13px; margin-top: 8px; font-weight: 400;">Можете использовать будильник и дыхательную практику</p>
+            <p>⚠️ Вы выведены из марафона</p>
+            <p id="removalReason" style="font-size: 13px; margin-top: 8px; font-weight: 400;">Не написали отчёт вовремя</p>
+            <p style="font-size: 12px; margin-top: 12px; color: #ff9999;">Вернитесь в следующее полнолуние или обратитесь к администратору</p>
+            <p style="font-size: 12px; margin-top: 8px; font-weight: 400;">Можете использовать будильник и дыхательную практику</p>
         </div>
 
         <!-- Информация о марафоне -->
@@ -793,6 +795,43 @@
             } catch (error) {
                 alert("Ошибка при отправке: " + error.message);
                 console.error("submitReport error:", error);
+            }
+        }
+
+        // Проверить и выпустить пользователя если не написал отчёт вовремя
+        async function checkAndRemoveIfMissedReport() {
+            const currentDay = getLunarDay();
+            const lastReportDay = window.currentUser.lastReportDay || 0;
+            const currentStatus = window.currentUser.status || "active";
+
+            console.log(`[Auto-removal check] Current day: ${currentDay}, Last report: ${lastReportDay}, Status: ${currentStatus}`);
+
+            // Если статус уже removed - не трогаем
+            if (currentStatus === "removed") {
+                return;
+            }
+
+            // Если последний отчёт не за сегодняшний день - пользователь должен выпасть
+            if (lastReportDay < currentDay) {
+                try {
+                    console.log(`[Auto-removal] Removing user because missed report. Current day: ${currentDay}, Last report: ${lastReportDay}`);
+
+                    // Обновить статус в Firestore
+                    await db.collection("users").doc(window.currentUser.uid).update({
+                        status: "removed",
+                        removedAt: new Date(),
+                        removedReason: "missed_daily_report"
+                    });
+
+                    // Обновить в памяти
+                    window.currentUser.status = "removed";
+                    window.currentUser.removedAt = new Date();
+                    window.currentUser.removedReason = "missed_daily_report";
+
+                    console.log("[Auto-removal] User removed successfully");
+                } catch (error) {
+                    console.error("[Auto-removal] Error removing user:", error);
+                }
             }
         }
 
@@ -1577,6 +1616,10 @@
                             email: user.email,
                             ...doc.data()
                         };
+
+                        // Проверить, не выпал ли пользователь из-за пропуска отчёта
+                        checkAndRemoveIfMissedReport();
+
                         console.log("Вызываю loadDayAssignment...");
                         loadDayAssignment();
 
@@ -1594,7 +1637,7 @@
                         checkTotalRays();
 
                         // Показать уведомление только если статус = removed
-                        if (doc.data().status === "removed") {
+                        if (window.currentUser.status === "removed") {
                             document.getElementById("removalNotice").style.display = "block";
                             document.getElementById("reportSection").style.display = "none";
                             document.getElementById("socialRewards").style.display = "none";

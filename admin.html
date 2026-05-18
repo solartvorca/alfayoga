@@ -1286,6 +1286,8 @@
                 const lastReportDay = user.lastReportDay || 0;
                 const lastReportText = lastReportDay > 0 ? `День ${lastReportDay}` : "—";
 
+                const restoreBtn = user.status === "removed" ? `<button onclick="restoreUserToMarathon('${doc.id}', '${user.nick}')" class="btn" style="padding: 4px 8px; font-size: 11px; background: rgba(0, 208, 132, 0.3); margin-bottom: 6px;">↻ Вернуть</button>` : "";
+
                 return `
                     <tr>
                         <td><a href="view-profile.html?uid=${doc.id}" class="user-nick-link">${user.nick}</a></td>
@@ -1296,7 +1298,8 @@
                         <td>${skipsText}</td>
                         <td><span class="${statusClass}">${statusText}</span></td>
                         <td style="font-size: 12px;">
-                            <select onchange="changeUserSubscription('${doc.id}', this.value)" style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 4px; color: #e0e6ed; padding: 4px;">
+                            ${restoreBtn}
+                            <select onchange="changeUserSubscription('${doc.id}', this.value)" style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 4px; color: #e0e6ed; padding: 4px; width: 100%;">
                                 <option value="free" ${subscription === "free" ? "selected" : ""}>Free</option>
                                 <option value="premium" ${subscription === "premium" ? "selected" : ""}>Premium</option>
                                 <option value="daily" ${subscription === "daily" ? "selected" : ""}>Daily</option>
@@ -1314,6 +1317,23 @@
                     subscription,
                     premiumSkips: subscription === "premium" ? 0 : undefined
                 });
+                loadUsers();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        // Вернуть пользователя в марафон
+        async function restoreUserToMarathon(uid, nick) {
+            if (!confirm(`Вернуть ${nick} в марафон?`)) return;
+
+            try {
+                await db.collection("users").doc(uid).update({
+                    status: "active",
+                    removedAt: null,
+                    removedReason: null
+                });
+                alert(`✓ ${nick} восстановлен(а) в марафоне!`);
                 loadUsers();
             } catch (error) {
                 alert("Ошибка: " + error.message);
