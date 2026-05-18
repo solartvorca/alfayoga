@@ -18,8 +18,14 @@ let alarmState = {
     lastAlarmTime: Date.now(),
     alarmInterval: (parseInt(localStorage.getItem('alarmIntervalSeconds')) || 600) * 1000,
     soundDuration: parseFloat(localStorage.getItem('alarmSoundDuration')) || 3,
+    mode: localStorage.getItem('alarmMode') || (isMobileDevice() ? 'vibration' : 'sound'),
     isSoundPlaying: false,
 };
+
+// Определение мобильного устройства
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
 let lunarState = {
     fullMoonDate: localStorage.getItem('fullMoonDate') ? new Date(localStorage.getItem('fullMoonDate')) : new Date(2026, 4, 2),
@@ -36,6 +42,7 @@ const alarmMessage = document.getElementById('alarmMessage');
 const alarmIntervalInput = document.getElementById('alarmInterval');
 const alarmIntervalDisplay = document.getElementById('alarmIntervalDisplay');
 const alarmDurationInput = document.getElementById('alarmDuration');
+const alarmModeSelect = document.getElementById('alarmMode');
 const lunarDaySpan = document.getElementById('lunarDay');
 const lunarPhaseSpan = document.getElementById('lunarPhase');
 const alarmNotification = document.getElementById('alarmNotification');
@@ -70,6 +77,15 @@ function updateAlarmDuration() {
     console.log(`[Alarm] Длительность звука обновлена: ${duration}с`);
 }
 
+// Обновление режима будильника
+function updateAlarmMode() {
+    if (!alarmModeSelect) return;
+    const mode = alarmModeSelect.value;
+    alarmState.mode = mode;
+    localStorage.setItem('alarmMode', mode);
+    console.log(`[Alarm] Режим будильника обновлен: ${mode}`);
+}
+
 if (inhalInput) inhalInput.addEventListener('change', updateBreathingParams);
 if (holdAfterInhaleInput) holdAfterInhaleInput.addEventListener('change', updateBreathingParams);
 if (exhaleInput) exhaleInput.addEventListener('change', updateBreathingParams);
@@ -78,6 +94,7 @@ if (alarmIntervalInput) alarmIntervalInput.addEventListener('change', updateAlar
 if (alarmIntervalInput) alarmIntervalInput.addEventListener('input', updateAlarmInterval);
 if (alarmDurationInput) alarmDurationInput.addEventListener('change', updateAlarmDuration);
 if (alarmDurationInput) alarmDurationInput.addEventListener('input', updateAlarmDuration);
+if (alarmModeSelect) alarmModeSelect.addEventListener('change', updateAlarmMode);
 
 // Загрузить сохраненные настройки будильника из localStorage
 if (alarmIntervalInput) {
@@ -93,6 +110,11 @@ if (alarmDurationInput) {
         alarmDurationInput.value = savedDuration;
         updateAlarmDuration();
     }
+}
+if (alarmModeSelect) {
+    const savedMode = localStorage.getItem('alarmMode') || (isMobileDevice() ? 'vibration' : 'sound');
+    alarmModeSelect.value = savedMode;
+    alarmState.mode = savedMode;
 }
 
 // Будильник
@@ -267,29 +289,33 @@ function triggerAlarm() {
     }
 
     alarmState.isSoundPlaying = true;
-    playAlarmSound();
+    const mode = alarmState.mode;
+    console.log(`[Alarm] Triggered with mode: ${mode}`);
+
+    // Воспроизводить звук если режим - звук или оба
+    if (mode === 'sound' || mode === 'both') {
+        playAlarmSound();
+    }
+
     showAlarmMessage();
 
     // Очень длинный cooldown на мобильных (10 сек), на десктопе достаточно 3 сек
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const cooldown = isMobile ? 10000 : 3000;
+    const cooldown = isMobileDevice() ? 10000 : 3000;
 
     setTimeout(() => {
         alarmState.isSoundPlaying = false;
         console.log(`[Alarm] Cooldown завершен (${cooldown}ms), разрешено новое срабатывание`);
     }, cooldown);
 
-    // Вибрация на мобильных (если доступна)
-    try {
-        if (navigator.vibrate) {
+    // Вибрация если режим - вибрация или оба
+    if ((mode === 'vibration' || mode === 'both') && navigator.vibrate) {
+        try {
             console.log('[Vibration] Attempting vibration pattern');
             navigator.vibrate([200, 100, 200, 100, 200]);
             console.log('[Vibration] Vibration triggered successfully');
-        } else {
-            console.warn('[Vibration] navigator.vibrate not available on this device/browser');
+        } catch (err) {
+            console.error('[Vibration] Error:', err);
         }
-    } catch (err) {
-        console.error('[Vibration] Error:', err);
     }
 
     // Браузерное уведомление (если разрешено)
