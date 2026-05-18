@@ -255,6 +255,14 @@ app.post('/checkAndRemoveUsersWithoutReport', async (req, res) => {
             const user = doc.data();
             const lastReportDay = user.lastReportDay || 0;
             const currentStatus = user.status || "active";
+            const isAdmin = user.email === "wuallar@gmail.com" || user.isAdmin;
+
+            // Администратор не может быть исключен
+            if (isAdmin) {
+                console.log(`[Daily Check] Skipping admin ${user.email} - admins cannot be removed`);
+                activeCount++;
+                return;
+            }
 
             // Если пользователь активен и не написал отчёт за сегодня
             if (currentStatus === "active" && lastReportDay < currentLunarDay) {

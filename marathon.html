@@ -1724,7 +1724,10 @@
                         checkTotalRays();
 
                         // Если статус = removed - скрыть весь контент марафона
-                        if (window.currentUser.status === "removed") {
+                        // Но администраторы никогда не исключаются
+                        const isAdmin = window.currentUser.email === "wuallar@gmail.com" || window.currentUser.isAdmin;
+
+                        if (window.currentUser.status === "removed" && !isAdmin) {
                             document.getElementById("removalNotice").style.display = "block";
 
                             // Скрыть весь контент марафона
