@@ -256,28 +256,15 @@
 
         async function handleRegister(e) {
             e.preventDefault();
+            registrationInProgress = true;
             const nick = document.getElementById("registerNick").value;
             const email = document.getElementById("registerEmail").value;
             const password = document.getElementById("registerPassword").value;
 
             try {
-                console.log('[Registration] Отправляю код подтверждения на:', email);
+                console.log('[Registration] Отправляю ссылку для входа на:', email);
 
-                // Отправляем код подтверждения на email
-                const response = await fetch('https://us-central1-budilnik-notifications.cloudfunctions.net/sendVerificationCode', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка отправки кода подтверждения');
-                }
-
-                const result = await response.json();
-                console.log('[Registration] ✓ Код отправлен:', result);
-
-                // Сохраняем данные регистрации для дальнейшего использования
+                // Сохраняем данные регистрации
                 pendingRegistrationData = {
                     email,
                     password,
@@ -285,55 +272,78 @@
                     referrerCode: new URLSearchParams(window.location.search).get('ref') || localStorage.getItem('pendingReferralCode')
                 };
 
-                // Показываем форму проверки кода
+                // Настройки для ссылки входа по email
+                const actionCodeSettings = {
+                    url: window.location.origin + window.location.pathname + '?register=1',
+                    handleCodeInApp: true
+                };
+
+                // Отправляем ссылку для входа
+                await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+                console.log('[Registration] ✓ Ссылка отправлена на email:', email);
+
+                // Сохраняем email в localStorage для использования после перехода по ссылке
+                localStorage.setItem('pendingRegistrationEmail', email);
+                localStorage.setItem('pendingRegistrationData', JSON.stringify(pendingRegistrationData));
+
+                // Показываем сообщение
                 document.getElementById("registerForm").style.display = "none";
-                document.getElementById("verifyEmailForm").style.display = "block";
-                document.getElementById("verifyEmailDisplay").textContent = email;
+                showError('✓ Ссылка для входа отправлена на ' + email + '. Проверьте почту!');
 
-                console.log('[Registration] Показываю форму проверки кода');
+                // Показываем кнопку для возврата
+                const backBtn = document.createElement('button');
+                backBtn.textContent = '← Вернуться';
+                backBtn.style.marginTop = '10px';
+                backBtn.style.width = '100%';
+                backBtn.onclick = () => {
+                    document.getElementById("registerForm").style.display = "block";
+                    backBtn.remove();
+                    showError('');
+                };
+                document.querySelector('.auth-container').appendChild(backBtn);
 
+                registrationInProgress = false;
             } catch (error) {
                 console.error('[Registration] Ошибка:', error);
-                showError(error.message || 'Ошибка при отправке кода. Попробуй позже.');
+                showError(error.message || 'Ошибка отправки ссылки. Попробуй позже.');
                 registrationInProgress = false;
             }
         }
 
-        async function handleVerifyEmail(e) {
-            e.preventDefault();
-            registrationInProgress = true;
-            const code = document.getElementById("verificationCode").value;
-            const email = pendingRegistrationData.email;
-            const password = pendingRegistrationData.password;
-            const nick = pendingRegistrationData.nick;
-            let referrerCode = pendingRegistrationData.referrerCode;
+        // Обработка ссылки входа по email при загрузке страницы
+        async function handleEmailLinkSignIn() {
+            if (auth.isSignInWithEmailLink(window.location.href)) {
+                console.log('[EmailLink] Обнаружена ссылка входа');
 
-            try {
-                console.log('[EmailVerification] Проверяю код:', code);
+                let email = localStorage.getItem('pendingRegistrationEmail');
+                let registrationDataStr = localStorage.getItem('pendingRegistrationData');
 
-                // Проверяем код через Cloud Function
-                const verifyResponse = await fetch('https://us-central1-budilnik-notifications.cloudfunctions.net/verifyEmailCode', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, code })
-                });
-
-                if (!verifyResponse.ok) {
-                    const error = await verifyResponse.json();
-                    throw new Error(error.error || 'Неверный код подтверждения');
+                if (!email) {
+                    email = prompt('Введи свой email для подтверждения:');
                 }
 
-                console.log('[EmailVerification] ✓ Email подтвержден');
+                if (!email) {
+                    console.error('[EmailLink] Email не введен');
+                    return;
+                }
 
-                // Теперь создаем аккаунт в Firebase
-                console.log('[Registration] Создаю аккаунт в Firebase...');
-                const res = await auth.createUserWithEmailAndPassword(email, password);
-                const uid = res.user.uid;
-                const referralCode = uid.substring(0, 8).toUpperCase();
+                try {
+                    console.log('[EmailLink] Завершаю вход по ссылке...');
+                    const result = await auth.signInWithEmailLink(email, window.location.href);
+                    const uid = result.user.uid;
 
-                let referrerId = null;
+                    console.log('[EmailLink] ✓ Вход завершен, uid:', uid);
 
-                console.log(`[Referral DEBUG] Итоговый код для поиска: "${referrerCode}"`);
+                    // Получаем данные регистрации
+                    let registrationData = registrationDataStr ? JSON.parse(registrationDataStr) : null;
+
+                    if (registrationData) {
+                        console.log('[Registration] Создаю профиль пользователя...');
+                        const referralCode = uid.substring(0, 8).toUpperCase();
+                        let referrerId = null;
+                        let referrerCode = registrationData.referrerCode;
+
+                        console.log(`[Referral DEBUG] Итоговый код для поиска: "${referrerCode}"`);
 
                 // Найти UID реферера по его коду
                 if (referrerCode) {
@@ -428,25 +438,17 @@
                 setTimeout(() => {
                     registrationInProgress = false;
                     window.location.href = "marathon.html";
-                }, 500);
-            } catch (error) {
-                console.error('[Registration] Ошибка:', error);
-                showError(error.message);
-                registrationInProgress = false;
+                        }, 500);
+                    }
+                } catch (error) {
+                    console.error('[EmailLink] Ошибка:', error);
+                    showError(error.message || 'Ошибка при входе по ссылке. Попробуй позже.');
+                }
             }
         }
 
-        // Повторная отправка кода подтверждения
-        async function resendVerificationCode() {
-            const email = pendingRegistrationData.email;
-            if (!email) {
-                showError('Email не найден');
-                return;
-            }
-
-            try {
-                console.log('[Resend] Отправляю новый код на:', email);
-                const response = await fetch('https://us-central1-budilnik-notifications.cloudfunctions.net/sendVerificationCode', {
+        // Вызываем обработку ссылки входа при загрузке страницы
+        handleEmailLinkSignIn();
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
