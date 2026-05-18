@@ -1731,10 +1731,11 @@
                         checkTotalRays();
 
                         // Если статус = removed - скрыть весь контент марафона
-                        // Но администраторы никогда не исключаются
+                        // Но администраторы и новые пользователи (lastReportDay = 0) никогда не исключаются
                         const isAdmin = window.currentUser.email === "wuallar@gmail.com" || window.currentUser.isAdmin;
+                        const isNewUser = (window.currentUser.lastReportDay || 0) === 0;
 
-                        if (window.currentUser.status === "removed" && !isAdmin) {
+                        if (window.currentUser.status === "removed" && !isAdmin && !isNewUser) {
                             document.getElementById("removalNotice").style.display = "block";
 
                             // Скрыть весь контент марафона
