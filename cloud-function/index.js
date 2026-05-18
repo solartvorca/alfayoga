@@ -312,6 +312,121 @@ app.post('/checkAndRemoveUsersWithoutReport', async (req, res) => {
     }
 });
 
+// Проверка кода подтверждения email
+app.post('/verifyEmailCode', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+
+        if (!email || !code) {
+            return res.status(400).json({ error: 'Email и код обязательны' });
+        }
+
+        const db = admin.firestore();
+        const doc = await db.collection('email_verifications').doc(email).get();
+
+        if (!doc.exists) {
+            return res.status(400).json({ error: 'Код не найден или истек' });
+        }
+
+        const data = doc.data();
+        const now = new Date();
+
+        // Проверка срока действия кода
+        if (now > data.expiresAt.toDate()) {
+            return res.status(400).json({ error: 'Код истек. Запроси новый код.' });
+        }
+
+        // Проверка количества попыток (максимум 5)
+        if (data.attempts >= 5) {
+            return res.status(400).json({ error: 'Слишком много неверных попыток. Запроси новый код.' });
+        }
+
+        // Проверка кода
+        if (data.code !== code) {
+            // Увеличиваем количество попыток
+            await db.collection('email_verifications').doc(email).update({
+                attempts: data.attempts + 1
+            });
+            return res.status(400).json({ error: 'Неверный код подтверждения' });
+        }
+
+        // Код верный - удаляем запись
+        await db.collection('email_verifications').doc(email).delete();
+
+        res.status(200).json({
+            success: true,
+            message: 'Email подтвержден успешно'
+        });
+    } catch (error) {
+        console.error('Ошибка проверки кода:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Отправка кода подтверждения email для регистрации
+app.post('/sendVerificationCode', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email не указан' });
+        }
+
+        // Генерируем 6-значный код
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Сохраняем код в Firestore с TTL 15 минут
+        const db = admin.firestore();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        await db.collection('email_verifications').doc(email).set({
+            code: verificationCode,
+            createdAt: new Date(),
+            expiresAt: expiresAt,
+            attempts: 0
+        });
+
+        const mailOptions = {
+            from: process.env.GMAIL_USER,
+            to: email,
+            subject: '🔐 Код подтверждения — Лунный Будильник',
+            html: `
+                <div style="font-family: Arial, sans-serif; background: #0a0e27; color: #e0e6ed; padding: 20px;">
+                    <div style="max-width: 600px; margin: 0 auto; background: rgba(180, 100, 255, 0.08); padding: 30px; border-radius: 12px; border: 1px solid rgba(180, 100, 255, 0.2);">
+                        <h2 style="color: #a18cd1; text-align: center;">🔐 Подтверждение email</h2>
+
+                        <p>Привет!</p>
+
+                        <p>Вы зарегистрировались на <strong>"Лунный Будильник"</strong>.</p>
+
+                        <div style="background: rgba(161, 140, 209, 0.15); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                            <p style="color: #888; margin: 0 0 10px 0; font-size: 12px;">Ваш код подтверждения:</p>
+                            <p style="color: #ffd700; font-size: 32px; margin: 0; letter-spacing: 5px; font-weight: bold;">${verificationCode}</p>
+                            <p style="color: #888; margin: 10px 0 0 0; font-size: 12px;">Код действителен 15 минут</p>
+                        </div>
+
+                        <p style="color: #c8d0db;">Если это были не вы, проигнорируйте это письмо.</p>
+
+                        <p style="text-align: center; color: #888; font-size: 12px; margin-top: 30px;">
+                            © Йога Царевича — Марафон осознанности
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({
+            success: true,
+            message: 'Код подтверждения отправлен',
+            expiresAt: expiresAt.toISOString()
+        });
+    } catch (error) {
+        console.error('Ошибка отправки кода:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Проверка здоровья приложения
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
