@@ -828,6 +828,60 @@
             }
         }
 
+        // Проверить и восстановить пользователя если это полнолуние
+        async function checkAndRestoreIfFullMoon() {
+            const currentStatus = window.currentUser.status || "active";
+
+            // Если статус не removed - нет смысла проверять
+            if (currentStatus !== "removed") {
+                return;
+            }
+
+            // Получить дату полнолуния
+            const fullMoonDateStr = localStorage.getItem('fullMoonDate') || "2026-05-02";
+            const fullMoonDate = new Date(fullMoonDateStr);
+            const lunarCycleDays = 29.5;
+
+            // Вычислить, какое сегодня полнолуние (если оно есть)
+            const now = new Date();
+            const daysSinceOriginalMoon = (now - fullMoonDate) / (1000 * 60 * 60 * 24);
+            const fullMoonNumber = Math.floor(daysSinceOriginalMoon / lunarCycleDays);
+
+            // Дата следующего полнолуния (последнего завершённого)
+            const completedFullMoonDate = new Date(fullMoonDate.getTime() + fullMoonNumber * lunarCycleDays * 24 * 60 * 60 * 1000);
+
+            // Проверим, находимся ли мы в день полнолуния (±1 день для уверенности)
+            const daysDiff = Math.abs((now - completedFullMoonDate) / (1000 * 60 * 60 * 24));
+
+            console.log(`[Full Moon Check] Days from full moon: ${daysDiff.toFixed(1)}`);
+
+            if (daysDiff <= 1) {
+                // Это день полнолуния или очень близко - восстановить пользователя
+                try {
+                    console.log(`[Full Moon Restore] Restoring user on full moon`);
+
+                    await db.collection("users").doc(window.currentUser.uid).update({
+                        status: "active",
+                        removedAt: null,
+                        removedReason: null,
+                        restoredAt: new Date(),
+                        restoredReason: "full_moon"
+                    });
+
+                    window.currentUser.status = "active";
+                    window.currentUser.removedAt = null;
+                    window.currentUser.removedReason = null;
+
+                    console.log("[Full Moon Restore] User restored successfully");
+
+                    // Перезагрузить страницу чтобы показать контент марафона
+                    location.reload();
+                } catch (error) {
+                    console.error("[Full Moon Restore] Error restoring user:", error);
+                }
+            }
+        }
+
         // Проверить и выпустить пользователя если не написал отчёт вовремя
         async function checkAndRemoveIfMissedReport() {
             const currentDay = getLunarDay();
@@ -1646,6 +1700,9 @@
                             email: user.email,
                             ...doc.data()
                         };
+
+                        // Проверить восстановление на полнолуние
+                        checkAndRestoreIfFullMoon();
 
                         // Проверить, не выпал ли пользователь из-за пропуска отчёта
                         checkAndRemoveIfMissedReport();
