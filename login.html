@@ -157,6 +157,9 @@
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit" class="btn">Войти</button>
+                <div style="text-align: center; margin-top: 10px;">
+                    <a onclick="handleForgotPassword()" style="color: #888; font-size: 13px; cursor: pointer; text-decoration: underline;">Забыли пароль?</a>
+                </div>
             </form>
             <div style="margin-top: 20px; text-align: center;">
                 <p style="color: #888; font-size: 13px; margin-bottom: 15px;">или</p>
@@ -261,6 +264,20 @@
                 window.location.href = "marathon.html";
             } catch (error) {
                 showError(error.message);
+            }
+        }
+
+        async function handleForgotPassword() {
+            const email = document.getElementById("loginEmail").value.trim();
+            if (!email) {
+                alert("Введи email в поле выше, затем нажми «Забыли пароль?»");
+                return;
+            }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                alert("Письмо для сброса пароля отправлено на " + email);
+            } catch (error) {
+                alert("Ошибка: " + error.message);
             }
         }
 
