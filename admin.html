@@ -1288,8 +1288,6 @@
                 const lastReportDay = user.lastReportDay || 0;
                 const lastReportText = lastReportDay > 0 ? `День ${lastReportDay}` : "—";
 
-                const restoreBtn = user.status === "removed" ? `<button onclick="restoreUserToMarathon('${doc.id}', '${user.nick}')" class="btn" style="padding: 4px 8px; font-size: 11px; background: rgba(0, 208, 132, 0.3); margin-bottom: 6px;">↻ Вернуть</button>` : "";
-
                 return `
                     <tr>
                         <td><a href="view-profile.html?uid=${doc.id}" class="user-nick-link">${user.nick}</a></td>
@@ -1298,9 +1296,13 @@
                         <td>${lastReportText}</td>
                         <td><span class="${subscriptionClass}">${subscriptionText}</span></td>
                         <td>${skipsText}</td>
-                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td>
+                            <select onchange="changeUserStatus('${doc.id}', '${user.nick}', this.value)" style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 4px; color: #e0e6ed; padding: 4px; width: 100%;">
+                                <option value="active" ${user.status === "active" ? "selected" : ""}>✅ Активен</option>
+                                <option value="removed" ${user.status === "removed" ? "selected" : ""}>❌ Исключён</option>
+                            </select>
+                        </td>
                         <td style="font-size: 12px;">
-                            ${restoreBtn}
                             <select onchange="changeUserSubscription('${doc.id}', this.value)" style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 4px; color: #e0e6ed; padding: 4px; width: 100%;">
                                 <option value="free" ${subscription === "free" ? "selected" : ""}>Free</option>
                                 <option value="premium" ${subscription === "premium" ? "selected" : ""}>Premium</option>
@@ -1325,21 +1327,26 @@
             }
         }
 
-        // Вернуть пользователя в марафон
-        async function restoreUserToMarathon(uid, nick) {
-            if (!confirm(`Вернуть ${nick} в марафон?`)) return;
-
+        // Изменить статус пользователя
+        async function changeUserStatus(uid, nick, status) {
+            const action = status === "removed" ? `Исключить ${nick} из марафона?` : `Вернуть ${nick} в марафон?`;
+            if (!confirm(action)) {
+                loadUsers();
+                return;
+            }
             try {
-                await db.collection("users").doc(uid).update({
-                    status: "active",
-                    removedAt: null,
-                    removedReason: null
-                });
-                alert(`✓ ${nick} восстановлен(а) в марафоне!`);
+                await db.collection("users").doc(uid).update({ status });
                 loadUsers();
             } catch (error) {
                 alert("Ошибка: " + error.message);
+                loadUsers();
             }
+        }
+
+        // Вернуть пользователя в марафон (старая функция, оставлена для совместимости)
+        async function restoreUserToMarathon(uid, nick) {
+            await changeUserStatus(uid, nick, "active");
+        }
         }
 
         // Проверить и исключить пользователей которые не написали отчёт за день
