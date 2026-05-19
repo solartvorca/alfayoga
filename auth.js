@@ -141,3 +141,5 @@ window.debugReferralCode = async (code) => {
         return null;
     }
 };
+
+checkAuth();
