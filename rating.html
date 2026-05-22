@@ -154,22 +154,21 @@
     <script src="mobile-nav.js"></script>
     <script>
         async function loadRating() {
-            const snapshot = await db.collection("users")
-                .where("status", "==", "active")
-                .orderBy("rays", "desc")
-                .limit(50)
-                .get();
-
+            const snapshot = await db.collection("users").get();
             const list = document.getElementById("ratingList");
+            const allUsers = snapshot.docs
+                .map(doc => doc.data())
+                .filter(u => u.status === "active" && (u.rays || 0) > 0)
+                .sort((a, b) => (b.rays || 0) - (a.rays || 0))
+                .slice(0, 50);
 
-            if (snapshot.empty) {
+            if (allUsers.length === 0) {
                 list.innerHTML = '<p style="text-align:center;color:#888;">Нет активных участников</p>';
                 return;
             }
 
             const places = ['🥇', '🥈', '🥉'];
-            list.innerHTML = snapshot.docs.map((doc, i) => {
-                const u = doc.data();
+            list.innerHTML = allUsers.map((u, i) => {
                 const place = places[i] || `${i + 1}`;
                 const cardClass = i < 3 ? `top-${i + 1}` : '';
                 return `
