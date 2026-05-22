@@ -201,8 +201,8 @@
                 </div>
 
                 <div class="welcome-buttons">
-                    <a href="login.html" class="welcome-btn welcome-btn-primary">Войти в марафон</a>
-                    <a href="index.html" class="welcome-btn welcome-btn-secondary">Просмотр без входа</a>
+                    <a href="login.html?register=true" class="welcome-btn welcome-btn-primary">Зарегистрироваться</a>
+                    <a href="login.html" class="welcome-btn welcome-btn-secondary">Уже есть аккаунт</a>
                 </div>
             </div>
 
@@ -224,12 +224,12 @@
                     Наша программа работает только если ты честен с собой в течение 28 дней. Не для галочки, не для галереи — для себя.
                 </div>
 
-                <div class="welcome-footer" id="redirectTimer">
-                    Перенаправление через 5 сек...
+                <div class="welcome-footer">
+                    В добрый путь! Внимание на источник. ✨
                 </div>
 
                 <div class="welcome-buttons">
-                    <a href="index.html" class="welcome-btn welcome-btn-primary">Начать сейчас →</a>
+                    <a href="marathon.html" class="welcome-btn welcome-btn-primary">Начать путь →</a>
                 </div>
             </div>
         </div>
@@ -254,18 +254,6 @@
                     document.getElementById("newUserContent").style.display = "block";
 
                     document.getElementById("userGreeting").textContent = `Приветствуем, ${nick}!`;
-
-                    // Обратный отсчёт
-                    let seconds = 12;
-                    const timer = setInterval(() => {
-                        seconds--;
-                        if (seconds > 0) {
-                            document.getElementById("redirectTimer").textContent = `Перенаправление через ${seconds} сек...`;
-                        } else {
-                            clearInterval(timer);
-                            window.location.href = "index.html";
-                        }
-                    }, 1000);
                 }
             }
             // Если не авторизован, показываем publicContent (по умолчанию)
