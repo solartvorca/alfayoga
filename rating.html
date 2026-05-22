@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .rating-container { max-width: 700px; margin: 0 auto; padding: 20px 15px 100px; }
+
+        .rating-title { font-size: 22px; font-weight: 700; color: #a18cd1; margin-bottom: 5px; }
+        .rating-subtitle { font-size: 13px; color: #888; margin-bottom: 25px; }
+
+        .rating-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(10, 14, 39, 0.6);
+            border: 1px solid rgba(180, 100, 255, 0.15);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .rating-card.top-1 { border-color: rgba(255, 215, 0, 0.5); background: rgba(255, 215, 0, 0.05); }
+        .rating-card.top-2 { border-color: rgba(192, 192, 192, 0.4); }
+        .rating-card.top-3 { border-color: rgba(205, 127, 50, 0.4); }
+
+        .rating-place { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+        .rating-nick { font-weight: 600; color: #e0e6ed; font-size: 15px; }
+        .rating-rays { margin-left: auto; color: #ffd700; font-weight: 700; font-size: 15px; white-space: nowrap; }
+        .rating-day { font-size: 12px; color: #888; }
+
+        .section-block {
+            background: rgba(10, 14, 39, 0.6);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-block h3 { color: #a18cd1; font-size: 16px; margin: 0 0 15px; }
+
+        .earn-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            color: #c8d0db;
+        }
+        .earn-item:last-child { border-bottom: none; }
+        .earn-badge {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .earn-badge.dust {
+            background: rgba(161, 140, 209, 0.15);
+            color: #a18cd1;
+        }
+
+        .prize-block {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08) 0%, rgba(161, 140, 209, 0.08) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .prize-emoji { font-size: 48px; margin-bottom: 10px; }
+        .prize-title { color: #ffd700; font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+        .prize-text { color: #c8d0db; font-size: 13px; line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <div class="rating-container">
+        <div class="rating-title">🏆 Рейтинг участников</div>
+        <div class="rating-subtitle">Активные участники марафона по количеству лучиков</div>
+
+        <div id="ratingList">
+            <p style="text-align:center; color:#888;">Загрузка...</p>
+        </div>
+
+        <!-- Приз победителю -->
+        <div class="prize-block">
+            <div class="prize-emoji">🌬️</div>
+            <div class="prize-title">Приз победителя месяца</div>
+            <div class="prize-text">
+                В день нового полнолуния участник с наибольшим числом лучиков получает
+                <strong style="color:#ffd700;">индивидуальную дыхательную практику под заказ</strong> —
+                для актуализации главного перед едой, чтобы пища лучше переваривалась,
+                как того завещала природа лучшего пищеварения.
+            </div>
+        </div>
+
+        <!-- Как зарабатываются лучики -->
+        <div class="section-block">
+            <h3>✨ Как зарабатывать лучики</h3>
+
+            <div class="earn-item">
+                <span>📝 Написал задачу и выполнил её</span>
+                <span class="earn-badge">+1 лучик</span>
+            </div>
+            <div class="earn-item">
+                <span>📣 Репост + комментарий в ВК</span>
+                <span class="earn-badge">+1 лучик</span>
+            </div>
+            <div class="earn-item">
+                <span>👥 Пригласил друга по реферальной ссылке</span>
+                <span class="earn-badge">+100 лучиков</span>
+            </div>
+            <div class="earn-item">
+                <span>💬 Написал комментарий</span>
+                <span class="earn-badge dust">Золотая пыльца</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        async function loadRating() {
+            const snapshot = await db.collection("users")
+                .where("status", "==", "active")
+                .orderBy("rays", "desc")
+                .limit(50)
+                .get();
+
+            const list = document.getElementById("ratingList");
+
+            if (snapshot.empty) {
+                list.innerHTML = '<p style="text-align:center;color:#888;">Нет активных участников</p>';
+                return;
+            }
+
+            const places = ['🥇', '🥈', '🥉'];
+            list.innerHTML = snapshot.docs.map((doc, i) => {
+                const u = doc.data();
+                const place = places[i] || `${i + 1}`;
+                const cardClass = i < 3 ? `top-${i + 1}` : '';
+                return `
+                    <div class="rating-card ${cardClass}">
+                        <div class="rating-place">${place}</div>
+                        <div>
+                            <div class="rating-nick">${u.nick || u.email}</div>
+                            <div class="rating-day">День ${u.lastReportDay || 0}</div>
+                        </div>
+                        <div class="rating-rays">🔥 ${u.rays || 0}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        loadRating();
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@
         { icon: '✨', label: 'Желания', path: 'wishes.html' },
         { icon: '🌿', label: 'Образ жизни', path: 'lifestyle.html' },
         { icon: '📅', label: 'Задачи', path: 'planner.html' },
-        { icon: '🔔', label: 'Уведомления', path: 'notifications.html' }
+        { icon: '🏆', label: 'Рейтинг', path: 'rating.html' }
     ];
 
     function getCurrentPage() {

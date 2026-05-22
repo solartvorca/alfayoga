@@ -578,6 +578,11 @@
             <div id="dailyPracticeContent" style="color: #c8d0db; font-size: 14px; line-height: 1.8;">
                 <p style="text-align: center; color: #888;">Загрузка...</p>
             </div>
+            <div id="practiceCheckbox" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,208,132,0.2);">
+                <button id="practiceBtn" onclick="markPracticeDone()" style="width:100%; padding: 12px; background: rgba(0,208,132,0.15); border: 1px solid rgba(0,208,132,0.4); border-radius: 10px; color: #00d084; font-size: 15px; font-weight: 600; cursor: pointer;">
+                    ✅ Отметить практику выполненной (+1 лучик)
+                </button>
+            </div>
         </div>
 
         <!-- Лента отчетов -->
@@ -976,9 +981,49 @@
 
                 document.getElementById("dailyPracticeSection").style.display = "block";
 
+                // Показать кнопку практики только если сегодня ещё не отмечали
+                const today = new Date().toDateString();
+                const doneKey = `practice_done_${today}`;
+                const practiceCheckbox = document.getElementById("practiceCheckbox");
+                const practiceBtn = document.getElementById("practiceBtn");
+                practiceCheckbox.style.display = "block";
+                if (localStorage.getItem(doneKey)) {
+                    practiceBtn.textContent = "✅ Практика выполнена сегодня";
+                    practiceBtn.disabled = true;
+                    practiceBtn.style.opacity = "0.5";
+                    practiceBtn.style.cursor = "default";
+                }
+
             } catch (error) {
                 console.error("Ошибка загрузки практики дня:", error);
                 document.getElementById("dailyPracticeSection").style.display = "none";
+            }
+        }
+
+        async function markPracticeDone() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            const today = new Date().toDateString();
+            const doneKey = `practice_done_${today}`;
+            if (localStorage.getItem(doneKey)) return;
+
+            try {
+                await db.collection("users").doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(1)
+                });
+                localStorage.setItem(doneKey, "1");
+                window.currentUser.rays = (window.currentUser.rays || 0) + 1;
+
+                const btn = document.getElementById("practiceBtn");
+                btn.textContent = "✅ Практика выполнена сегодня";
+                btn.disabled = true;
+                btn.style.opacity = "0.5";
+                btn.style.cursor = "default";
+
+                alert("✓ Практика отмечена! +1 лучик");
+            } catch (error) {
+                alert("Ошибка: " + error.message);
             }
         }
 
