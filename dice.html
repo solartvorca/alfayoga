@@ -209,7 +209,10 @@
 
         <div class="result-card" id="resultCard">
             <div class="result-number" id="resultNumber"></div>
-            <div class="result-hexagram" id="resultHexagram"></div>
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:8px;">
+                <div class="result-hexagram" id="resultHexagram" style="margin:0;"></div>
+                <div id="resultHexagramLines" style="flex-shrink:0;"></div>
+            </div>
             <div class="result-title" id="resultTitle"></div>
             <div class="result-pinyin" id="resultPinyin"></div>
             <div id="resultTrigrams" class="result-trigrams"></div>
@@ -246,6 +249,23 @@
             const res = await fetch('384.txt');
             const text = await res.text();
             ichingData = parseIching(text);
+        }
+
+        function buildHexagramHTML(trigramsStr) {
+            const TLINES = {
+                '☰': [1,1,1], '☱': [1,1,0], '☲': [1,0,1], '☳': [1,0,0],
+                '☴': [0,1,1], '☵': [0,1,0], '☶': [0,0,1], '☷': [0,0,0]
+            };
+            const t = trigramsStr || '';
+            const lower = TLINES[t[0]];
+            const upper = TLINES[t[1]];
+            if (!lower || !upper) return '';
+            const lines = [...lower, ...upper];
+            const lineHTML = lines.slice().reverse().map(yang => yang
+                ? `<div style="height:5px;background:#c8d0db;border-radius:2px;"></div>`
+                : `<div style="display:flex;gap:5px;"><div style="flex:1;height:5px;background:#c8d0db;border-radius:2px;"></div><div style="flex:1;height:5px;background:#c8d0db;border-radius:2px;"></div></div>`
+            ).join('');
+            return `<div style="width:44px;height:48px;display:flex;flex-direction:column;justify-content:space-between;">${lineHTML}</div>`;
         }
 
         function parseIching(text) {
@@ -361,6 +381,7 @@
             try {
                 document.getElementById('resultNumber').textContent = `Позиция ${entry.no} из 384`;
                 document.getElementById('resultHexagram').textContent = entry.hieroglyph || '';
+                document.getElementById('resultHexagramLines').innerHTML = buildHexagramHTML(entry.trigrams);
                 document.getElementById('resultTitle').textContent = entry.wilhelm || '';
                 document.getElementById('resultPinyin').textContent = entry.pinyin || '';
                 document.getElementById('resultTrigrams').textContent = entry.trigrams || '';
