@@ -259,30 +259,38 @@
                     gates: noMatch[4]
                 };
 
-                const hierMatch = block.match(/Иероглиф:\s+(\S+)\s+\(([^)]+)\)/);
+                // Контент находится в следующем блоке после "No XXX"
+                const content = blocks[i + 1] || '';
+
+                const hierMatch = content.match(/Иероглиф:\s+(\S+)\s+\(([^(]+)\(/);
                 if (hierMatch) {
                     entry.hieroglyph = hierMatch[1];
-                    entry.trigrams = hierMatch[2];
+                    entry.trigrams = hierMatch[2].trim();
+                } else {
+                    const hierMatch2 = content.match(/Иероглиф:\s+(\S+)\s+\(([^)]+)\)/);
+                    if (hierMatch2) {
+                        entry.hieroglyph = hierMatch2[1];
+                        entry.trigrams = hierMatch2[2].trim();
+                    }
                 }
 
-                const pinyinMatch = block.match(/Пиньинь:\s+(\S+)/);
+                const pinyinMatch = content.match(/Пиньинь:\s+(\S+)/);
                 if (pinyinMatch) entry.pinyin = pinyinMatch[1].trim();
 
-                const wilhelmMatch = block.match(/Вильгельм\/Байнс:\s+(.+)/);
+                const wilhelmMatch = content.match(/Вильгельм\/Байнс:\s+(.+)/);
                 if (wilhelmMatch) entry.wilhelm = wilhelmMatch[1].trim();
 
-                const namesMatch = block.match(/Все рус\. назв\.:\s+(.+)/);
+                const namesMatch = content.match(/Все рус\. назв\.:\s+(.+)/);
                 if (namesMatch) entry.names = namesMatch[1].trim();
 
-                const raveMatch = block.match(/Ворота\s+[\w\s()–—]+(?:\n|\r)/);
-                const raveLineMatch = block.match(/\[РЕЙВ И ЦЗИН[^\]]*\]\s*\n\s*(.+)\n\s*(.+)/);
+                const raveLineMatch = content.match(/\[РЕЙВ И ЦЗИН[^\]]*\]\s*\n\s*(.+)\n\s*(.+)/);
                 if (raveLineMatch) {
                     entry.rave = raveLineMatch[1].trim() + ' · ' + raveLineMatch[2].trim();
                 }
 
-                const shadowMatch = block.match(/Тень\s+\(Shadow\):\s+([^\n]+)/);
-                const giftMatch = block.match(/Дар\s+\(Gift\):\s+([^\n]+)/);
-                const siddhiMatch = block.match(/Сиддхи\(Siddhi\):\s+([^\n]+)/);
+                const shadowMatch = content.match(/Тень\s+\(Shadow\):\s+([^\n]+)/);
+                const giftMatch = content.match(/Дар\s+\(Gift\):\s+([^\n]+)/);
+                const siddhiMatch = content.match(/Сиддхи\(Siddhi\):\s+([^\n]+)/);
                 if (shadowMatch) entry.shadow = shadowMatch[1].trim();
                 if (giftMatch) entry.gift = giftMatch[1].trim();
                 if (siddhiMatch) entry.siddhi = siddhiMatch[1].trim();

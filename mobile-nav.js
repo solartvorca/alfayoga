@@ -6,7 +6,8 @@
         { icon: '✨', label: 'Желания', path: 'wishes.html' },
         { icon: '🌿', label: 'Образ жизни', path: 'lifestyle.html' },
         { icon: '📅', label: 'Задачи', path: 'planner.html' },
-        { icon: '🏆', label: 'Рейтинг', path: 'rating.html' }
+        { icon: '🏆', label: 'Рейтинг', path: 'rating.html' },
+        { icon: '🎲', label: 'И Цзин', path: 'dice.html' }
     ];
 
     function getCurrentPage() {
