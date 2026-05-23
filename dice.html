@@ -26,6 +26,7 @@
         .balance-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
         .balance-value { font-size: 20px; font-weight: 700; color: #ffd700; }
         .balance-value.dust { color: #a18cd1; }
+        .balance-value.prana { color: #00d084; }
 
         .dice-cost {
             text-align: center;
@@ -192,15 +193,19 @@
                 <div class="balance-label">Золотая пыльца</div>
                 <div class="balance-value dust" id="dustDisplay">—</div>
             </div>
+            <div class="balance-item">
+                <div class="balance-label">Прана</div>
+                <div class="balance-value prana" id="pranaDisplay">—</div>
+            </div>
         </div>
 
-        <div class="dice-cost">Стоимость броска: <span>−10 лучиков</span> · Награда: <span>+20 золотой пыльцы</span></div>
+        <div class="dice-cost">Стоимость броска: <span>−10 лучиков</span> · Награда: <span>+20 пыльцы</span> · <span style="color:#00d084;">+1 прана</span></div>
 
         <button class="dice-btn" id="rollBtn" onclick="rollDice()">🎲 Бросить кость</button>
 
         <div id="rollingAnim" style="display:none;" class="dice-rolling">🎲</div>
 
-        <div class="reward-notice" id="rewardNotice">✨ +20 золотой пыльцы начислено!</div>
+        <div class="reward-notice" id="rewardNotice">✨ +20 золотой пыльцы · 🌿 +1 прана начислено!</div>
 
         <div class="result-card" id="resultCard">
             <div class="result-number" id="resultNumber"></div>
@@ -302,6 +307,7 @@
             if (!user) return;
             document.getElementById('raysDisplay').textContent = '🔥 ' + (user.rays || 0);
             document.getElementById('dustDisplay').textContent = '✨ ' + (user.dust || 0);
+            document.getElementById('pranaDisplay').textContent = '🌿 ' + (user.prana || 0);
         }
 
         async function rollDice() {
@@ -331,14 +337,16 @@
             const idx = Math.floor(Math.random() * ichingData.length);
             const entry = ichingData[idx];
 
-            // Списать 10 лучиков, начислить 20 пыльцы
+            // Списать 10 лучиков, начислить 20 пыльцы и 1 прану
             try {
                 await db.collection('users').doc(user.uid).update({
                     rays: firebase.firestore.FieldValue.increment(-10),
-                    dust: firebase.firestore.FieldValue.increment(20)
+                    dust: firebase.firestore.FieldValue.increment(20),
+                    prana: firebase.firestore.FieldValue.increment(1)
                 });
                 user.rays = (user.rays || 0) - 10;
                 user.dust = (user.dust || 0) + 20;
+                user.prana = (user.prana || 0) + 1;
                 updateBalance();
             } catch (e) {
                 alert('Ошибка: ' + e.message);
@@ -372,31 +380,26 @@
             }
             btn.disabled = false;
 
-            // Сохранить как гексаграмму дня если сегодня ещё не было броска или данные пустые
+            // Каждый бросок обновляет гексаграмму дня
             const today = new Date().toISOString().slice(0, 10);
             const dailyRef = db.collection('settings').doc('daily_hexagram');
-            const dailyDoc = await dailyRef.get();
-            const existingData = dailyDoc.exists ? dailyDoc.data() : null;
-            const isEmpty = !existingData || !existingData.wilhelm;
-            if (!dailyDoc.exists || existingData.date !== today || isEmpty) {
-                await dailyRef.set({
-                    date: today,
-                    no: entry.no,
-                    hex: entry.hex,
-                    line: entry.line,
-                    gates: entry.gates,
-                    hieroglyph: entry.hieroglyph || '',
-                    trigrams: entry.trigrams || '',
-                    wilhelm: entry.wilhelm || '',
-                    pinyin: entry.pinyin || '',
-                    names: entry.names || '',
-                    rave: entry.rave || '',
-                    shadow: entry.shadow || '',
-                    gift: entry.gift || '',
-                    siddhi: entry.siddhi || '',
-                    setBy: user.nick || user.email
-                });
-            }
+            await dailyRef.set({
+                date: today,
+                no: entry.no,
+                hex: entry.hex,
+                line: entry.line,
+                gates: entry.gates,
+                hieroglyph: entry.hieroglyph || '',
+                trigrams: entry.trigrams || '',
+                wilhelm: entry.wilhelm || '',
+                pinyin: entry.pinyin || '',
+                names: entry.names || '',
+                rave: entry.rave || '',
+                shadow: entry.shadow || '',
+                gift: entry.gift || '',
+                siddhi: entry.siddhi || '',
+                setBy: user.nick || user.email
+            });
         }
 
         // Инициализация
