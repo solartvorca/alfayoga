@@ -245,55 +245,51 @@
 
         function parseIching(text) {
             const entries = [];
-            const blocks = text.split('========================================================================');
+            const headerRe = /No\s+(\d+)\s+\|\s+ГЕКСАГРАММА\s+(\d+)\s+\/\s+ЛИНИЯ\s+(\d+)\s+\|\s+Ворота\s+([\d.]+)/g;
 
-            for (let i = 0; i < blocks.length; i++) {
-                const block = blocks[i];
-                const noMatch = block.match(/No\s+(\d+)\s+\|\s+ГЕКСАГРАММА\s+(\d+)\s+\/\s+ЛИНИЯ\s+(\d+)\s+\|\s+Ворота\s+([\d.]+)/);
-                if (!noMatch) continue;
+            const positions = [];
+            let m;
+            while ((m = headerRe.exec(text)) !== null) {
+                positions.push({ index: m.index, g: [m[1], m[2], m[3], m[4]] });
+            }
+
+            for (let i = 0; i < positions.length; i++) {
+                const { g } = positions[i];
+                const start = positions[i].index;
+                const end = i + 1 < positions.length ? positions[i + 1].index : text.length;
+                const block = text.slice(start, end);
 
                 const entry = {
-                    no: parseInt(noMatch[1]),
-                    hex: parseInt(noMatch[2]),
-                    line: parseInt(noMatch[3]),
-                    gates: noMatch[4]
+                    no: parseInt(g[0]),
+                    hex: parseInt(g[1]),
+                    line: parseInt(g[2]),
+                    gates: g[3]
                 };
 
-                // Контент находится в следующем блоке после "No XXX"
-                const content = blocks[i + 1] || '';
-
-                const hierMatch = content.match(/Иероглиф:\s+(\S+)\s+\(([^(]+)\(/);
-                if (hierMatch) {
-                    entry.hieroglyph = hierMatch[1];
-                    entry.trigrams = hierMatch[2].trim();
-                } else {
-                    const hierMatch2 = content.match(/Иероглиф:\s+(\S+)\s+\(([^)]+)\)/);
-                    if (hierMatch2) {
-                        entry.hieroglyph = hierMatch2[1];
-                        entry.trigrams = hierMatch2[2].trim();
-                    }
+                const hierM = block.match(/Иероглиф:\s+(\S+)\s+\((.+)/);
+                if (hierM) {
+                    entry.hieroglyph = hierM[1];
+                    entry.trigrams = hierM[2].replace(/\)\s*$/, '').trim();
                 }
 
-                const pinyinMatch = content.match(/Пиньинь:\s+(\S+)/);
-                if (pinyinMatch) entry.pinyin = pinyinMatch[1].trim();
+                const pinyinM = block.match(/Пиньинь:\s+(\S+)/);
+                if (pinyinM) entry.pinyin = pinyinM[1].trim();
 
-                const wilhelmMatch = content.match(/Вильгельм\/Байнс:\s+(.+)/);
-                if (wilhelmMatch) entry.wilhelm = wilhelmMatch[1].trim();
+                const wilhelmM = block.match(/Вильгельм\/Байнс:\s+(.+)/);
+                if (wilhelmM) entry.wilhelm = wilhelmM[1].trim();
 
-                const namesMatch = content.match(/Все рус\. назв\.:\s+(.+)/);
-                if (namesMatch) entry.names = namesMatch[1].trim();
+                const namesM = block.match(/Все рус\. назв\.:\s+(.+)/);
+                if (namesM) entry.names = namesM[1].trim();
 
-                const raveLineMatch = content.match(/\[РЕЙВ И ЦЗИН[^\]]*\]\s*\n\s*(.+)\n\s*(.+)/);
-                if (raveLineMatch) {
-                    entry.rave = raveLineMatch[1].trim() + ' · ' + raveLineMatch[2].trim();
-                }
+                const raveM = block.match(/\[РЕЙВ И ЦЗИН[^\]]*\][\r\n]+\s*(.+)/);
+                if (raveM) entry.rave = raveM[1].trim();
 
-                const shadowMatch = content.match(/Тень\s+\(Shadow\):\s+([^\n]+)/);
-                const giftMatch = content.match(/Дар\s+\(Gift\):\s+([^\n]+)/);
-                const siddhiMatch = content.match(/Сиддхи\(Siddhi\):\s+([^\n]+)/);
-                if (shadowMatch) entry.shadow = shadowMatch[1].trim();
-                if (giftMatch) entry.gift = giftMatch[1].trim();
-                if (siddhiMatch) entry.siddhi = siddhiMatch[1].trim();
+                const shadowM = block.match(/Тень\s+\(Shadow\):\s+([^\r\n]+)/);
+                const giftM = block.match(/Дар\s+\(Gift\):\s+([^\r\n]+)/);
+                const siddhiM = block.match(/Сиддхи\(Siddhi\):\s+([^\r\n]+)/);
+                if (shadowM) entry.shadow = shadowM[1].trim();
+                if (giftM) entry.gift = giftM[1].trim();
+                if (siddhiM) entry.siddhi = siddhiM[1].trim();
 
                 entries.push(entry);
             }
@@ -354,22 +350,26 @@
             document.getElementById('rollingAnim').style.display = 'none';
 
             // Показать результат
-            document.getElementById('resultNumber').textContent = `Позиция ${entry.no} из 384`;
-            document.getElementById('resultHexagram').textContent = entry.hieroglyph || '';
-            document.getElementById('resultTitle').textContent = entry.wilhelm || '';
-            document.getElementById('resultPinyin').textContent = entry.pinyin || '';
-            document.getElementById('resultTrigrams').textContent = entry.trigrams || '';
-            document.getElementById('resultLine').textContent = `Гексаграмма ${entry.hex} · Линия ${entry.line} · Ворота ${entry.gates}`;
-            document.getElementById('resultNames').innerHTML = (entry.names || '').split('|').map(n => `<span>${n.trim()}</span>`).join(' · ');
-            document.getElementById('resultRave').textContent = entry.rave || '—';
-            document.getElementById('resultGene').innerHTML = `
-                <div class="gene-key-item gene-shadow"><div class="gene-label">Тень</div>${entry.shadow || '—'}</div>
-                <div class="gene-key-item gene-gift"><div class="gene-label">Дар</div>${entry.gift || '—'}</div>
-                <div class="gene-key-item gene-siddhi"><div class="gene-label">Сиддхи</div>${entry.siddhi || '—'}</div>
-            `;
-
-            document.getElementById('resultCard').style.display = 'block';
-            document.getElementById('rewardNotice').style.display = 'block';
+            try {
+                document.getElementById('resultNumber').textContent = `Позиция ${entry.no} из 384`;
+                document.getElementById('resultHexagram').textContent = entry.hieroglyph || '';
+                document.getElementById('resultTitle').textContent = entry.wilhelm || '';
+                document.getElementById('resultPinyin').textContent = entry.pinyin || '';
+                document.getElementById('resultTrigrams').textContent = entry.trigrams || '';
+                document.getElementById('resultLine').textContent = `Гексаграмма ${entry.hex} · Линия ${entry.line} · Ворота ${entry.gates}`;
+                document.getElementById('resultNames').innerHTML = (entry.names || '').split('|').map(n => `<span>${n.trim()}</span>`).join(' · ');
+                document.getElementById('resultRave').textContent = entry.rave || '—';
+                document.getElementById('resultGene').innerHTML = `
+                    <div class="gene-key-item gene-shadow"><div class="gene-label">Тень</div>${entry.shadow || '—'}</div>
+                    <div class="gene-key-item gene-gift"><div class="gene-label">Дар</div>${entry.gift || '—'}</div>
+                    <div class="gene-key-item gene-siddhi"><div class="gene-label">Сиддхи</div>${entry.siddhi || '—'}</div>
+                `;
+                document.getElementById('resultCard').style.display = 'block';
+                document.getElementById('rewardNotice').style.display = 'block';
+            } catch (dispErr) {
+                console.error('Ошибка отображения результата:', dispErr, entry);
+                alert('Результат получен, но ошибка при отображении: ' + dispErr.message);
+            }
             btn.disabled = false;
 
             // Сохранить как гексаграмму дня если сегодня ещё не было броска или данные пустые
