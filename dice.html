@@ -372,11 +372,13 @@
             document.getElementById('rewardNotice').style.display = 'block';
             btn.disabled = false;
 
-            // Если сегодня ещё не было броска — сохранить как гексаграмму дня
+            // Сохранить как гексаграмму дня если сегодня ещё не было броска или данные пустые
             const today = new Date().toISOString().slice(0, 10);
             const dailyRef = db.collection('settings').doc('daily_hexagram');
             const dailyDoc = await dailyRef.get();
-            if (!dailyDoc.exists || dailyDoc.data().date !== today) {
+            const existingData = dailyDoc.exists ? dailyDoc.data() : null;
+            const isEmpty = !existingData || !existingData.wilhelm;
+            if (!dailyDoc.exists || existingData.date !== today || isEmpty) {
                 await dailyRef.set({
                     date: today,
                     no: entry.no,
