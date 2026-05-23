@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кости И Цзин — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dice-container { max-width: 700px; margin: 0 auto; padding: 20px 15px 100px; }
+
+        .dice-header { text-align: center; margin-bottom: 30px; }
+        .dice-header h1 { font-size: 24px; color: #a18cd1; margin-bottom: 8px; }
+        .dice-header p { font-size: 14px; color: #888; line-height: 1.6; }
+
+        .dice-balance {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(10,14,39,0.6);
+            border: 1px solid rgba(180,100,255,0.2);
+            border-radius: 12px;
+        }
+        .balance-item { text-align: center; }
+        .balance-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .balance-value { font-size: 20px; font-weight: 700; color: #ffd700; }
+        .balance-value.dust { color: #a18cd1; }
+
+        .dice-cost {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .dice-cost span { color: #ffd700; font-weight: 600; }
+
+        .dice-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #a18cd1 0%, #ffd700 100%);
+            border: none;
+            border-radius: 14px;
+            color: #0a0e27;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 30px;
+            transition: all 0.2s;
+        }
+        .dice-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .dice-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .dice-rolling {
+            text-align: center;
+            font-size: 60px;
+            margin: 20px 0;
+            animation: spin 0.5s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-card {
+            background: rgba(10,14,39,0.8);
+            border: 1px solid rgba(161,140,209,0.4);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .result-number {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-hexagram {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+
+        .result-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .result-pinyin {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .result-trigrams {
+            font-size: 13px;
+            color: #a18cd1;
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            background: rgba(161,140,209,0.08);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .result-section {
+            margin-bottom: 14px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+        }
+        .result-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .result-section-text {
+            font-size: 14px;
+            color: #c8d0db;
+            line-height: 1.6;
+        }
+
+        .result-names {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.8;
+        }
+        .result-names span { color: #c8d0db; }
+
+        .result-line {
+            display: inline-block;
+            background: rgba(0,208,132,0.1);
+            border: 1px solid rgba(0,208,132,0.3);
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 12px;
+            color: #00d084;
+            margin-bottom: 10px;
+        }
+
+        .reward-notice {
+            text-align: center;
+            padding: 14px;
+            background: rgba(161,140,209,0.1);
+            border: 1px solid rgba(161,140,209,0.3);
+            border-radius: 10px;
+            color: #a18cd1;
+            font-weight: 600;
+            font-size: 15px;
+            display: none;
+        }
+
+        .gene-key-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .gene-key-item {
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        .gene-shadow { background: rgba(255,100,100,0.08); color: #ff9999; }
+        .gene-gift { background: rgba(0,208,132,0.08); color: #00d084; }
+        .gene-siddhi { background: rgba(255,215,0,0.08); color: #ffd700; }
+        .gene-label { font-size: 10px; opacity: 0.7; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+    <div class="dice-container">
+        <div class="dice-header">
+            <h1>🎲 Кости И Цзин</h1>
+            <p>Брось кость — получи одно из 384 положений Книги Перемен.<br>Номер гексаграммы и линии укажут тебе путь.</p>
+        </div>
+
+        <div class="dice-balance">
+            <div class="balance-item">
+                <div class="balance-label">Лучики</div>
+                <div class="balance-value" id="raysDisplay">—</div>
+            </div>
+            <div class="balance-item">
+                <div class="balance-label">Золотая пыльца</div>
+                <div class="balance-value dust" id="dustDisplay">—</div>
+            </div>
+        </div>
+
+        <div class="dice-cost">Стоимость броска: <span>−10 лучиков</span> · Награда: <span>+20 золотой пыльцы</span></div>
+
+        <button class="dice-btn" id="rollBtn" onclick="rollDice()">🎲 Бросить кость</button>
+
+        <div id="rollingAnim" style="display:none;" class="dice-rolling">🎲</div>
+
+        <div class="reward-notice" id="rewardNotice">✨ +20 золотой пыльцы начислено!</div>
+
+        <div class="result-card" id="resultCard">
+            <div class="result-number" id="resultNumber"></div>
+            <div class="result-hexagram" id="resultHexagram"></div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-pinyin" id="resultPinyin"></div>
+            <div id="resultTrigrams" class="result-trigrams"></div>
+            <div class="result-line" id="resultLine"></div>
+
+            <div class="result-section">
+                <div class="result-section-title">Все названия</div>
+                <div class="result-names" id="resultNames"></div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-section-title">Рейв И Цзин (Human Design)</div>
+                <div class="result-section-text" id="resultRave"></div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-section-title">Генный ключ</div>
+                <div class="gene-key-row" id="resultGene"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        let ichingData = null;
+
+        // Загрузить и распарсить 384.txt
+        async function loadIching() {
+            const res = await fetch('384.txt');
+            const text = await res.text();
+            ichingData = parseIching(text);
+        }
+
+        function parseIching(text) {
+            const entries = [];
+            const blocks = text.split('========================================================================');
+
+            for (let i = 0; i < blocks.length; i++) {
+                const block = blocks[i];
+                const noMatch = block.match(/No\s+(\d+)\s+\|\s+ГЕКСАГРАММА\s+(\d+)\s+\/\s+ЛИНИЯ\s+(\d+)\s+\|\s+Ворота\s+([\d.]+)/);
+                if (!noMatch) continue;
+
+                const entry = {
+                    no: parseInt(noMatch[1]),
+                    hex: parseInt(noMatch[2]),
+                    line: parseInt(noMatch[3]),
+                    gates: noMatch[4]
+                };
+
+                const hierMatch = block.match(/Иероглиф:\s+(\S+)\s+\(([^)]+)\)/);
+                if (hierMatch) {
+                    entry.hieroglyph = hierMatch[1];
+                    entry.trigrams = hierMatch[2];
+                }
+
+                const pinyinMatch = block.match(/Пиньинь:\s+(\S+)/);
+                if (pinyinMatch) entry.pinyin = pinyinMatch[1].trim();
+
+                const wilhelmMatch = block.match(/Вильгельм\/Байнс:\s+(.+)/);
+                if (wilhelmMatch) entry.wilhelm = wilhelmMatch[1].trim();
+
+                const namesMatch = block.match(/Все рус\. назв\.:\s+(.+)/);
+                if (namesMatch) entry.names = namesMatch[1].trim();
+
+                const raveMatch = block.match(/Ворота\s+[\w\s()–—]+(?:\n|\r)/);
+                const raveLineMatch = block.match(/\[РЕЙВ И ЦЗИН[^\]]*\]\s*\n\s*(.+)\n\s*(.+)/);
+                if (raveLineMatch) {
+                    entry.rave = raveLineMatch[1].trim() + ' · ' + raveLineMatch[2].trim();
+                }
+
+                const shadowMatch = block.match(/Тень\s+\(Shadow\):\s+([^\n]+)/);
+                const giftMatch = block.match(/Дар\s+\(Gift\):\s+([^\n]+)/);
+                const siddhiMatch = block.match(/Сиддхи\(Siddhi\):\s+([^\n]+)/);
+                if (shadowMatch) entry.shadow = shadowMatch[1].trim();
+                if (giftMatch) entry.gift = giftMatch[1].trim();
+                if (siddhiMatch) entry.siddhi = siddhiMatch[1].trim();
+
+                entries.push(entry);
+            }
+
+            return entries;
+        }
+
+        function updateBalance() {
+            const user = window.currentUser;
+            if (!user) return;
+            document.getElementById('raysDisplay').textContent = '🔥 ' + (user.rays || 0);
+            document.getElementById('dustDisplay').textContent = '✨ ' + (user.dust || 0);
+        }
+
+        async function rollDice() {
+            const user = window.currentUser;
+            if (!user) return;
+
+            if ((user.rays || 0) < 10) {
+                alert('Недостаточно лучиков! Нужно минимум 10.');
+                return;
+            }
+
+            if (!ichingData || ichingData.length === 0) {
+                alert('Данные загружаются, попробуй через секунду.');
+                return;
+            }
+
+            const btn = document.getElementById('rollBtn');
+            btn.disabled = true;
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('rewardNotice').style.display = 'none';
+            document.getElementById('rollingAnim').style.display = 'block';
+
+            // Анимация броска
+            await new Promise(r => setTimeout(r, 1200));
+
+            // Случайная позиция 1-384
+            const idx = Math.floor(Math.random() * ichingData.length);
+            const entry = ichingData[idx];
+
+            // Списать 10 лучиков, начислить 20 пыльцы
+            try {
+                await db.collection('users').doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(-10),
+                    dust: firebase.firestore.FieldValue.increment(20)
+                });
+                user.rays = (user.rays || 0) - 10;
+                user.dust = (user.dust || 0) + 20;
+                updateBalance();
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+                btn.disabled = false;
+                document.getElementById('rollingAnim').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('rollingAnim').style.display = 'none';
+
+            // Показать результат
+            document.getElementById('resultNumber').textContent = `Позиция ${entry.no} из 384`;
+            document.getElementById('resultHexagram').textContent = entry.hieroglyph || '';
+            document.getElementById('resultTitle').textContent = entry.wilhelm || '';
+            document.getElementById('resultPinyin').textContent = entry.pinyin || '';
+            document.getElementById('resultTrigrams').textContent = entry.trigrams || '';
+            document.getElementById('resultLine').textContent = `Гексаграмма ${entry.hex} · Линия ${entry.line} · Ворота ${entry.gates}`;
+            document.getElementById('resultNames').innerHTML = (entry.names || '').split('|').map(n => `<span>${n.trim()}</span>`).join(' · ');
+            document.getElementById('resultRave').textContent = entry.rave || '—';
+            document.getElementById('resultGene').innerHTML = `
+                <div class="gene-key-item gene-shadow"><div class="gene-label">Тень</div>${entry.shadow || '—'}</div>
+                <div class="gene-key-item gene-gift"><div class="gene-label">Дар</div>${entry.gift || '—'}</div>
+                <div class="gene-key-item gene-siddhi"><div class="gene-label">Сиддхи</div>${entry.siddhi || '—'}</div>
+            `;
+
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('rewardNotice').style.display = 'block';
+            btn.disabled = false;
+        }
+
+        // Инициализация
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    window.currentUser = { uid: user.uid, email: user.email, ...doc.data() };
+                    updateBalance();
+                }
+            }
+        });
+
+        loadIching();
+    </script>
+</body>
+</html>
