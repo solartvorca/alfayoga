@@ -507,6 +507,30 @@
             <button class="btn-read-more" onclick="showMarathonInfo()">Просмотреть описание полностью</button>
         </div>
 
+        <!-- Гексаграмма дня -->
+        <div id="hexagramOfDay" style="display:none; background: rgba(10,14,39,0.7); border: 1px solid rgba(255,215,0,0.25); border-radius: 14px; padding: 18px; margin-bottom: 20px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="font-size:13px; color:#ffd700; font-weight:600; text-transform:uppercase; letter-spacing:1px;">🎲 Гексаграмма дня</div>
+                <a href="dice.html" style="font-size:11px; color:#888; text-decoration:underline;">Бросить кость</a>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+                <div id="hdHieroglyph" style="font-size:48px; line-height:1;"></div>
+                <div>
+                    <div id="hdTitle" style="font-size:18px; font-weight:700; color:#ffd700;"></div>
+                    <div id="hdLine" style="font-size:12px; color:#a18cd1; margin-top:3px;"></div>
+                    <div id="hdTrigrams" style="font-size:12px; color:#888; margin-top:2px;"></div>
+                </div>
+            </div>
+            <div id="hdNames" style="font-size:12px; color:#888; margin-top:10px; line-height:1.7;"></div>
+            <div id="hdRave" style="font-size:13px; color:#c8d0db; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);"></div>
+            <div id="hdGene" style="display:flex; gap:8px; margin-top:8px; font-size:12px;">
+                <span id="hdShadow" style="flex:1; text-align:center; padding:6px; background:rgba(255,100,100,0.08); border-radius:8px; color:#ff9999;"></span>
+                <span id="hdGift" style="flex:1; text-align:center; padding:6px; background:rgba(0,208,132,0.08); border-radius:8px; color:#00d084;"></span>
+                <span id="hdSiddhi" style="flex:1; text-align:center; padding:6px; background:rgba(255,215,0,0.08); border-radius:8px; color:#ffd700;"></span>
+            </div>
+            <div id="hdSetBy" style="font-size:11px; color:#555; margin-top:8px; text-align:right;"></div>
+        </div>
+
         <!-- Задание дня -->
         <div class="day-assignment" id="dayAssignment">
             <div class="day-number">День <span id="dayNumber">1</span></div>
@@ -817,6 +841,7 @@
 
                 try {
                     loadDailyPractice();
+                    loadHexagramOfDay();
                     loadReports();
                 } catch (e) {
                     console.error("Ошибка загрузки отчетов:", e);
@@ -928,6 +953,30 @@
                 } catch (error) {
                     console.error("[Auto-removal] Error removing user:", error);
                 }
+            }
+        }
+
+        // Гексаграмма дня
+        async function loadHexagramOfDay() {
+            try {
+                const today = new Date().toISOString().slice(0, 10);
+                const doc = await db.collection('settings').doc('daily_hexagram').get();
+                if (!doc.exists || doc.data().date !== today) return;
+
+                const h = doc.data();
+                document.getElementById('hdHieroglyph').textContent = h.hieroglyph || '';
+                document.getElementById('hdTitle').textContent = h.wilhelm || '';
+                document.getElementById('hdLine').textContent = `Гексаграмма ${h.hex} · Линия ${h.line} · Ворота ${h.gates}`;
+                document.getElementById('hdTrigrams').textContent = h.trigrams || '';
+                document.getElementById('hdNames').textContent = h.names || '';
+                document.getElementById('hdRave').textContent = h.rave || '';
+                document.getElementById('hdShadow').innerHTML = `<div style="font-size:10px;opacity:0.7">Тень</div>${h.shadow || ''}`;
+                document.getElementById('hdGift').innerHTML = `<div style="font-size:10px;opacity:0.7">Дар</div>${h.gift || ''}`;
+                document.getElementById('hdSiddhi').innerHTML = `<div style="font-size:10px;opacity:0.7">Сиддхи</div>${h.siddhi || ''}`;
+                document.getElementById('hdSetBy').textContent = h.setBy ? `Установил: ${h.setBy}` : '';
+                document.getElementById('hexagramOfDay').style.display = 'block';
+            } catch (e) {
+                console.error('Ошибка загрузки гексаграммы дня:', e);
             }
         }
 

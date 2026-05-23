@@ -363,6 +363,30 @@
             document.getElementById('resultCard').style.display = 'block';
             document.getElementById('rewardNotice').style.display = 'block';
             btn.disabled = false;
+
+            // Если сегодня ещё не было броска — сохранить как гексаграмму дня
+            const today = new Date().toISOString().slice(0, 10);
+            const dailyRef = db.collection('settings').doc('daily_hexagram');
+            const dailyDoc = await dailyRef.get();
+            if (!dailyDoc.exists || dailyDoc.data().date !== today) {
+                await dailyRef.set({
+                    date: today,
+                    no: entry.no,
+                    hex: entry.hex,
+                    line: entry.line,
+                    gates: entry.gates,
+                    hieroglyph: entry.hieroglyph || '',
+                    trigrams: entry.trigrams || '',
+                    wilhelm: entry.wilhelm || '',
+                    pinyin: entry.pinyin || '',
+                    names: entry.names || '',
+                    rave: entry.rave || '',
+                    shadow: entry.shadow || '',
+                    gift: entry.gift || '',
+                    siddhi: entry.siddhi || '',
+                    setBy: user.nick || user.email
+                });
+            }
         }
 
         // Инициализация
