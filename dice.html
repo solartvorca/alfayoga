@@ -232,6 +232,19 @@
                 <div class="result-section-title">Генный ключ</div>
                 <div class="gene-key-row" id="resultGene"></div>
             </div>
+
+            <div class="result-section" id="resultTransition" style="display:none;">
+                <div class="result-section-title">Переход при подвижной линии → Гексаграмма <span id="resultTransHexNum"></span></div>
+                <div style="display:flex; align-items:center; gap:12px; margin:10px 0;">
+                    <div id="resultTransHexLines" style="flex-shrink:0;"></div>
+                    <div style="font-size:40px; line-height:1; flex-shrink:0;" id="resultTransHieroglyph"></div>
+                    <div>
+                        <div style="font-size:14px; font-weight:700; color:#ffd700;" id="resultTransName"></div>
+                    </div>
+                </div>
+                <div style="font-size:12px; color:#a18cd1; margin-bottom:8px;" id="resultTransRave"></div>
+                <div style="display:flex; gap:6px; font-size:11px;" id="resultTransGene"></div>
+            </div>
         </div>
     </div>
 
@@ -316,6 +329,31 @@
                 if (giftM) entry.gift = giftM[1].trim();
                 if (siddhiM) entry.siddhi = siddhiM[1].trim();
 
+                // Переход при подвижной линии
+                const transM = block.match(/\[ПЕРЕХОД при подвижной линии \d+\s*=>\s*Гексаграмма\s+(\d+)\]/);
+                if (transM) {
+                    entry.transHex = parseInt(transM[1]);
+                    const transBlock = block.slice(block.indexOf(transM[0]));
+
+                    const transHierM = transBlock.match(/И Цзин:[\r\n]+\s+(\S+)\s+\((.+)/);
+                    if (transHierM) {
+                        entry.transHieroglyph = transHierM[1];
+                        entry.transTrigrams = transHierM[2].replace(/\)\s*$/, '').trim();
+                    }
+                    const transWilhelmM = transBlock.match(/Вильгельм:\s+([^\r\n]+)/);
+                    if (transWilhelmM) entry.transWilhelm = transWilhelmM[1].trim();
+
+                    const transRaveM = transBlock.match(/Рейв И Цзин:\s+([^\r\n]+)/);
+                    if (transRaveM) entry.transRave = transRaveM[1].trim();
+
+                    const transShadowM = transBlock.match(/Тень:\s+([^\r\n]+)/);
+                    const transGiftM = transBlock.match(/Дар:\s+([^\r\n]+)/);
+                    const transSiddhiM = transBlock.match(/Сиддхи:\s+([^\r\n]+)/);
+                    if (transShadowM) entry.transShadow = transShadowM[1].trim();
+                    if (transGiftM) entry.transGift = transGiftM[1].trim();
+                    if (transSiddhiM) entry.transSiddhi = transSiddhiM[1].trim();
+                }
+
                 entries.push(entry);
             }
 
@@ -393,6 +431,31 @@
                     <div class="gene-key-item gene-gift"><div class="gene-label">Дар</div>${entry.gift || '—'}</div>
                     <div class="gene-key-item gene-siddhi"><div class="gene-label">Сиддхи</div>${entry.siddhi || '—'}</div>
                 `;
+
+                // Переход
+                const transEl = document.getElementById('resultTransition');
+                if (entry.transHex) {
+                    document.getElementById('resultTransHexNum').textContent = entry.transHex;
+                    document.getElementById('resultTransHexLines').innerHTML = buildHexagramHTML(entry.transTrigrams);
+                    document.getElementById('resultTransHieroglyph').textContent = entry.transHieroglyph || '';
+                    document.getElementById('resultTransName').textContent = entry.transWilhelm || '';
+                    document.getElementById('resultTransRave').textContent = entry.transRave || '';
+                    document.getElementById('resultTransGene').innerHTML = `
+                        <div style="flex:1;text-align:center;padding:5px;background:rgba(255,100,100,0.08);border-radius:7px;color:#ff9999;">
+                            <div style="font-size:9px;opacity:0.7;">Тень</div>${entry.transShadow || '—'}
+                        </div>
+                        <div style="flex:1;text-align:center;padding:5px;background:rgba(0,208,132,0.08);border-radius:7px;color:#00d084;">
+                            <div style="font-size:9px;opacity:0.7;">Дар</div>${entry.transGift || '—'}
+                        </div>
+                        <div style="flex:1;text-align:center;padding:5px;background:rgba(255,215,0,0.08);border-radius:7px;color:#ffd700;">
+                            <div style="font-size:9px;opacity:0.7;">Сиддхи</div>${entry.transSiddhi || '—'}
+                        </div>
+                    `;
+                    transEl.style.display = 'block';
+                } else {
+                    transEl.style.display = 'none';
+                }
+
                 document.getElementById('resultCard').style.display = 'block';
                 document.getElementById('rewardNotice').style.display = 'block';
             } catch (dispErr) {
@@ -419,6 +482,14 @@
                 shadow: entry.shadow || '',
                 gift: entry.gift || '',
                 siddhi: entry.siddhi || '',
+                transHex: entry.transHex || null,
+                transHieroglyph: entry.transHieroglyph || '',
+                transTrigrams: entry.transTrigrams || '',
+                transWilhelm: entry.transWilhelm || '',
+                transRave: entry.transRave || '',
+                transShadow: entry.transShadow || '',
+                transGift: entry.transGift || '',
+                transSiddhi: entry.transSiddhi || '',
                 setBy: user.nick || user.email
             });
         }
