@@ -29,7 +29,8 @@ function checkAuth() {
         } else {
             // Не авторизован - перенаправить на login
             if (!window.location.pathname.includes("login.html") &&
-                !window.location.pathname.includes("index.html")) {
+                !window.location.pathname.includes("index.html") &&
+                !window.location.pathname.includes("welcome.html")) {
                 window.location.href = "login.html";
             }
         }

@@ -171,6 +171,10 @@
                     <div class="rays-display">✨ <span id="dustCount">0</span></div>
                     <div class="rays-label">ЗОЛОТОЙ ПЫЛЬЦЫ</div>
                 </div>
+                <div style="text-align: center;">
+                    <div class="rays-display">🌿 <span id="pranaCount">0</span></div>
+                    <div class="rays-label">ПРАНЫ</div>
+                </div>
             </div>
         </div>
 
@@ -311,7 +315,8 @@
                 document.getElementById("profileNick").textContent = user.nick || "Участник";
                 document.getElementById("profileEmail").textContent = user.email || "";
                 document.getElementById("raysCount").textContent = user.rays || 0;
-                document.getElementById("dustCount").textContent = user.dustAmount || 0;
+                document.getElementById("dustCount").textContent = user.dust || 0;
+                document.getElementById("pranaCount").textContent = user.prana || 0;
 
                 const profile = user.creativeProfile || {};
 
