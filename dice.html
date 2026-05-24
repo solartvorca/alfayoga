@@ -395,22 +395,31 @@
             const idx = Math.floor(Math.random() * ichingData.length);
             const entry = ichingData[idx];
 
-            // Списать 10 лучиков, начислить 20 пыльцы и 1 прану
+            // Списать 10 лучиков, начислить 20 пыльцы
             try {
                 await db.collection('users').doc(user.uid).update({
                     rays: firebase.firestore.FieldValue.increment(-10),
-                    dust: firebase.firestore.FieldValue.increment(20),
-                    prana: firebase.firestore.FieldValue.increment(1)
+                    dust: firebase.firestore.FieldValue.increment(20)
                 });
                 user.rays = (user.rays || 0) - 10;
                 user.dust = (user.dust || 0) + 20;
-                user.prana = (user.prana || 0) + 1;
                 updateBalance();
             } catch (e) {
                 alert('Ошибка: ' + e.message);
                 btn.disabled = false;
                 document.getElementById('rollingAnim').style.display = 'none';
                 return;
+            }
+
+            // Начислить 1 прану (отдельно — не блокирует основную награду)
+            try {
+                await db.collection('users').doc(user.uid).update({
+                    prana: firebase.firestore.FieldValue.increment(1)
+                });
+                user.prana = (user.prana || 0) + 1;
+                updateBalance();
+            } catch (e) {
+                console.warn('Ошибка начисления праны:', e.message);
             }
 
             document.getElementById('rollingAnim').style.display = 'none';
