@@ -582,7 +582,7 @@
                 return;
             }
 
-            if (!user.dustAmount || user.dustAmount === 0) {
+            if (!user.dust || user.dust === 0) {
                 alert("У вас нет золотой пыльцы. Получайте её через комментарии!");
                 return;
             }
@@ -594,7 +594,7 @@
 
                 // Вычесть пыльцу
                 await db.collection("users").doc(user.uid).update({
-                    dustAmount: firebase.firestore.FieldValue.increment(-1)
+                    dust: firebase.firestore.FieldValue.increment(-1)
                 });
 
                 alert("Поддержка отправлена! 💛");

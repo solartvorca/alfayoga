@@ -1351,7 +1351,7 @@
 
                 // Вернуть пыльцу автору отчета
                 await db.collection("users").doc(reportAuthorId).update({
-                    dustAmount: firebase.firestore.FieldValue.increment(-1)
+                    dust: firebase.firestore.FieldValue.increment(-1)
                 });
 
                 // Перезагрузить комментарии
@@ -1386,7 +1386,7 @@
 
                 // Добавить золотую пыльцу автору отчета
                 await db.collection("users").doc(reportAuthorId).update({
-                    dustAmount: firebase.firestore.FieldValue.increment(1)
+                    dust: firebase.firestore.FieldValue.increment(1)
                 });
 
                 // Очистить инпут и перезагрузить комментарии
@@ -1811,7 +1811,7 @@
                             email: user.email,
                             nick: user.email.split('@')[0],
                             rays: 0,
-                            dustAmount: 0,
+                            dust: 0,
                             status: "active",
                             subscription: "free",
                             joinedAt: new Date(),
