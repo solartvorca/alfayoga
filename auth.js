@@ -18,6 +18,17 @@ function checkAuth() {
                     ...userDoc.data()
                 };
 
+                // Миграция: dustAmount -> dust (один раз при входе)
+                if (window.currentUser.dustAmount && !window.currentUser.dust) {
+                    const migratedDust = window.currentUser.dustAmount;
+                    window.currentUser.dust = migratedDust;
+                    window.currentUser.dustAmount = 0;
+                    db.collection("users").doc(user.uid).update({
+                        dust: migratedDust,
+                        dustAmount: firebase.firestore.FieldValue.delete()
+                    }).catch(() => {});
+                }
+
                 // Проверить статус марафона на всех страницах
                 checkMarathonStatus();
 
