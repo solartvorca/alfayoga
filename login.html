@@ -506,9 +506,17 @@
         }
 
         // Проверить состояние авторизации
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             if (user && !registrationInProgress) {
-                window.location.href = "marathon.html";
+                try {
+                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    if (userDoc.exists) {
+                        window.location.href = "marathon.html";
+                    }
+                    // Нет документа — остаёмся на login.html, пусть пользователь регистрируется
+                } catch (e) {
+                    window.location.href = "marathon.html";
+                }
             }
         });
 

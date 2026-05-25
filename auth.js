@@ -5,8 +5,11 @@ function checkAuth() {
             // Пользователь авторизован
             const userDoc = await db.collection("users").doc(user.uid).get();
             if (!userDoc.exists) {
-                // Первый вход - перенаправить на регистрацию профиля
-                window.location.href = "login.html?register=" + user.uid;
+                // Нет профиля — на login.html (только если не уже там)
+                if (!window.location.pathname.includes("login.html")) {
+                    window.location.href = "login.html";
+                }
+                return;
             } else {
                 // Уже зарегистрирован
                 window.currentUser = {
