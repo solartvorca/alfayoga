@@ -1801,7 +1801,7 @@
                 const userRef = db.collection("users").doc(user.uid);
                 userRef.onSnapshot(doc => {
                     console.log("onSnapshot сработал, doc.exists:", doc.exists);
-                    if (!doc.exists) {
+                    if (!doc.exists && !doc.metadata.fromCache) {
                         console.log("Документа пользователя нет, создаю его...");
 
                         // Генерировать реферальный код для нового пользователя
