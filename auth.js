@@ -62,6 +62,9 @@ async function checkMarathonStatus() {
     // Уже исключён — не проверяем
     if (user.status === "removed") return;
 
+    // Премиум-участники не исключаются автоматически
+    if (user.status === "premium") return;
+
     const today = getLunarDay();
     const lastReport = user.lastReportDay || 0;
 
