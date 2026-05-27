@@ -65,6 +65,13 @@ async function checkMarathonStatus() {
     // Премиум-участники не исключаются автоматически
     if (user.status === "premium") return;
 
+    // Недавно восстановлен администратором — даём 48 часов на отчёт
+    if (user.restoredAt) {
+        const restoredDate = user.restoredAt.toDate ? user.restoredAt.toDate() : new Date(user.restoredAt);
+        const hoursSinceRestore = (Date.now() - restoredDate.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceRestore < 48) return;
+    }
+
     const today = getLunarDay();
     const lastReport = user.lastReportDay || 0;
 
