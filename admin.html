@@ -1320,10 +1320,13 @@
         // Изменить подписку пользователя
         async function changeUserSubscription(uid, subscription) {
             try {
-                await db.collection("users").doc(uid).update({
-                    subscription,
-                    premiumSkips: subscription === "premium" ? 0 : undefined
-                });
+                const updateData = { subscription };
+                if (subscription === "premium") {
+                    updateData.premiumSkips = 0;
+                } else {
+                    updateData.premiumSkips = firebase.firestore.FieldValue.delete();
+                }
+                await db.collection("users").doc(uid).update(updateData);
                 loadUsers();
             } catch (error) {
                 alert("Ошибка: " + error.message);
