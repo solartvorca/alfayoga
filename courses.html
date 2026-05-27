@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Курсы автора — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .courses-container { max-width: 700px; margin: 0 auto; padding: 20px 15px 100px; }
+        .page-title { font-size: 22px; font-weight: 700; color: #a18cd1; margin-bottom: 5px; }
+        .page-subtitle { font-size: 13px; color: #888; margin-bottom: 25px; }
+
+        .course-card {
+            background: rgba(10, 14, 39, 0.6);
+            border: 1px solid rgba(180, 100, 255, 0.2);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 14px;
+            text-decoration: none;
+            display: block;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+        }
+        .course-card:hover { border-color: rgba(180, 100, 255, 0.5); background: rgba(10, 14, 39, 0.8); }
+        .course-num { font-size: 12px; color: #888; margin-bottom: 6px; }
+        .course-title { font-size: 17px; font-weight: 700; color: #e0e6ed; margin-bottom: 8px; }
+        .course-desc { font-size: 13px; color: #a0a8b5; line-height: 1.6; }
+        .course-actions { position: absolute; top: 14px; right: 14px; display: flex; gap: 8px; }
+        .btn-icon { background: none; border: 1px solid rgba(180,100,255,0.3); color: #a18cd1; border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+        .btn-icon:hover { background: rgba(180,100,255,0.15); }
+        .btn-icon.del { border-color: rgba(255,100,100,0.3); color: #ff6464; }
+        .btn-icon.del:hover { background: rgba(255,100,100,0.1); }
+
+        .add-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(161,140,209,0.1); border: 1px dashed rgba(161,140,209,0.4);
+            border-radius: 14px; padding: 16px 20px; color: #a18cd1;
+            font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 20px;
+            width: 100%; text-align: left;
+        }
+        .add-btn:hover { background: rgba(161,140,209,0.2); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #0d1130; border: 1px solid rgba(180,100,255,0.3); border-radius: 16px; padding: 28px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal h3 { color: #a18cd1; font-size: 17px; margin: 0 0 20px; }
+        .field-group { margin-bottom: 16px; }
+        .field-group label { display: block; font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 6px; }
+        .field-group input, .field-group textarea {
+            width: 100%; background: rgba(180,100,255,0.08); border: 1px solid rgba(180,100,255,0.25);
+            border-radius: 8px; padding: 10px 12px; color: #e0e6ed; font-size: 14px; font-family: inherit; box-sizing: border-box;
+        }
+        .field-group textarea { resize: vertical; min-height: 80px; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+        .btn-save { background: linear-gradient(135deg, #a18cd1, #ffd700); color: #0a0e27; border: none; border-radius: 8px; padding: 10px 22px; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .btn-cancel { background: none; border: 1px solid rgba(180,100,255,0.3); color: #888; border-radius: 8px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="courses-container">
+        <div class="nav-bar" style="display:flex;justify-content:space-between;margin-bottom:30px;padding-bottom:15px;border-bottom:1px solid rgba(180,100,255,0.2);">
+            <div class="nav-links" style="display:flex;gap:16px;flex-wrap:wrap;">
+                <a href="index.html" style="color:#a18cd1;text-decoration:none;font-size:13px;">🌙 Будильник</a>
+                <a href="marathon.html" style="color:#a18cd1;text-decoration:none;font-size:13px;">📖 Марафон</a>
+                <a href="courses.html" style="color:#ffd700;text-decoration:none;font-size:13px;">🎓 Курсы</a>
+                <a href="profile.html" style="color:#a18cd1;text-decoration:none;font-size:13px;">👤 Профиль</a>
+                <a href="rating.html" style="color:#a18cd1;text-decoration:none;font-size:13px;">🏆 Рейтинг</a>
+                <a href="admin.html" id="adminLink" style="display:none;color:#a18cd1;text-decoration:none;font-size:13px;">⚙️ Админ</a>
+            </div>
+            <button onclick="logout()" style="background:rgba(255,100,100,0.15);border:1px solid rgba(255,100,100,0.3);color:#ff6464;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;">Выход</button>
+        </div>
+
+        <div class="page-title">🎓 Курсы автора</div>
+        <div class="page-subtitle">Обучающие программы по духовным практикам</div>
+
+        <button class="add-btn" id="addCourseBtn" style="display:none;" onclick="openModal()">✚ Добавить курс</button>
+
+        <div id="coursesList">
+            <p style="text-align:center;color:#888;padding:40px 0;">Загрузка...</p>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 id="modalTitle">Добавить курс</h3>
+            <div class="field-group">
+                <label>Название курса</label>
+                <input type="text" id="fieldTitle" placeholder="Курс духовной психологии">
+            </div>
+            <div class="field-group">
+                <label>Описание</label>
+                <textarea id="fieldDesc" placeholder="О чём этот курс..."></textarea>
+            </div>
+            <div class="field-group">
+                <label>Порядок (номер)</label>
+                <input type="number" id="fieldOrder" value="1" min="1">
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+                <button class="btn-save" onclick="saveCourse()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        let isAdmin = false;
+        let editId = null;
+
+        auth.onAuthStateChanged(async user => {
+            if (!user) return;
+            const doc = await db.collection("users").doc(user.uid).get();
+            if (!doc.exists) return;
+            const data = doc.data();
+            isAdmin = data.isAdmin || data.email === "wuallar@gmail.com";
+            if (isAdmin) {
+                document.getElementById("addCourseBtn").style.display = "flex";
+                document.getElementById("adminLink").style.display = "inline";
+            }
+            loadCourses();
+        });
+
+        async function loadCourses() {
+            const snap = await db.collection("courses").orderBy("order").get();
+            const list = document.getElementById("coursesList");
+            if (snap.empty) {
+                list.innerHTML = '<p style="text-align:center;color:#888;padding:40px 0;">Курсов пока нет</p>';
+                return;
+            }
+            list.innerHTML = snap.docs.map((doc, i) => {
+                const d = doc.data();
+                return `
+                    <a href="course.html?id=${doc.id}" class="course-card">
+                        <div class="course-num">Курс ${d.order || i+1}</div>
+                        <div class="course-title">${d.title}</div>
+                        ${d.description ? `<div class="course-desc">${d.description}</div>` : ''}
+                        ${isAdmin ? `<div class="course-actions" onclick="event.preventDefault()">
+                            <button class="btn-icon" onclick="editCourse('${doc.id}','${escQ(d.title)}','${escQ(d.description||'')}',${d.order||1})">✏️</button>
+                            <button class="btn-icon del" onclick="deleteCourse('${doc.id}')">🗑️</button>
+                        </div>` : ''}
+                    </a>`;
+            }).join('');
+        }
+
+        function escQ(s) { return (s||'').replace(/'/g, "\\'").replace(/\n/g, ' '); }
+
+        function openModal(id, title, desc, order) {
+            editId = id || null;
+            document.getElementById("modalTitle").textContent = id ? "Редактировать курс" : "Добавить курс";
+            document.getElementById("fieldTitle").value = title || '';
+            document.getElementById("fieldDesc").value = desc || '';
+            document.getElementById("fieldOrder").value = order || 1;
+            document.getElementById("modalOverlay").classList.add("open");
+        }
+
+        function editCourse(id, title, desc, order) {
+            openModal(id, title, desc, order);
+        }
+
+        function closeModal() {
+            document.getElementById("modalOverlay").classList.remove("open");
+            editId = null;
+        }
+
+        async function saveCourse() {
+            const title = document.getElementById("fieldTitle").value.trim();
+            if (!title) { alert("Введите название"); return; }
+            const data = {
+                title,
+                description: document.getElementById("fieldDesc").value.trim(),
+                order: parseInt(document.getElementById("fieldOrder").value) || 1
+            };
+            if (editId) {
+                await db.collection("courses").doc(editId).update(data);
+            } else {
+                await db.collection("courses").add({ ...data, createdAt: new Date() });
+            }
+            closeModal();
+            loadCourses();
+        }
+
+        async function deleteCourse(id) {
+            if (!confirm("Удалить курс? Все уроки будут удалены.")) return;
+            const lessons = await db.collection("courses").doc(id).collection("lessons").get();
+            const batch = db.batch();
+            lessons.forEach(d => batch.delete(d.ref));
+            batch.delete(db.collection("courses").doc(id));
+            await batch.commit();
+            loadCourses();
+        }
+    </script>
+</body>
+</html>

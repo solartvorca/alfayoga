@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Урок — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .lesson-container { max-width: 700px; margin: 0 auto; padding: 20px 15px 100px; }
+        .back-link { color: #a18cd1; text-decoration: none; font-size: 13px; display: inline-block; margin-bottom: 20px; }
+        .back-link:hover { color: #ffd700; }
+
+        .day-badge { display: inline-block; background: rgba(161,140,209,0.15); color: #a18cd1; border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+        .lesson-title { font-size: 24px; font-weight: 700; color: #e0e6ed; margin-bottom: 24px; line-height: 1.3; }
+
+        .content-block {
+            background: rgba(10,14,39,0.6); border: 1px solid rgba(180,100,255,0.15);
+            border-radius: 14px; padding: 20px; margin-bottom: 16px;
+        }
+        .block-title { font-size: 13px; color: #a18cd1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .block-text { font-size: 14px; color: #c8d0db; line-height: 1.8; white-space: pre-line; }
+
+        .video-wrap { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; margin-bottom: 8px; }
+        .video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .video-label { font-size: 12px; color: #888; margin-bottom: 14px; }
+
+        .material-link { display: inline-block; background: rgba(0,143,204,0.15); border: 1px solid rgba(0,143,204,0.3); color: #00a3e0; border-radius: 8px; padding: 8px 14px; font-size: 13px; text-decoration: none; word-break: break-all; }
+        .material-link:hover { background: rgba(0,143,204,0.25); }
+
+        .edit-btn { display: flex; align-items: center; gap: 6px; background: rgba(161,140,209,0.1); border: 1px solid rgba(161,140,209,0.3); color: #a18cd1; border-radius: 8px; padding: 8px 16px; font-size: 13px; cursor: pointer; margin-bottom: 20px; }
+        .edit-btn:hover { background: rgba(161,140,209,0.2); }
+
+        .nav-btns { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+        .nav-btn { flex: 1; min-width: 120px; text-align: center; background: rgba(161,140,209,0.08); border: 1px solid rgba(161,140,209,0.2); color: #a18cd1; border-radius: 10px; padding: 12px; text-decoration: none; font-size: 13px; font-weight: 600; }
+        .nav-btn:hover { background: rgba(161,140,209,0.18); }
+        .nav-btn.next { background: linear-gradient(135deg, rgba(161,140,209,0.15), rgba(255,215,0,0.1)); border-color: rgba(255,215,0,0.3); color: #ffd700; }
+    </style>
+</head>
+<body>
+    <div class="lesson-container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(180,100,255,0.15);">
+            <a id="backLink" href="courses.html" class="back-link">← К курсу</a>
+            <button onclick="logout()" style="background:rgba(255,100,100,0.15);border:1px solid rgba(255,100,100,0.3);color:#ff6464;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Выход</button>
+        </div>
+
+        <button class="edit-btn" id="editBtn" style="display:none;" onclick="window.location.href='course.html?id='+courseId">✏️ Редактировать в курсе</button>
+
+        <div id="lessonContent">
+            <p style="text-align:center;color:#888;padding:40px 0;">Загрузка...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        const p = new URLSearchParams(window.location.search);
+        const courseId = p.get("courseId");
+        const lessonId = p.get("lessonId");
+
+        if (!courseId || !lessonId) window.location.href = "courses.html";
+
+        document.getElementById("backLink").href = "course.html?id=" + courseId;
+
+        auth.onAuthStateChanged(async user => {
+            if (!user) return;
+            const userDoc = await db.collection("users").doc(user.uid).get();
+            if (!userDoc.exists) return;
+            const userData = userDoc.data();
+            const isAdmin = userData.isAdmin || userData.email === "wuallar@gmail.com";
+            if (isAdmin) document.getElementById("editBtn").style.display = "flex";
+            loadLesson();
+        });
+
+        function buildVideo(videoId, label) {
+            if (!videoId) return '';
+            return `
+                <div class="content-block">
+                    <div class="block-title">${label}</div>
+                    <div class="video-wrap">
+                        <iframe src="https://vk.com/video_ext.php?oid=${videoId.split('_')[0]}&id=${videoId.split('_')[1]}&hd=2" allowfullscreen></iframe>
+                    </div>
+                </div>`;
+        }
+
+        function buildText(label, text, icon) {
+            if (!text) return '';
+            return `
+                <div class="content-block">
+                    <div class="block-title">${icon || ''} ${label}</div>
+                    <div class="block-text">${text}</div>
+                </div>`;
+        }
+
+        function buildLink(label, url, icon) {
+            if (!url) return '';
+            const isUrl = url.startsWith('http');
+            return `
+                <div class="content-block">
+                    <div class="block-title">${icon || ''} ${label}</div>
+                    ${isUrl ? `<a href="${url}" target="_blank" class="material-link">🔗 Открыть</a>` : `<div class="block-text">${url}</div>`}
+                </div>`;
+        }
+
+        async function loadLesson() {
+            const doc = await db.collection("courses").doc(courseId).collection("lessons").doc(lessonId).get();
+            if (!doc.exists) { window.location.href = "course.html?id=" + courseId; return; }
+            const d = doc.data();
+            document.title = `День ${d.dayNumber}: ${d.title} — Лунный Будильник`;
+
+            let html = `
+                <div class="day-badge">День ${d.dayNumber}</div>
+                <div class="lesson-title">${d.title}</div>
+            `;
+
+            html += buildText("Актуальность", d.relevance, "🎯");
+            html += buildText("Цель", d.goal, "✨");
+            html += buildText("Задачи", d.tasks, "📋");
+            html += buildVideo(d.shortVideoId, "🎬 Короткий ролик");
+            html += buildVideo(d.fullVideoId, "🎓 Обучающее видео");
+            html += buildText("Белая книга", d.whitePaper, "📖");
+            html += buildText("Проверочные материалы", d.checkMaterials, "✅");
+            html += buildLink("Презентация", d.presentation, "📊");
+            html += buildText("Домашнее задание", d.homework, "🏠");
+
+            // Навигация между днями
+            const allLessons = await db.collection("courses").doc(courseId).collection("lessons").orderBy("dayNumber").get();
+            const ids = allLessons.docs.map(d => d.id);
+            const idx = ids.indexOf(lessonId);
+            let navHtml = '<div class="nav-btns">';
+            if (idx > 0) {
+                navHtml += `<a href="lesson.html?courseId=${courseId}&lessonId=${ids[idx-1]}" class="nav-btn">← Предыдущий день</a>`;
+            }
+            if (idx < ids.length - 1) {
+                navHtml += `<a href="lesson.html?courseId=${courseId}&lessonId=${ids[idx+1]}" class="nav-btn next">Следующий день →</a>`;
+            } else {
+                navHtml += `<a href="course.html?id=${courseId}" class="nav-btn next">✅ Курс завершён</a>`;
+            }
+            navHtml += '</div>';
+            html += navHtml;
+
+            document.getElementById("lessonContent").innerHTML = html;
+        }
+    </script>
+</body>
+</html>

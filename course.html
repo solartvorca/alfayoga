@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Курс — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .course-container { max-width: 700px; margin: 0 auto; padding: 20px 15px 100px; }
+        .back-link { color: #a18cd1; text-decoration: none; font-size: 13px; display: inline-block; margin-bottom: 20px; }
+        .back-link:hover { color: #ffd700; }
+        .course-header { background: rgba(161,140,209,0.08); border: 1px solid rgba(161,140,209,0.2); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+        .course-num { font-size: 12px; color: #888; margin-bottom: 6px; }
+        .course-title { font-size: 22px; font-weight: 700; color: #a18cd1; margin-bottom: 10px; }
+        .course-desc { font-size: 14px; color: #c8d0db; line-height: 1.7; }
+
+        .section-title { font-size: 15px; font-weight: 700; color: #e0e6ed; margin-bottom: 14px; }
+        .lesson-card {
+            background: rgba(10,14,39,0.6); border: 1px solid rgba(180,100,255,0.15);
+            border-radius: 12px; padding: 16px 18px; margin-bottom: 10px;
+            text-decoration: none; display: flex; align-items: center; gap: 14px;
+            transition: border-color 0.2s;
+        }
+        .lesson-card:hover { border-color: rgba(180,100,255,0.4); }
+        .lesson-num { font-size: 20px; font-weight: 700; color: #a18cd1; min-width: 36px; text-align: center; }
+        .lesson-info { flex: 1; }
+        .lesson-title { font-size: 15px; font-weight: 600; color: #e0e6ed; }
+        .lesson-meta { font-size: 12px; color: #888; margin-top: 3px; }
+        .lesson-actions { display: flex; gap: 6px; }
+        .btn-icon { background: none; border: 1px solid rgba(180,100,255,0.3); color: #a18cd1; border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+        .btn-icon:hover { background: rgba(180,100,255,0.15); }
+        .btn-icon.del { border-color: rgba(255,100,100,0.3); color: #ff6464; }
+        .btn-icon.del:hover { background: rgba(255,100,100,0.1); }
+
+        .add-btn { display: flex; align-items: center; gap: 8px; background: rgba(161,140,209,0.1); border: 1px dashed rgba(161,140,209,0.4); border-radius: 12px; padding: 14px 18px; color: #a18cd1; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 20px; width: 100%; text-align: left; }
+        .add-btn:hover { background: rgba(161,140,209,0.2); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #0d1130; border: 1px solid rgba(180,100,255,0.3); border-radius: 16px; padding: 28px; width: 100%; max-width: 540px; margin: auto; }
+        .modal h3 { color: #a18cd1; font-size: 17px; margin: 0 0 20px; }
+        .field-group { margin-bottom: 14px; }
+        .field-group label { display: block; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .field-group input, .field-group textarea { width: 100%; background: rgba(180,100,255,0.08); border: 1px solid rgba(180,100,255,0.25); border-radius: 8px; padding: 9px 12px; color: #e0e6ed; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+        .field-group textarea { resize: vertical; min-height: 70px; }
+        .section-divider { font-size: 12px; color: #a18cd1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(180,100,255,0.15); }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+        .btn-save { background: linear-gradient(135deg, #a18cd1, #ffd700); color: #0a0e27; border: none; border-radius: 8px; padding: 10px 22px; font-weight: 700; font-size: 14px; cursor: pointer; }
+        .btn-cancel { background: none; border: 1px solid rgba(180,100,255,0.3); color: #888; border-radius: 8px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="course-container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid rgba(180,100,255,0.15);">
+            <a href="courses.html" class="back-link">← Все курсы</a>
+            <button onclick="logout()" style="background:rgba(255,100,100,0.15);border:1px solid rgba(255,100,100,0.3);color:#ff6464;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Выход</button>
+        </div>
+
+        <div id="courseHeader" class="course-header">
+            <div style="text-align:center;color:#888;padding:20px;">Загрузка...</div>
+        </div>
+
+        <button class="add-btn" id="addLessonBtn" style="display:none;" onclick="openModal()">✚ Добавить день</button>
+
+        <div class="section-title" id="lessonsTitle" style="display:none;">📅 Программа курса</div>
+        <div id="lessonsList"></div>
+    </div>
+
+    <!-- Модальное окно добавления/редактирования дня -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 id="modalTitle">Добавить день</h3>
+
+            <div class="field-group">
+                <label>Номер дня</label>
+                <input type="number" id="fDay" value="1" min="1">
+            </div>
+            <div class="field-group">
+                <label>Название дня</label>
+                <input type="text" id="fTitle" placeholder="Введение в практику">
+            </div>
+
+            <div class="section-divider">Описание</div>
+            <div class="field-group">
+                <label>Актуальность</label>
+                <textarea id="fRelevance" placeholder="Почему это важно сейчас..."></textarea>
+            </div>
+            <div class="field-group">
+                <label>Цель</label>
+                <textarea id="fGoal" placeholder="Чего достигнет участник..."></textarea>
+            </div>
+            <div class="field-group">
+                <label>Задачи</label>
+                <textarea id="fTasks" placeholder="Конкретные шаги..."></textarea>
+            </div>
+
+            <div class="section-divider">Видео (ID видео ВКонтакте)</div>
+            <div class="field-group">
+                <label>Короткий ролик (videoId)</label>
+                <input type="text" id="fShortVideo" placeholder="123456_789012">
+            </div>
+            <div class="field-group">
+                <label>Обучающее видео (videoId)</label>
+                <input type="text" id="fFullVideo" placeholder="123456_789012">
+            </div>
+
+            <div class="section-divider">Дополнительные материалы</div>
+            <div class="field-group">
+                <label>Белая книга (текст или ссылка)</label>
+                <textarea id="fWhitePaper" placeholder="Текст или URL..."></textarea>
+            </div>
+            <div class="field-group">
+                <label>Проверочные материалы</label>
+                <textarea id="fCheck" placeholder="Вопросы, тесты..."></textarea>
+            </div>
+            <div class="field-group">
+                <label>Презентация (ссылка)</label>
+                <input type="text" id="fPresentation" placeholder="https://...">
+            </div>
+            <div class="field-group">
+                <label>Домашнее задание</label>
+                <textarea id="fHomework" placeholder="Задание для участника..."></textarea>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+                <button class="btn-save" onclick="saveLesson()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const courseId = params.get("id");
+        let isAdmin = false;
+        let editLessonId = null;
+
+        if (!courseId) window.location.href = "courses.html";
+
+        auth.onAuthStateChanged(async user => {
+            if (!user) return;
+            const doc = await db.collection("users").doc(user.uid).get();
+            if (!doc.exists) return;
+            const data = doc.data();
+            isAdmin = data.isAdmin || data.email === "wuallar@gmail.com";
+            if (isAdmin) {
+                document.getElementById("addLessonBtn").style.display = "flex";
+            }
+            loadCourse();
+            loadLessons();
+        });
+
+        async function loadCourse() {
+            const doc = await db.collection("courses").doc(courseId).get();
+            if (!doc.exists) { window.location.href = "courses.html"; return; }
+            const d = doc.data();
+            document.title = d.title + " — Лунный Будильник";
+            document.getElementById("courseHeader").innerHTML = `
+                <div class="course-num">Курс ${d.order || ''}</div>
+                <div class="course-title">${d.title}</div>
+                ${d.description ? `<div class="course-desc">${d.description}</div>` : ''}
+            `;
+        }
+
+        async function loadLessons() {
+            const snap = await db.collection("courses").doc(courseId).collection("lessons").orderBy("dayNumber").get();
+            const list = document.getElementById("lessonsList");
+            if (snap.empty) {
+                list.innerHTML = '<p style="text-align:center;color:#888;padding:30px 0;">Дней ещё нет</p>';
+                return;
+            }
+            document.getElementById("lessonsTitle").style.display = "block";
+            list.innerHTML = snap.docs.map(doc => {
+                const d = doc.data();
+                const hasMaterials = d.shortVideoId || d.fullVideoId || d.whitePaper || d.homework;
+                return `
+                    <a href="lesson.html?courseId=${courseId}&lessonId=${doc.id}" class="lesson-card">
+                        <div class="lesson-num">${d.dayNumber}</div>
+                        <div class="lesson-info">
+                            <div class="lesson-title">${d.title}</div>
+                            ${hasMaterials ? '<div class="lesson-meta">📎 Есть материалы</div>' : ''}
+                        </div>
+                        ${isAdmin ? `<div class="lesson-actions" onclick="event.preventDefault()">
+                            <button class="btn-icon" onclick="editLesson('${doc.id}')">✏️</button>
+                            <button class="btn-icon del" onclick="deleteLesson('${doc.id}')">🗑️</button>
+                        </div>` : ''}
+                    </a>`;
+            }).join('');
+        }
+
+        function openModal(id) {
+            editLessonId = id || null;
+            document.getElementById("modalTitle").textContent = id ? "Редактировать день" : "Добавить день";
+            if (!id) clearForm();
+            document.getElementById("modalOverlay").classList.add("open");
+        }
+
+        function closeModal() {
+            document.getElementById("modalOverlay").classList.remove("open");
+            editLessonId = null;
+        }
+
+        function clearForm() {
+            ["fDay","fTitle","fRelevance","fGoal","fTasks","fShortVideo","fFullVideo","fWhitePaper","fCheck","fPresentation","fHomework"]
+                .forEach(id => document.getElementById(id).value = '');
+            document.getElementById("fDay").value = 1;
+        }
+
+        async function editLesson(id) {
+            const doc = await db.collection("courses").doc(courseId).collection("lessons").doc(id).get();
+            const d = doc.data();
+            document.getElementById("fDay").value = d.dayNumber || 1;
+            document.getElementById("fTitle").value = d.title || '';
+            document.getElementById("fRelevance").value = d.relevance || '';
+            document.getElementById("fGoal").value = d.goal || '';
+            document.getElementById("fTasks").value = d.tasks || '';
+            document.getElementById("fShortVideo").value = d.shortVideoId || '';
+            document.getElementById("fFullVideo").value = d.fullVideoId || '';
+            document.getElementById("fWhitePaper").value = d.whitePaper || '';
+            document.getElementById("fCheck").value = d.checkMaterials || '';
+            document.getElementById("fPresentation").value = d.presentation || '';
+            document.getElementById("fHomework").value = d.homework || '';
+            openModal(id);
+        }
+
+        async function saveLesson() {
+            const title = document.getElementById("fTitle").value.trim();
+            if (!title) { alert("Введите название дня"); return; }
+            const data = {
+                dayNumber: parseInt(document.getElementById("fDay").value) || 1,
+                title,
+                relevance: document.getElementById("fRelevance").value.trim(),
+                goal: document.getElementById("fGoal").value.trim(),
+                tasks: document.getElementById("fTasks").value.trim(),
+                shortVideoId: document.getElementById("fShortVideo").value.trim(),
+                fullVideoId: document.getElementById("fFullVideo").value.trim(),
+                whitePaper: document.getElementById("fWhitePaper").value.trim(),
+                checkMaterials: document.getElementById("fCheck").value.trim(),
+                presentation: document.getElementById("fPresentation").value.trim(),
+                homework: document.getElementById("fHomework").value.trim()
+            };
+            const ref = db.collection("courses").doc(courseId).collection("lessons");
+            if (editLessonId) {
+                await ref.doc(editLessonId).update(data);
+            } else {
+                await ref.add({ ...data, createdAt: new Date() });
+            }
+            closeModal();
+            loadLessons();
+        }
+
+        async function deleteLesson(id) {
+            if (!confirm("Удалить этот день?")) return;
+            await db.collection("courses").doc(courseId).collection("lessons").doc(id).delete();
+            loadLessons();
+        }
+    </script>
+</body>
+</html>

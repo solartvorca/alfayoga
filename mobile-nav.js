@@ -2,6 +2,7 @@
     const navItems = [
         { icon: '🌙', label: 'Луна', path: 'index.html' },
         { icon: '🏃', label: 'Марафон', path: 'marathon.html' },
+        { icon: '🎓', label: 'Курсы', path: 'courses.html' },
         { icon: '👤', label: 'Профиль', path: 'profile.html' },
         { icon: '✨', label: 'Желания', path: 'wishes.html' },
         { icon: '🌿', label: 'Образ жизни', path: 'lifestyle.html' },
