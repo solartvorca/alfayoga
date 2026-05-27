@@ -1283,7 +1283,7 @@
                 }[subscription];
 
                 const skipCount = user.premiumSkips || 0;
-                const skipsText = subscription === "premium" ? `${skipCount}/5` : "-";
+                const skipsText = subscription === "daily" ? `${skipCount}/5` : "-";
 
                 const statusClass = user.status === "active" ? "status-active" : "status-removed";
                 const statusText = user.status === "active" ? "Активен" : "Исключен";
@@ -1321,7 +1321,7 @@
         async function changeUserSubscription(uid, subscription) {
             try {
                 const updateData = { subscription };
-                if (subscription === "premium") {
+                if (subscription === "daily") {
                     updateData.premiumSkips = 0;
                 } else {
                     updateData.premiumSkips = firebase.firestore.FieldValue.delete();

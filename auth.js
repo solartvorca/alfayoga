@@ -90,6 +90,22 @@ async function checkMarathonStatus() {
     }
 
     if (shouldRemove) {
+        // Дели-участники: используем пропуск вместо исключения
+        if (user.subscription === "daily") {
+            const skipsUsed = user.premiumSkips || 0;
+            if (skipsUsed < 5) {
+                const today2 = getLunarDay();
+                await db.collection("users").doc(user.uid).update({
+                    premiumSkips: firebase.firestore.FieldValue.increment(1),
+                    lastReportDay: today2 - 1
+                });
+                window.currentUser.premiumSkips = skipsUsed + 1;
+                window.currentUser.lastReportDay = today2 - 1;
+                return;
+            }
+            // Все 5 пропусков использованы — исключаем
+        }
+
         await db.collection("users").doc(user.uid).update({
             status: "removed"
         });
