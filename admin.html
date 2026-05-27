@@ -1343,8 +1343,9 @@
             try {
                 const updateData = { status };
                 if (status === "active") {
-                    // При восстановлении даём 48 часов без риска вылета
                     updateData.restoredAt = new Date();
+                    // Сбросить lastReportDay на сегодня, иначе checkMarathonStatus сразу исключит снова
+                    updateData.lastReportDay = typeof getLunarDay === "function" ? getLunarDay() : 0;
                 }
                 await db.collection("users").doc(uid).update(updateData);
                 loadUsers();
