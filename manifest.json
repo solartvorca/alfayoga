@@ -1,0 +1,19 @@
+{
+  "name": "Радуга Луна",
+  "short_name": "Радуга Луна",
+  "description": "Лунный марафон осознанности",
+  "start_url": "marathon.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0e27",
+  "theme_color": "#0a0e27",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
