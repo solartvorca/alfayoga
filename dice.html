@@ -483,6 +483,9 @@
                 document.getElementById('resultCard').style.display = 'block';
                 document.getElementById('rewardNotice').style.display = 'block';
 
+                // Сохранить данные броска для передачи в отчёт
+                window._lastDiceEntry = entry;
+
                 // AI толкование (фоновое)
                 document.getElementById('aiInterpretation').style.display = 'block';
                 document.getElementById('aiInterpretationText').textContent = '✨ Получаю толкование...';
@@ -548,6 +551,21 @@
         loadIching();
 
         function sendDiceToReport() {
+            // Сохраняем данные броска чтобы marathon.html мог показать их как комментарий
+            const entryData = window._lastDiceEntry;
+            if (entryData) {
+                localStorage.setItem('diceEntryData', JSON.stringify({
+                    no: entryData.no,
+                    hex: entryData.hex,
+                    line: entryData.line,
+                    gates: entryData.gates,
+                    hieroglyph: entryData.hieroglyph || '',
+                    wilhelm: entryData.wilhelm || '',
+                    shadow: entryData.shadow || '',
+                    gift: entryData.gift || '',
+                    siddhi: entryData.siddhi || ''
+                }));
+            }
             window.location.href = 'marathon.html?fromDice=1';
         }
     </script>

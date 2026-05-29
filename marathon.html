@@ -712,6 +712,8 @@
     <script>
         let currentDayNum = 0;
         let hasSubmitted = false;
+        const AI_BOT_UID = 'ai_bot';
+        const AI_BOT_NICK = '🌙 Лунный ИИ';
 
         // Предзаполнить отчёт толкованием костей если пришли с dice.html
         if (new URLSearchParams(location.search).get('fromDice') && localStorage.getItem('diceAIText')) {
@@ -889,6 +891,24 @@
                 }
 
                 alert("✓ Отчет отправлен! +1 лучик");
+
+                // Если пришли с dice.html — показать данные броска как комментарий
+                const diceEntryRaw = localStorage.getItem('diceEntryData');
+                if (diceEntryRaw) {
+                    localStorage.removeItem('diceEntryData');
+                    try {
+                        const e = JSON.parse(diceEntryRaw);
+                        const diceComment = `🎲 Выпало в И Цзин:\n${e.hieroglyph} «${e.wilhelm}» · Гексаграмма ${e.hex} · Линия ${e.line} · Ворота ${e.gates}\n✦ Тень: ${e.shadow} · Дар: ${e.gift} · Сиддхи: ${e.siddhi}`;
+                        db.collection('comments').add({
+                            reportId: docId,
+                            uid: AI_BOT_UID,
+                            nick: AI_BOT_NICK,
+                            text: diceComment,
+                            isAI: true,
+                            createdAt: new Date()
+                        }).then(() => loadComments(docId)).catch(() => {});
+                    } catch(e) {}
+                }
 
                 // AI реакция (фоновая, не блокирует UI)
                 postAIReactionToReport(docId, text).then(() => loadComments(docId)).catch(() => {});
