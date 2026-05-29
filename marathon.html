@@ -712,8 +712,6 @@
     <script>
         let currentDayNum = 0;
         let hasSubmitted = false;
-        const AI_BOT_UID = 'ai_bot';
-        const AI_BOT_NICK = 'Царь';
 
         // Предзаполнить отчёт толкованием костей если пришли с dice.html
         if (new URLSearchParams(location.search).get('fromDice') && localStorage.getItem('diceAIText')) {
