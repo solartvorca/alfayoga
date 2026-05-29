@@ -1417,10 +1417,12 @@
                 // Удалить комментарий
                 await db.collection("comments").doc(commentId).delete();
 
-                // Вернуть пыльцу автору отчета
-                await db.collection("users").doc(reportAuthorId).update({
-                    dust: firebase.firestore.FieldValue.increment(-1)
-                });
+                // Вернуть пыльцу автору отчета (не боту)
+                if (reportAuthorId && reportAuthorId !== 'ai_bot') {
+                    await db.collection("users").doc(reportAuthorId).update({
+                        dust: firebase.firestore.FieldValue.increment(-1)
+                    });
+                }
 
                 // Перезагрузить комментарии
                 loadComments(reportId);
@@ -1452,10 +1454,12 @@
                     createdAt: new Date()
                 });
 
-                // Добавить золотую пыльцу автору отчета
-                await db.collection("users").doc(reportAuthorId).update({
-                    dust: firebase.firestore.FieldValue.increment(1)
-                });
+                // Добавить золотую пыльцу автору отчета (не боту)
+                if (reportAuthorId && reportAuthorId !== 'ai_bot') {
+                    await db.collection("users").doc(reportAuthorId).update({
+                        dust: firebase.firestore.FieldValue.increment(1)
+                    });
+                }
 
                 // Очистить инпут и перезагрузить комментарии
                 event.target.value = "";
