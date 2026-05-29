@@ -251,6 +251,14 @@
                 <div style="font-size:12px; color:#a18cd1; margin-bottom:8px;" id="resultTransRave"></div>
                 <div style="display:flex; gap:6px; font-size:11px;" id="resultTransGene"></div>
             </div>
+
+            <div id="aiInterpretation" style="display:none; margin-top:16px; padding:16px; background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.3); border-radius:12px;">
+                <div style="font-size:12px; color:#a18cd1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">🌙 Толкование ИИ</div>
+                <div id="aiInterpretationText" style="font-size:14px; color:#c8d0db; line-height:1.7; font-style:italic;"></div>
+                <button id="sendToReportBtn" onclick="sendDiceToReport()" style="display:none; margin-top:12px; width:100%; padding:10px; background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.4); border-radius:8px; color:#a18cd1; font-size:13px; font-weight:600; cursor:pointer;">
+                    📋 Отправить толкование в отчёт
+                </button>
+            </div>
         </div>
     </div>
 
@@ -259,6 +267,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="auth.js"></script>
+    <script src="ai.js"></script>
     <script src="mobile-nav.js"></script>
     <script>
         let ichingData = null;
@@ -473,6 +482,22 @@
 
                 document.getElementById('resultCard').style.display = 'block';
                 document.getElementById('rewardNotice').style.display = 'block';
+
+                // AI толкование (фоновое)
+                document.getElementById('aiInterpretation').style.display = 'block';
+                document.getElementById('aiInterpretationText').textContent = '✨ Получаю толкование...';
+                document.getElementById('sendToReportBtn').style.display = 'none';
+                getAIDiceInterpretation(entry).then(interpretation => {
+                    if (interpretation) {
+                        document.getElementById('aiInterpretationText').textContent = interpretation;
+                        document.getElementById('sendToReportBtn').style.display = 'block';
+                        localStorage.setItem('diceAIText', interpretation);
+                    } else {
+                        document.getElementById('aiInterpretation').style.display = 'none';
+                    }
+                }).catch(() => {
+                    document.getElementById('aiInterpretation').style.display = 'none';
+                });
             } catch (dispErr) {
                 console.error('Ошибка отображения результата:', dispErr, entry);
                 alert('Результат получен, но ошибка при отображении: ' + dispErr.message);
@@ -521,6 +546,10 @@
         });
 
         loadIching();
+
+        function sendDiceToReport() {
+            window.location.href = 'marathon.html?fromDice=1';
+        }
     </script>
 </body>
 </html>

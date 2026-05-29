@@ -332,6 +332,7 @@
             <button class="tab-btn" onclick="switchTab('mailing', this)">📨 Рассылка</button>
             <button class="tab-btn" onclick="switchTab('book', this)">📖 Книга</button>
             <button class="tab-btn" onclick="switchTab('zhiznetron', this)">⚡ Жизнетрон</button>
+            <button class="tab-btn" onclick="switchTab('ai', this)">🤖 ИИ</button>
         </div>
 
         <!-- Марафоны -->
@@ -701,6 +702,45 @@
                 <div class="section-title">📚 Практики Жизнетрона</div>
                 <div id="zhiznetronList">
                     <p style="text-align: center; color: #888;">Загрузка...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="ai-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">🤖 Настройки ИИ (OpenRouter)</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>API ключ OpenRouter</label>
+                        <input type="password" id="aiApiKey" placeholder="sk-or-v1-...">
+                    </div>
+                    <div class="form-group">
+                        <label>Модель</label>
+                        <select id="aiModel">
+                            <option value="google/gemini-2.0-flash-exp:free">Google Gemini 2.0 Flash (бесплатная)</option>
+                            <option value="google/gemini-flash-1.5-8b:free">Google Gemini 1.5 Flash 8B (бесплатная)</option>
+                            <option value="meta-llama/llama-3.1-8b-instruct:free">Meta LLaMA 3.1 8B (бесплатная)</option>
+                            <option value="qwen/qwen2.5-7b-instruct:free">Qwen 2.5 7B (бесплатная)</option>
+                            <option value="microsoft/phi-3-mini-128k-instruct:free">Microsoft Phi-3 Mini (бесплатная)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="aiEnabled" style="width:auto;">
+                        <label style="text-transform: none; font-size: 14px; color: #c8d0db; cursor: pointer;" for="aiEnabled">ИИ активен</label>
+                    </div>
+                    <button class="btn" onclick="saveAISettings()">💾 Сохранить</button>
+                </div>
+                <div id="aiSaveStatus" style="margin-top: 10px; font-size: 13px; color: #00d084; display: none;">✓ Настройки сохранены</div>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">ℹ️ Как работает ИИ</div>
+                <div style="font-size: 13px; color: #888; line-height: 1.8;">
+                    <p>• После каждого нового отчёта — ИИ пишет добрый комментарий</p>
+                    <p>• После каждого комментария участника — ИИ реагирует</p>
+                    <p>• При смене лунного дня — ИИ публикует отчёт о задании с научным исследованием</p>
+                    <p>• На странице "И Цзин" — ИИ толкует выпавшую гексаграмму</p>
+                    <p style="margin-top: 12px; color: #a18cd1;">Получить ключ: <a href="https://openrouter.ai/keys" target="_blank" style="color: #a18cd1;">openrouter.ai/keys</a></p>
                 </div>
             </div>
         </div>
@@ -1897,6 +1937,41 @@
                 alert("Ошибка: " + error.message);
             }
         }
+
+        async function loadAISettingsAdmin() {
+            try {
+                const doc = await db.collection('settings').doc('ai').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('aiApiKey').value = data.apiKey || '';
+                    document.getElementById('aiEnabled').checked = data.enabled || false;
+                    const modelSel = document.getElementById('aiModel');
+                    if (data.model) {
+                        const opt = [...modelSel.options].find(o => o.value === data.model);
+                        if (opt) opt.selected = true;
+                        else { const o = new Option(data.model, data.model, true, true); modelSel.add(o); }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function saveAISettings() {
+            const apiKey = document.getElementById('aiApiKey').value.trim();
+            const model = document.getElementById('aiModel').value;
+            const enabled = document.getElementById('aiEnabled').checked;
+
+            try {
+                await db.collection('settings').doc('ai').set({ apiKey, model, enabled }, { merge: true });
+                const status = document.getElementById('aiSaveStatus');
+                status.style.display = 'block';
+                setTimeout(() => { status.style.display = 'none'; }, 3000);
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        // Загрузить AI настройки при открытии вкладки
+        document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', loadAISettingsAdmin);
 
     </script>
     <script src="mobile-nav.js"></script>
