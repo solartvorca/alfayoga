@@ -1400,12 +1400,18 @@
             replies.sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
 
             list.innerHTML = replies.map(data => {
+                if (data.isAI) {
+                    return `
+                        <div class="reply-item" style="margin-bottom:8px; padding:8px 10px; background:linear-gradient(135deg,rgba(161,140,209,0.1),rgba(100,60,180,0.07)); border:1px solid rgba(161,140,209,0.2); border-radius:8px;">
+                            <span class="comment-author" style="font-size:11px; color:#a18cd1; cursor:default;">👑 Царь</span>
+                            <div class="comment-text" style="font-size:12px; font-style:italic; color:#c8b8e8; margin-top:4px;">${data.text}</div>
+                        </div>`;
+                }
                 return `
                     <div class="reply-item" style="margin-bottom: 8px;">
                         <a href="view-profile.html?uid=${data.uid}" class="comment-author" style="font-size: 11px;">${data.nick}</a>
                         <div class="comment-text" style="font-size: 12px;">${data.text}</div>
-                    </div>
-                `;
+                    </div>`;
             }).join("");
         }
 
@@ -1449,7 +1455,7 @@
                 const reportAuthorId = reportDoc.data().uid;
 
                 // Добавить комментарий
-                await db.collection("comments").add({
+                const commentRef = await db.collection("comments").add({
                     reportId,
                     uid: user.uid,
                     nick: user.nick,
@@ -1468,8 +1474,9 @@
                 event.target.value = "";
                 loadComments(reportId);
 
-                // AI реакция на комментарий (фоновая)
-                postAIReactionToComment(reportId, text).then(() => loadComments(reportId)).catch(() => {});
+                // AI реакция — появится как ответ прямо под комментарием
+                postAIReactionToComment(reportId, commentRef.id, text)
+                    .then(() => loadComments(reportId)).catch(() => {});
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }

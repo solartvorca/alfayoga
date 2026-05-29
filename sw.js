@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raduga-luna-v11';
+const CACHE_NAME = 'raduga-luna-v12';
 
 const STATIC_ASSETS = [
     'index.html',

@@ -79,7 +79,14 @@ async function postAIReactionToReport(reportId, reportText) {
     });
 }
 
-async function postAIReactionToComment(reportId, commentText) {
+async function postAIReactionToComment(reportId, commentId, commentText) {
+    // Проверить что ещё нет ответа на этот комментарий
+    const existing = await db.collection('replies')
+        .where('commentId', '==', commentId)
+        .where('uid', '==', AI_BOT_UID)
+        .limit(1).get();
+    if (!existing.empty) return;
+
     const text = await callAI([
         {
             role: 'system',
@@ -93,8 +100,9 @@ async function postAIReactionToComment(reportId, commentText) {
 
     if (!text) return;
 
-    await db.collection('comments').add({
+    await db.collection('replies').add({
         reportId,
+        commentId,
         uid: AI_BOT_UID,
         nick: AI_BOT_NICK,
         text,
