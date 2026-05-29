@@ -877,8 +877,11 @@
                 }
 
                 document.getElementById("reportText").value = "";
-                hasSubmitted = true;
-                document.getElementById("submitBtn").disabled = true;
+                const isAdminUser = window.currentUser?.isAdmin || window.currentUser?.email === "wuallar@gmail.com";
+                if (!isAdminUser) {
+                    hasSubmitted = true;
+                    document.getElementById("submitBtn").disabled = true;
+                }
 
                 try {
                     loadDailyPractice();
@@ -1620,7 +1623,8 @@
             const docId = currentDayNum + "_" + user.uid;
             const doc = await db.collection("reports").doc(docId).get();
 
-            if (doc.exists) {
+            const isAdminCheck = user.isAdmin || user.email === "wuallar@gmail.com";
+            if (doc.exists && !isAdminCheck) {
                 hasSubmitted = true;
                 document.getElementById("submitBtn").disabled = true;
             }
