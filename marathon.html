@@ -1301,29 +1301,32 @@
                 return;
             }
 
-            // Сортировка на клиенте (по дате, новые сверху)
-            const comments = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            comments.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+            const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const aiComments = allDocs.filter(d => d.isAI);
+            const userComments = allDocs.filter(d => !d.isAI).sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+            const isAdmin = window.currentUser && (window.currentUser.isAdmin === true || window.currentUser.email === "wuallar@gmail.com");
 
-            list.innerHTML = comments.map(data => {
+            // Блок Царя — над комментариями, привязан к отчёту
+            let aiHtml = '';
+            aiComments.forEach(data => {
                 const commentId = data.id;
-                const isAdmin = window.currentUser && (window.currentUser.isAdmin === true || window.currentUser.email === "wuallar@gmail.com");
-
-                // Специальный рендер для AI-комментариев
-                if (data.isAI) {
-                    return `
-                        <div class="comment-item" style="background: rgba(161,140,209,0.07); border-left: 2px solid rgba(161,140,209,0.5);">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                <span class="comment-author" style="color: #a18cd1; cursor: default;">👑 Царь</span>
-                                ${isAdmin ? `<button onclick="deleteComment('${reportId}', '${commentId}')" style="background: rgba(255, 100, 100, 0.2); border: none; color: #ff6464; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;">✕</button>` : ''}
-                            </div>
-                            <div class="comment-text" style="font-style: italic; color: #b8a8d8;">${data.text}</div>
+                aiHtml += `
+                    <div style="margin-bottom:10px; padding:10px 14px; background:linear-gradient(135deg,rgba(161,140,209,0.1),rgba(100,60,180,0.08)); border:1px solid rgba(161,140,209,0.25); border-radius:10px; position:relative;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:13px; font-weight:700; color:#a18cd1;">👑 Царь</span>
+                            ${isAdmin ? `<button onclick="deleteComment('${reportId}','${commentId}')" style="background:rgba(255,100,100,0.2);border:none;color:#ff6464;padding:2px 6px;border-radius:3px;font-size:10px;cursor:pointer;">✕</button>` : ''}
                         </div>
-                    `;
-                }
+                        <div style="font-size:13px; color:#c8b8e8; line-height:1.65; font-style:italic;">${data.text}</div>
+                    </div>`;
+            });
+
+            // Разделитель если есть и Царь и люди
+            if (aiComments.length > 0 && userComments.length > 0) {
+                aiHtml += `<div style="font-size:11px;color:#555;margin:4px 0 8px;letter-spacing:0.05em;">💬 Комментарии участников</div>`;
+            }
+
+            list.innerHTML = aiHtml + userComments.map(data => {
+                const commentId = data.id;
 
                 const isOwner = window.currentUser && window.currentUser.uid === data.uid;
                 const canDelete = isOwner || isAdmin;
@@ -1371,9 +1374,9 @@
                 });
             });
 
-            // Загрузить ответы для каждого комментария
-            comments.forEach(comment => {
-                if (!comment.isAI) loadReplies(comment.id);
+            // Загрузить ответы для пользовательских комментариев
+            userComments.forEach(comment => {
+                loadReplies(comment.id);
             });
         }
 

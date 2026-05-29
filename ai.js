@@ -61,6 +61,14 @@ async function postAIReactionToReport(reportId, reportText) {
 
     if (!text) return;
 
+    // Проверить что ещё нет AI-комментария на этот отчёт
+    const existing = await db.collection('comments')
+        .where('reportId', '==', reportId)
+        .where('uid', '==', AI_BOT_UID)
+        .where('isAI', '==', true)
+        .limit(1).get();
+    if (!existing.empty) return;
+
     await db.collection('comments').add({
         reportId,
         uid: AI_BOT_UID,
