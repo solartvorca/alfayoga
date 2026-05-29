@@ -14,14 +14,6 @@ async function loadAISettings() {
     return _aiSettings;
 }
 
-const FREE_MODELS = [
-    'meta-llama/llama-3.1-8b-instruct:free',
-    'mistralai/mistral-7b-instruct:free',
-    'google/gemma-2-9b-it:free',
-    'microsoft/phi-3-mini-128k-instruct:free',
-    'qwen/qwen-2.5-7b-instruct:free'
-];
-
 async function callAI(messages, maxTokens = 250) {
     const settings = await loadAISettings();
     if (!settings.enabled || !settings.apiKey) return null;
@@ -32,12 +24,11 @@ async function callAI(messages, maxTokens = 250) {
             headers: {
                 'Authorization': `Bearer ${settings.apiKey}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': window.location.origin,
+                'HTTP-Referer': 'https://solartvorca.github.io',
                 'X-Title': 'Raduga Luna'
             },
             body: JSON.stringify({
-                models: FREE_MODELS,
-                route: 'fallback',
+                model: 'openrouter/auto',
                 messages,
                 max_tokens: maxTokens
             })
