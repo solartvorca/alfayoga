@@ -16,11 +16,9 @@ async function loadAISettings() {
 
 const FREE_MODELS = [
     'google/gemini-2.0-flash-exp:free',
-    'google/gemini-flash-1.5-8b:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
     'meta-llama/llama-3.1-8b-instruct:free',
-    'qwen/qwen2.5-72b-instruct:free',
-    'mistralai/mistral-7b-instruct:free'
+    'mistralai/mistral-7b-instruct:free',
+    'qwen/qwen-2.5-7b-instruct:free'
 ];
 
 async function callAI(messages, maxTokens = 250) {
@@ -44,7 +42,11 @@ async function callAI(messages, maxTokens = 250) {
             })
         });
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            console.warn('[AI] Ошибка API:', response.status, err);
+            return null;
+        }
         const data = await response.json();
         return data.choices?.[0]?.message?.content?.trim() || null;
     } catch (e) {
