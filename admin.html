@@ -714,22 +714,13 @@
                         <label>API ключ OpenRouter</label>
                         <input type="password" id="aiApiKey" placeholder="sk-or-v1-...">
                     </div>
-                    <div class="form-group">
-                        <label>Модель</label>
-                        <select id="aiModel">
-                            <option value="google/gemini-2.0-flash-exp:free">Google Gemini 2.0 Flash (бесплатная)</option>
-                            <option value="google/gemini-flash-1.5-8b:free">Google Gemini 1.5 Flash 8B (бесплатная)</option>
-                            <option value="meta-llama/llama-3.1-8b-instruct:free">Meta LLaMA 3.1 8B (бесплатная)</option>
-                            <option value="qwen/qwen2.5-7b-instruct:free">Qwen 2.5 7B (бесплатная)</option>
-                            <option value="microsoft/phi-3-mini-128k-instruct:free">Microsoft Phi-3 Mini (бесплатная)</option>
-                        </select>
-                    </div>
                     <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
                         <input type="checkbox" id="aiEnabled" style="width:auto;">
                         <label style="text-transform: none; font-size: 14px; color: #c8d0db; cursor: pointer;" for="aiEnabled">ИИ активен</label>
                     </div>
                     <button class="btn" onclick="saveAISettings()">💾 Сохранить</button>
                 </div>
+                <p style="font-size:12px; color:#666; margin-top:8px;">Модель выбирается автоматически из топовых бесплатных: Gemini 2.0, LLaMA 3.3, Qwen 2.5 и др.</p>
                 <div id="aiSaveStatus" style="margin-top: 10px; font-size: 13px; color: #00d084; display: none;">✓ Настройки сохранены</div>
             </div>
 
@@ -1945,23 +1936,16 @@
                     const data = doc.data();
                     document.getElementById('aiApiKey').value = data.apiKey || '';
                     document.getElementById('aiEnabled').checked = data.enabled || false;
-                    const modelSel = document.getElementById('aiModel');
-                    if (data.model) {
-                        const opt = [...modelSel.options].find(o => o.value === data.model);
-                        if (opt) opt.selected = true;
-                        else { const o = new Option(data.model, data.model, true, true); modelSel.add(o); }
-                    }
                 }
             } catch (e) {}
         }
 
         async function saveAISettings() {
             const apiKey = document.getElementById('aiApiKey').value.trim();
-            const model = document.getElementById('aiModel').value;
             const enabled = document.getElementById('aiEnabled').checked;
 
             try {
-                await db.collection('settings').doc('ai').set({ apiKey, model, enabled }, { merge: true });
+                await db.collection('settings').doc('ai').set({ apiKey, enabled }, { merge: true });
                 const status = document.getElementById('aiSaveStatus');
                 status.style.display = 'block';
                 setTimeout(() => { status.style.display = 'none'; }, 3000);

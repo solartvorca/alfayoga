@@ -14,6 +14,15 @@ async function loadAISettings() {
     return _aiSettings;
 }
 
+const FREE_MODELS = [
+    'google/gemini-2.0-flash-exp:free',
+    'google/gemini-flash-1.5-8b:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'qwen/qwen2.5-72b-instruct:free',
+    'mistralai/mistral-7b-instruct:free'
+];
+
 async function callAI(messages, maxTokens = 250) {
     const settings = await loadAISettings();
     if (!settings.enabled || !settings.apiKey) return null;
@@ -28,7 +37,8 @@ async function callAI(messages, maxTokens = 250) {
                 'X-Title': 'Радуга Луна'
             },
             body: JSON.stringify({
-                model: settings.model || 'google/gemini-2.0-flash-exp:free',
+                models: FREE_MODELS,
+                route: 'fallback',
                 messages,
                 max_tokens: maxTokens
             })
