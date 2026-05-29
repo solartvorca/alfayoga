@@ -35,8 +35,7 @@ async function callAI(messages, maxTokens = 250) {
                 'X-Title': 'Raduga Luna'
             },
             body: JSON.stringify({
-                models: FREE_MODELS,
-                route: 'fallback',
+                model: 'google/gemini-2.0-flash-exp:free',
                 messages,
                 max_tokens: maxTokens
             })
@@ -44,7 +43,7 @@ async function callAI(messages, maxTokens = 250) {
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            console.warn('[AI] Ошибка API:', response.status, err);
+            console.warn('[AI] Ошибка API:', response.status, JSON.stringify(err));
             return null;
         }
         const data = await response.json();
