@@ -1,4 +1,4 @@
-const AI_BOT_NICK = '🌙 Лунный ИИ';
+const AI_BOT_NICK = 'Царь';
 const AI_BOT_UID = 'ai_bot';
 
 let _aiSettings = null;
