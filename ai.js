@@ -34,7 +34,7 @@ async function callAI(messages, maxTokens = 250) {
                 'Authorization': `Bearer ${settings.apiKey}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': window.location.origin,
-                'X-Title': 'Радуга Луна'
+                'X-Title': 'Raduga Luna'
             },
             body: JSON.stringify({
                 models: FREE_MODELS,
