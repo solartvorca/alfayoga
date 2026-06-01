@@ -119,12 +119,14 @@
             drawer.appendChild(a);
         });
 
-        // Кнопка выхода внизу drawer
-        const logoutBtn = document.createElement('button');
+        // Кнопка выхода в drawer
+        const logoutBtn = document.createElement('a');
         logoutBtn.innerHTML = `<span class="drawer-icon">🚪</span><span>Выйти</span>`;
         logoutBtn.className = 'nav-drawer-item';
-        logoutBtn.style.cssText = 'width:100%; text-align:left; background:none; border:none; border-top:1px solid rgba(161,140,209,0.15); color:#888; cursor:pointer; margin-top:auto; padding-bottom:80px;';
-        logoutBtn.onclick = () => {
+        logoutBtn.href = '#';
+        logoutBtn.style.cssText = 'border-top:1px solid rgba(161,140,209,0.15); color:#888; margin-top:16px;';
+        logoutBtn.onclick = (e) => {
+            e.preventDefault();
             firebase.auth().signOut().then(() => {
                 window.location.href = 'login.html';
             });
