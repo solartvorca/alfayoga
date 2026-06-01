@@ -714,8 +714,8 @@
         let hasSubmitted = false;
 
         function getMarathonDay() {
-            const day = getMarathonDay();
-            return Math.min(day, 28);
+            const day = getLunarDay();
+            return Math.min(day, 29);
         }
 
         // Предзаполнить отчёт толкованием костей если пришли с dice.html
