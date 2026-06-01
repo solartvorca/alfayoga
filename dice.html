@@ -496,10 +496,12 @@
                         document.getElementById('sendToReportBtn').style.display = 'block';
                         localStorage.setItem('diceAIText', interpretation);
                     } else {
-                        document.getElementById('aiInterpretation').style.display = 'none';
+                        console.warn('[AI Dice] Толкование не получено (AI вернул null — проверь настройки ИИ)');
+                        document.getElementById('aiInterpretationText').textContent = '⚠️ Толкование временно недоступно';
                     }
-                }).catch(() => {
-                    document.getElementById('aiInterpretation').style.display = 'none';
+                }).catch(err => {
+                    console.error('[AI Dice] Ошибка:', err);
+                    document.getElementById('aiInterpretationText').textContent = '⚠️ Толкование временно недоступно';
                 });
             } catch (dispErr) {
                 console.error('Ошибка отображения результата:', dispErr, entry);

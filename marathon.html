@@ -905,6 +905,7 @@
                             nick: AI_BOT_NICK,
                             text: diceComment,
                             isAI: true,
+                            isDiceComment: true,
                             createdAt: new Date()
                         }).then(() => loadComments(docId)).catch(() => {});
                     } catch(e) {}

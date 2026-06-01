@@ -50,13 +50,14 @@ async function callAI(messages, maxTokens = 250) {
 const TSAR_PERSONA = 'Ты — Царь, мудрый и тёплый покровитель марафона "Йога царевича". Отвечаешь коротко: 1-2 предложения. Говоришь с достоинством и теплотой, иногда с мягким юмором. Обращаешься на "ты". Только по-русски.';
 
 async function postAIReactionToReport(reportId, reportText) {
-    // Проверить до обращения к AI
+    // Проверить до обращения к AI (dice-комментарии не считаются — нужна текстовая реакция)
     const existing = await db.collection('comments')
         .where('reportId', '==', reportId)
         .where('uid', '==', AI_BOT_UID)
         .where('isAI', '==', true)
-        .limit(1).get();
-    if (!existing.empty) return;
+        .get();
+    const hasTextReaction = existing.docs.some(d => !d.data().isDiceComment);
+    if (hasTextReaction) return;
 
     const text = await callAI([
         { role: 'system', content: TSAR_PERSONA },
