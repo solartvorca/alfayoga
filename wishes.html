@@ -570,7 +570,12 @@
                             </div>
                             <div class="public-wish-content">${wish.text}</div>
                             <div class="public-wish-footer">
-                                <button class="vote-btn" onclick="voteWish('${wish.id}')">💛 Поддержать</button>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <input type="number" id="voteAmt-${wish.id}" min="1" value="1"
+                                        style="width:52px; padding:5px 6px; background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.35); border-radius:6px; color:#ffd700; text-align:center; font-size:13px;">
+                                    <span style="font-size:12px; color:#888;">✨</span>
+                                    <button class="vote-btn" onclick="voteWish('${wish.id}')">💛 Поддержать</button>
+                                </div>
                                 <span class="vote-count">${wish.votes} ✨</span>
                             </div>
                         </div>
@@ -584,27 +589,25 @@
 
         async function voteWish(wishId) {
             const user = window.currentUser;
-            if (!user) {
-                alert("Нужно войти в аккаунт");
-                return;
-            }
+            if (!user) { alert("Нужно войти в аккаунт"); return; }
 
-            if (!user.dust || user.dust === 0) {
-                alert("У вас нет золотой пыльцы. Получайте её через комментарии!");
+            const amountInput = document.getElementById(`voteAmt-${wishId}`);
+            const amount = Math.max(1, parseInt(amountInput?.value) || 1);
+
+            if ((user.dust || 0) < amount) {
+                alert(`Недостаточно пыльцы. Нужно ${amount} ✨, у вас ${user.dust || 0}`);
                 return;
             }
 
             try {
                 await db.collection("public_wishes").doc(wishId).update({
-                    votes: firebase.firestore.FieldValue.increment(1)
+                    votes: firebase.firestore.FieldValue.increment(amount)
                 });
-
-                // Вычесть пыльцу
                 await db.collection("users").doc(user.uid).update({
-                    dust: firebase.firestore.FieldValue.increment(-1)
+                    dust: firebase.firestore.FieldValue.increment(-amount)
                 });
-
-                alert("Поддержка отправлена! 💛");
+                user.dust = (user.dust || 0) - amount;
+                alert(`Поддержка отправлена! ${amount} ✨`);
                 loadPublicWishes();
             } catch (error) {
                 alert("Ошибка: " + error.message);

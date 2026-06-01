@@ -791,18 +791,34 @@
                     const availableMaterials = materialsArray.filter(m => materials[m.key]);
 
                     if (availableMaterials.length > 0) {
-                        const materialsHtml = availableMaterials.map(m => `
-                            <a href="${materials[m.key]}" target="_blank" class="material-link">
-                                <span class="material-icon">${m.icon}</span>
+                        const isAdmin = window.currentUser?.isAdmin || window.currentUser?.email === "wuallar@gmail.com";
+                        const unlocked = window.currentUser?.unlockedMaterials || [];
+
+                        // Сохраняем URL для разблокировки по индексу (безопасно для onclick)
+                        window._dayMaterialsData = availableMaterials.map(m => ({
+                            key: `${currentDayNum}_${m.key}`,
+                            url: materials[m.key]
+                        }));
+
+                        const materialsHtml = availableMaterials.map((m, i) => {
+                            const unlockKey = `${currentDayNum}_${m.key}`;
+                            const isUnlocked = isAdmin || unlocked.includes(unlockKey);
+                            if (isUnlocked) {
+                                return `<a href="${materials[m.key]}" target="_blank" class="material-link">
+                                    <span class="material-icon">${m.icon}</span>
+                                    <span>${m.label}</span>
+                                </a>`;
+                            }
+                            return `<div class="material-link" style="cursor:pointer; opacity:0.75;" onclick="unlockMaterial(${i})">
+                                <span class="material-icon">🔒</span>
                                 <span>${m.label}</span>
-                            </a>
-                        `).join('');
+                                <span style="font-size:10px; color:#ffd700; display:block; margin-top:2px;">10 ✨ пыльцы</span>
+                            </div>`;
+                        }).join('');
 
                         document.getElementById("dayMaterials").innerHTML = `
                             <div class="materials-title">📚 Дополнительные материалы</div>
-                            <div class="materials-grid">
-                                ${materialsHtml}
-                            </div>
+                            <div class="materials-grid">${materialsHtml}</div>
                         `;
                     } else {
                         document.getElementById("dayMaterials").innerHTML = '';
@@ -1882,6 +1898,35 @@
             } catch (error) {
                 console.error("Ошибка при лайке комментария:", error);
                 alert("Ошибка при лайке: " + error.message);
+            }
+        }
+
+        async function unlockMaterial(index) {
+            const user = window.currentUser;
+            if (!user) { alert("Нужно войти в аккаунт"); return; }
+
+            const mat = (window._dayMaterialsData || [])[index];
+            if (!mat) return;
+
+            if ((user.dust || 0) < 10) {
+                alert(`Недостаточно пыльцы. Нужно 10 ✨, у вас ${user.dust || 0}`);
+                return;
+            }
+
+            if (!confirm("Открыть материал за 10 пыльцы ✨?")) return;
+
+            try {
+                await db.collection("users").doc(user.uid).update({
+                    dust: firebase.firestore.FieldValue.increment(-10),
+                    unlockedMaterials: firebase.firestore.FieldValue.arrayUnion(mat.key)
+                });
+
+                window.currentUser.dust = (user.dust || 0) - 10;
+                window.currentUser.unlockedMaterials = [...(user.unlockedMaterials || []), mat.key];
+
+                loadDayAssignment();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
             }
         }
 
