@@ -764,13 +764,15 @@
                     const rawVideo = data.videoId || data.videoUrl || '';
                     if (rawVideo) {
                         let oid, id;
-                        const urlMatch = rawVideo.match(/video-(\d+)[_](\d+)/);
-                        if (urlMatch) {
-                            oid = urlMatch[1]; id = urlMatch[2];
-                        } else {
-                            const idMatch = rawVideo.match(/^(\d+)[_](\d+)$/);
-                            if (idMatch) { oid = idMatch[1]; id = idMatch[2]; }
-                        }
+                        // Формат: video_ext.php?oid=-186690269&id=456239435
+                        const embedMatch = rawVideo.match(/oid=-?(\d+)&id=(\d+)/);
+                        // Формат: vk.com/video-186690269_456239435
+                        const urlMatch = rawVideo.match(/video-(\d+)_(\d+)/);
+                        // Формат: просто 186690269_456239435
+                        const idMatch = rawVideo.match(/^(\d+)_(\d+)$/);
+                        if (embedMatch) { oid = embedMatch[1]; id = embedMatch[2]; }
+                        else if (urlMatch) { oid = urlMatch[1]; id = urlMatch[2]; }
+                        else if (idMatch) { oid = idMatch[1]; id = idMatch[2]; }
                         if (oid && id) {
                             const vkLink = `https://vk.com/video-${oid}_${id}`;
                             const videoEmbedUrl = `https://vk.com/video_ext.php?oid=-${oid}&id=${id}`;
