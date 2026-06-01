@@ -2,6 +2,7 @@ const AI_BOT_NICK = 'Царь';
 const AI_BOT_UID = 'ai_bot';
 
 let _aiSettings = null;
+let _aiCreditsExhausted = false;
 
 async function loadAISettings() {
     if (_aiSettings !== null) return _aiSettings;
@@ -15,6 +16,8 @@ async function loadAISettings() {
 }
 
 async function callAI(messages, maxTokens = 250) {
+    if (_aiCreditsExhausted) return null;
+
     const settings = await loadAISettings();
     if (!settings.enabled || !settings.apiKey) return null;
 
@@ -36,7 +39,12 @@ async function callAI(messages, maxTokens = 250) {
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            console.warn('[AI] Ошибка API:', response.status, JSON.stringify(err));
+            if (response.status === 402) {
+                _aiCreditsExhausted = true;
+                console.warn('[AI] Недостаточно кредитов OpenRouter. Пополни баланс на openrouter.ai/settings/credits');
+            } else {
+                console.warn('[AI] Ошибка API:', response.status, JSON.stringify(err));
+            }
             return null;
         }
         const data = await response.json();
