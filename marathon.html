@@ -1883,6 +1883,9 @@
         let _aiCatchUpDone = false;
         async function runAICatchUp() {
             if (_aiCatchUpDone) return;
+            // Запускать не чаще одного раза в сутки
+            const today = new Date().toISOString().slice(0, 10);
+            if (localStorage.getItem('aiCatchUpDate') === today) return;
             _aiCatchUpDone = true;
             try {
                 const reportsSnap = await db.collection("reports")
@@ -1917,6 +1920,7 @@
                     }
                 }
 
+                localStorage.setItem('aiCatchUpDate', today);
                 loadReports();
             } catch (e) {
                 console.warn('[AI CatchUp]', e);
