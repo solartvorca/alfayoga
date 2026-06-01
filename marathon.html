@@ -713,6 +713,11 @@
         let currentDayNum = 0;
         let hasSubmitted = false;
 
+        function getMarathonDay() {
+            const day = getMarathonDay();
+            return Math.min(day, 28);
+        }
+
         // Предзаполнить отчёт толкованием костей если пришли с dice.html
         if (new URLSearchParams(location.search).get('fromDice') && localStorage.getItem('diceAIText')) {
             document.addEventListener('DOMContentLoaded', () => {
@@ -729,7 +734,7 @@
         async function loadDayAssignment() {
             // Первая загрузка - используем лунный день
             if (!window.dayNavigationActive) {
-                currentDayNum = getLunarDay();
+                currentDayNum = getMarathonDay();
             }
             document.getElementById("dayNumber").textContent = currentDayNum;
 
@@ -980,7 +985,7 @@
 
         // Проверить и выпустить пользователя если не написал отчёт вовремя
         async function checkAndRemoveIfMissedReport() {
-            const currentDay = getLunarDay();
+            const currentDay = getMarathonDay();
             const lastReportDay = window.currentUser.lastReportDay || 0;
             const currentStatus = window.currentUser.status || "active";
 
@@ -1934,7 +1939,7 @@
             if (user) {
                 console.log("Пользователь залогирован:", user.email);
                 // Загрузить день сразу
-                currentDayNum = getLunarDay();
+                currentDayNum = getMarathonDay();
                 document.getElementById("dayNumber").textContent = currentDayNum;
 
                 const userRef = db.collection("users").doc(user.uid);
