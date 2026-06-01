@@ -523,7 +523,10 @@
         <div id="users-tab" class="tab-content">
             <div class="admin-section">
                 <div class="section-title">👥 Управление подписками участников</div>
-                <button onclick="checkAndRemoveUsersWithoutReport()" class="btn" style="margin-bottom: 15px; background: rgba(255, 100, 100, 0.2);">🔍 Проверить и исключить без отчёта</button>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button onclick="checkAndRemoveUsersWithoutReport()" class="btn" style="background: rgba(255, 100, 100, 0.2);">🔍 Проверить и исключить без отчёта</button>
+                    <button onclick="restoreAllRemovedUsers()" class="btn" style="background: rgba(0, 208, 132, 0.2); border-color: rgba(0, 208, 132, 0.4); color: #00d084;">♻️ Восстановить всех исключённых</button>
+                </div>
                 <div id="adminCheckStatus" style="display: none; padding: 12px; margin-bottom: 15px; background: rgba(180, 100, 255, 0.1); border-left: 3px solid #a18cd1; border-radius: 4px; font-size: 13px; color: #c8d0db;"></div>
                 <table class="users-table">
                     <thead>
@@ -1370,6 +1373,11 @@
             }
         }
 
+        function currentMarathonDay() {
+            const day = typeof getLunarDay === "function" ? getLunarDay() : 1;
+            return Math.min(day, 29);
+        }
+
         // Изменить статус пользователя
         async function changeUserStatus(uid, nick, status) {
             const action = status === "removed" ? `Исключить ${nick} из марафона?` : `Вернуть ${nick} в марафон?`;
@@ -1381,14 +1389,46 @@
                 const updateData = { status };
                 if (status === "active") {
                     updateData.restoredAt = new Date();
-                    // Сбросить lastReportDay на сегодня, иначе checkMarathonStatus сразу исключит снова
-                    updateData.lastReportDay = typeof getLunarDay === "function" ? getLunarDay() : 0;
+                    updateData.lastReportDay = currentMarathonDay();
                 }
                 await db.collection("users").doc(uid).update(updateData);
                 loadUsers();
             } catch (error) {
                 alert("Ошибка: " + error.message);
                 loadUsers();
+            }
+        }
+
+        // Восстановить всех исключённых участников
+        async function restoreAllRemovedUsers() {
+            if (!confirm("Восстановить всех исключённых участников в марафон?")) return;
+
+            const statusEl = document.getElementById("adminCheckStatus");
+            statusEl.style.display = "block";
+            statusEl.textContent = "⏳ Восстанавливаю...";
+
+            try {
+                const snapshot = await db.collection("users").where("status", "==", "removed").get();
+                if (snapshot.empty) {
+                    statusEl.textContent = "✅ Нет исключённых участников";
+                    return;
+                }
+
+                const today = currentMarathonDay();
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.update(doc.ref, {
+                        status: "active",
+                        restoredAt: new Date(),
+                        lastReportDay: today
+                    });
+                });
+                await batch.commit();
+
+                statusEl.textContent = `✅ Восстановлено ${snapshot.size} участников`;
+                loadUsers();
+            } catch (error) {
+                statusEl.textContent = "❌ Ошибка: " + error.message;
             }
         }
 
