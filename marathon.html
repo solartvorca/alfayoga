@@ -759,22 +759,26 @@
                         postAIDailyReport(currentDayNum, data.title || '', data.content || '').catch(() => {});
                     }
 
-                    // Отображение видео
-                    if (data.videoId) {
-                        const videoId = data.videoId;
-                        const [oid, id] = videoId.split('_');
-                        const vkLink = `https://vk.com/video-${videoId}`;
-                        const videoEmbedUrl = `https://vk.com/video_ext.php?oid=-${oid}&id=${id}`;
-
-                        document.getElementById("dayVideo").innerHTML = `
-                            <div class="video-wrapper">
-                                <iframe
-                                    src="${videoEmbedUrl}"
-                                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                                ></iframe>
-                            </div>
-                            <a href="${vkLink}" target="_blank" class="video-link-btn">💬 Открыть в ВК (комментируй и получай лучики)</a>
-                        `;
+                    // Отображение видео (поддерживаем оба поля: videoId и videoUrl)
+                    document.getElementById("dayVideo").innerHTML = '';
+                    const rawVideo = data.videoId || data.videoUrl || '';
+                    if (rawVideo) {
+                        const match = rawVideo.match(/video-?(\d+)[_](\d+)/);
+                        if (match) {
+                            const oid = match[1];
+                            const id = match[2];
+                            const vkLink = `https://vk.com/video-${oid}_${id}`;
+                            const videoEmbedUrl = `https://vk.com/video_ext.php?oid=-${oid}&id=${id}`;
+                            document.getElementById("dayVideo").innerHTML = `
+                                <div class="video-wrapper">
+                                    <iframe
+                                        src="${videoEmbedUrl}"
+                                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                                    ></iframe>
+                                </div>
+                                <a href="${vkLink}" target="_blank" class="video-link-btn">💬 Открыть в ВК (комментируй и получай лучики)</a>
+                            `;
+                        }
                     }
 
                     // Отображение материалов
