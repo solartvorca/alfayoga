@@ -120,14 +120,10 @@
         });
 
         // Кнопка выхода внизу drawer
-        const spacer = document.createElement('div');
-        spacer.style.flex = '1';
-        drawer.appendChild(spacer);
-
         const logoutBtn = document.createElement('button');
         logoutBtn.innerHTML = `<span class="drawer-icon">🚪</span><span>Выйти</span>`;
         logoutBtn.className = 'nav-drawer-item';
-        logoutBtn.style.cssText = 'width:100%; text-align:left; background:none; border:none; border-top:1px solid rgba(161,140,209,0.1); color:#888; cursor:pointer; margin-top:8px;';
+        logoutBtn.style.cssText = 'width:100%; text-align:left; background:none; border:none; border-top:1px solid rgba(161,140,209,0.15); color:#888; cursor:pointer; margin-top:auto; padding-bottom:80px;';
         logoutBtn.onclick = () => {
             firebase.auth().signOut().then(() => {
                 window.location.href = 'login.html';
