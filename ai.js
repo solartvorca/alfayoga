@@ -47,27 +47,22 @@ async function callAI(messages, maxTokens = 250) {
     }
 }
 
+const TSAR_PERSONA = 'Ты — Царь, мудрый и тёплый покровитель марафона "Йога царевича". Отвечаешь коротко: 1-2 предложения. Говоришь с достоинством и теплотой, иногда с мягким юмором. Обращаешься на "ты". Только по-русски.';
+
 async function postAIReactionToReport(reportId, reportText) {
-    const text = await callAI([
-        {
-            role: 'system',
-            content: 'Ты — добрый и игривый ИИ-помощник марафона "Радуга Луна". Пиши коротко: 1-2 предложения. Тёплый, поддерживающий тон с лёгким юмором. Только по-русски.'
-        },
-        {
-            role: 'user',
-            content: `Участник написал отчёт о своей практике: "${reportText}"\n\nНапиши добрую реакцию или лёгкую шутку в 1-2 предложения.`
-        }
-    ]);
-
-    if (!text) return;
-
-    // Проверить что ещё нет AI-комментария на этот отчёт
+    // Проверить до обращения к AI
     const existing = await db.collection('comments')
         .where('reportId', '==', reportId)
         .where('uid', '==', AI_BOT_UID)
         .where('isAI', '==', true)
         .limit(1).get();
     if (!existing.empty) return;
+
+    const text = await callAI([
+        { role: 'system', content: TSAR_PERSONA },
+        { role: 'user', content: `Участник написал отчёт о своей практике: "${reportText}"\n\nОтветь как Царь — поддержи или отметь что-то важное в 1-2 предложения.` }
+    ]);
+    if (!text) return;
 
     await db.collection('comments').add({
         reportId,
@@ -80,29 +75,50 @@ async function postAIReactionToReport(reportId, reportText) {
 }
 
 async function postAIReactionToComment(reportId, commentId, commentText) {
-    // Проверить что ещё нет ответа на этот комментарий
+    // Пропустить только если уже есть прямая реакция Царя на этот комментарий (без replyToId)
     const existing = await db.collection('replies')
         .where('commentId', '==', commentId)
         .where('uid', '==', AI_BOT_UID)
-        .limit(1).get();
-    if (!existing.empty) return;
+        .get();
+    const hasDirectReaction = existing.docs.some(d => !d.data().replyToId);
+    if (hasDirectReaction) return;
 
     const text = await callAI([
-        {
-            role: 'system',
-            content: 'Ты — добрый и игривый ИИ-помощник марафона "Радуга Луна". Пиши коротко: 1-2 предложения. Тёплый тон с лёгким юмором. Только по-русски.'
-        },
-        {
-            role: 'user',
-            content: `В марафоне участник написал комментарий: "${commentText}"\n\nНапиши лёгкую, добрую реакцию.`
-        }
+        { role: 'system', content: TSAR_PERSONA },
+        { role: 'user', content: `Участник оставил комментарий в марафоне: "${commentText}"\n\nОтветь как Царь — коротко и тепло.` }
     ]);
-
     if (!text) return;
 
     await db.collection('replies').add({
         reportId,
         commentId,
+        uid: AI_BOT_UID,
+        nick: AI_BOT_NICK,
+        text,
+        isAI: true,
+        createdAt: new Date()
+    });
+}
+
+async function postAIReactionToReply(reportId, commentId, replyId, replyText) {
+    // Пропустить если уже ответил на именно этот ответ
+    const existing = await db.collection('replies')
+        .where('commentId', '==', commentId)
+        .where('uid', '==', AI_BOT_UID)
+        .where('replyToId', '==', replyId)
+        .limit(1).get();
+    if (!existing.empty) return;
+
+    const text = await callAI([
+        { role: 'system', content: TSAR_PERSONA },
+        { role: 'user', content: `Участник написал в беседе марафона: "${replyText}"\n\nОтветь как Царь — коротко и тепло.` }
+    ]);
+    if (!text) return;
+
+    await db.collection('replies').add({
+        reportId,
+        commentId,
+        replyToId: replyId,
         uid: AI_BOT_UID,
         nick: AI_BOT_NICK,
         text,

@@ -666,15 +666,14 @@
             <p><strong>Лучики 🔥</strong></p>
             <ul style="margin: 10px 0 15px 20px; color: #c8d0db;">
                 <li>За каждый отчёт начисляется <strong>«лучик»</strong></li>
-                <li>Лучиками можно сжигать на своих желания и цели</li>
-                <li>Лучиками оплачиваются образовательные курсы и скидки на индивидуальные процессы</li>
+                <li>Лучиками можно сжигать для осуществления своих желаний и в поддержку целей</li>
             </ul>
 
             <p><strong>Золотая Пыльца ✨</strong></p>
             <ul style="margin: 10px 0 10px 20px; color: #c8d0db;">
                 <li>Накапливается за комментарии под отчётами других участников</li>
                 <li>Золотой пыльцой можно поддержать публичные желания сообщества (голосовать за них)</li>
-                <li>Каждый голос добавляет силы чужому желанию</li>
+                <li>Каждый голос добавляет силы вашему желанию</li>
             </ul>
         </div>
     </div>
@@ -1493,7 +1492,7 @@
 
             try {
                 // Добавить ответ
-                await db.collection("replies").add({
+                const replyRef = await db.collection("replies").add({
                     reportId,
                     commentId,
                     uid: user.uid,
@@ -1505,6 +1504,10 @@
                 // Очистить инпут и перезагрузить ответы
                 inputElement.value = "";
                 await loadReplies(commentId);
+
+                // AI реакция Царя на ответ
+                postAIReactionToReply(reportId, commentId, replyRef.id, text.trim())
+                    .then(() => loadReplies(commentId)).catch(() => {});
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }
@@ -1875,6 +1878,50 @@
             }
         }
 
+        // Догнать реакции Царя на все отчёты/комментарии/ответы без ответа
+        let _aiCatchUpDone = false;
+        async function runAICatchUp() {
+            if (_aiCatchUpDone) return;
+            _aiCatchUpDone = true;
+            try {
+                const reportsSnap = await db.collection("reports")
+                    .where("dayNumber", "==", currentDayNum)
+                    .get();
+
+                for (const reportDoc of reportsSnap.docs) {
+                    const rData = reportDoc.data();
+                    if (rData.isAI) continue;
+
+                    await postAIReactionToReport(reportDoc.id, rData.text).catch(() => {});
+
+                    const commentsSnap = await db.collection("comments")
+                        .where("reportId", "==", reportDoc.id)
+                        .get();
+
+                    for (const commentDoc of commentsSnap.docs) {
+                        const cData = commentDoc.data();
+                        if (cData.isAI) continue;
+
+                        await postAIReactionToComment(reportDoc.id, commentDoc.id, cData.text).catch(() => {});
+
+                        const repliesSnap = await db.collection("replies")
+                            .where("commentId", "==", commentDoc.id)
+                            .get();
+
+                        for (const replyDoc of repliesSnap.docs) {
+                            const rplyData = replyDoc.data();
+                            if (rplyData.isAI) continue;
+                            await postAIReactionToReply(reportDoc.id, commentDoc.id, replyDoc.id, rplyData.text).catch(() => {});
+                        }
+                    }
+                }
+
+                loadReports();
+            } catch (e) {
+                console.warn('[AI CatchUp]', e);
+            }
+        }
+
         // Инициализация
         auth.onAuthStateChanged(user => {
             console.log("Auth state changed, user:", user ? user.email : "не залогирован");
@@ -1957,6 +2004,7 @@
                         loadHexagramOfDay();
                         loadDailyPractice();
                         loadReports();
+                        runAICatchUp();
                         checkUserReport();
                         loadSocialRewardsStatus();
                         loadAdminNotifications();
