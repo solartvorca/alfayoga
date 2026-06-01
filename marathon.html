@@ -761,7 +761,7 @@
 
                     // Отображение видео
                     document.getElementById("dayVideo").innerHTML = '';
-                    const rawVideo = data.videoId || data.videoUrl || '';
+                    const rawVideo = data.videoUrl || data.videoId || '';
                     if (rawVideo) {
                         let oid, id;
                         // Формат: video_ext.php?oid=-186690269&id=456239435
