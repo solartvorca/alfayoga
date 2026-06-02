@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raduga-luna-v16';
+const CACHE_NAME = 'raduga-luna-v17';
 
 const STATIC_ASSETS = [
     'index.html',
@@ -59,6 +59,7 @@ self.addEventListener('fetch', event => {
         url.includes('chrome-extension') ||
         url.includes('huggingface.co') ||
         url.includes('openrouter.ai') ||
+        url.includes('stability.ai') ||
         url.includes('generativelanguage.googleapis.com')) {
         return;
     }
