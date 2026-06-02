@@ -762,6 +762,27 @@
                 <div id="geminiTestResult" style="margin-top:12px;"></div>
             </div>
 
+            <div class="admin-section" style="border-left:3px solid #ff7043;background:rgba(255,112,67,0.05);">
+                <div class="section-title" style="color:#ff7043;">🤗 Hugging Face API (генерация изображений)</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">Ключ из <a href="https://huggingface.co/settings/tokens" target="_blank" style="color:#ff7043;">huggingface.co/settings/tokens</a> — используется для генерации изображений через модели Stable Diffusion и FLUX.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>API ключ Hugging Face (hf_...)</label>
+                        <input type="password" id="hfApiKey" placeholder="hf_...">
+                    </div>
+                    <div class="form-group">
+                        <label>Модель (по умолчанию FLUX.1-schnell)</label>
+                        <input type="text" id="hfModel" placeholder="black-forest-labs/FLUX.1-schnell" value="black-forest-labs/FLUX.1-schnell">
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <button class="btn" onclick="saveHFSettings()">💾 Сохранить</button>
+                        <button class="btn" onclick="testHFImageGen()" style="background:rgba(255,112,67,0.2);border-color:rgba(255,112,67,0.4);color:#ff7043;">🧪 Тест</button>
+                    </div>
+                </div>
+                <div id="hfSaveStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+                <div id="hfTestResult" style="margin-top:12px;"></div>
+            </div>
+
             <div class="admin-section">
                 <div class="section-title">ℹ️ Как работает ИИ</div>
                 <div style="font-size: 13px; color: #888; line-height: 1.8;">
@@ -2206,7 +2227,80 @@
                 if (geminiDoc.exists) {
                     document.getElementById('geminiApiKey').value = geminiDoc.data().apiKey || '';
                 }
+                const hfDoc = await db.collection('settings').doc('huggingface').get();
+                if (hfDoc.exists) {
+                    document.getElementById('hfApiKey').value = hfDoc.data().apiKey || '';
+                    if (hfDoc.data().model) document.getElementById('hfModel').value = hfDoc.data().model;
+                }
             } catch (e) {}
+        }
+
+        async function saveHFSettings() {
+            const apiKey = document.getElementById('hfApiKey').value.trim();
+            const model = document.getElementById('hfModel').value.trim() || 'black-forest-labs/FLUX.1-schnell';
+            const statusEl = document.getElementById('hfSaveStatus');
+            try {
+                await db.collection('settings').doc('huggingface').set({ apiKey, model }, { merge: true });
+                statusEl.textContent = '✅ Ключ сохранён';
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6464';
+                statusEl.style.display = 'block';
+            }
+        }
+
+        async function testHFImageGen() {
+            const apiKey = document.getElementById('hfApiKey').value.trim();
+            const model = (document.getElementById('hfModel').value.trim()) || 'black-forest-labs/FLUX.1-schnell';
+            if (!apiKey) { alert('Сначала введи ключ'); return; }
+
+            const statusEl = document.getElementById('hfSaveStatus');
+            const resultEl = document.getElementById('hfTestResult');
+            statusEl.textContent = '⏳ Генерирую изображение...';
+            statusEl.style.color = '#ff7043';
+            statusEl.style.display = 'block';
+            resultEl.innerHTML = '';
+
+            try {
+                const response = await fetch(
+                    `https://api-inference.huggingface.co/models/${model}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ inputs: 'Small cute fluffy baby dragon, chibi style, 3D render, white background, high detail' })
+                    }
+                );
+
+                if (response.status === 503) {
+                    const data = await response.json().catch(() => ({}));
+                    const wait = data.estimated_time ? Math.ceil(data.estimated_time) : 30;
+                    statusEl.textContent = `⏳ Модель прогревается, подожди ~${wait} сек и нажми Тест снова`;
+                    statusEl.style.color = '#ffd700';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    statusEl.textContent = '❌ Ошибка ' + response.status + ': ' + (err.error || JSON.stringify(err));
+                    statusEl.style.color = '#ff6464';
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                statusEl.textContent = '✅ Hugging Face работает!';
+                statusEl.style.color = '#00d084';
+                resultEl.innerHTML = `<img src="${url}" style="max-width:200px;border-radius:12px;margin-top:10px;border:1px solid rgba(255,112,67,0.3);">`;
+            } catch (e) {
+                statusEl.textContent = '❌ ' + e.message;
+                statusEl.style.color = '#ff6464';
+            }
         }
 
         async function saveGeminiSettings() {
