@@ -332,6 +332,7 @@
             <button class="tab-btn" onclick="switchTab('zhiznetron', this)">⚡ Жизнетрон</button>
             <button class="tab-btn" onclick="switchTab('ai', this)">🤖 ИИ</button>
             <button class="tab-btn" onclick="switchTab('hd', this)">🔮 HD База</button>
+            <button class="tab-btn" onclick="switchTab('raffle', this); loadRaffleAdmin()">🎲 Розыгрыш</button>
         </div>
 
         <!-- Марафоны -->
@@ -817,6 +818,34 @@
                     <button class="btn btn-small" onclick="loadHDKnowledge('gates')" style="font-size:12px;">Ворота</button>
                 </div>
                 <div id="hdKnowledgeList"><p style="text-align:center;color:#888;">Выбери категорию выше</p></div>
+            </div>
+        </div>
+
+        <!-- Розыгрыш лучиков -->
+        <div id="raffle-tab" class="tab-content">
+            <div class="admin-section" style="border-left:3px solid #ffd700;background:rgba(255,215,0,0.04);">
+                <div class="section-title" style="color:#ffd700;">🎲 Создать розыгрыш (от администратора)</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">Запусти конкурс — участники бросают два кубика и борются за лучики. 6:6 = мгновенный выигрыш. В конце дня нажми «Наградить победителей».</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Приз (лучики)</label>
+                        <input type="number" id="adminPrizeRays" min="1" placeholder="10" value="10">
+                    </div>
+                </div>
+                <button class="btn" onclick="createAdminRaffle()" style="margin-top:10px;">🎲 Запустить розыгрыш</button>
+                <div id="adminRaffleCreateStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📊 Текущий розыгрыш</div>
+                <div id="adminRaffleStatus" style="font-size:13px;color:#888;margin-bottom:12px;">Загрузка...</div>
+                <div id="adminRaffleLeaderboard"></div>
+                <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+                    <button class="btn" onclick="loadRaffleAdmin()" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.2);">🔄 Обновить</button>
+                    <button class="btn" onclick="endRaffleAndAward()" style="background:rgba(0,208,132,0.15);border-color:rgba(0,208,132,0.4);color:#00d084;">🏆 Завершить и наградить победителей</button>
+                    <button class="btn" onclick="cancelRaffle()" style="background:rgba(255,100,100,0.12);border-color:rgba(255,100,100,0.3);color:#ff6464;">✕ Отменить розыгрыш</button>
+                </div>
+                <div id="adminRaffleActionStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
             </div>
         </div>
     </div>
@@ -2260,6 +2289,138 @@
 
         // Загрузить AI настройки при открытии вкладки
         document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', loadAISettingsAdmin);
+
+        // ===== РОЗЫГРЫШ ЛУЧИКОВ (ADMIN) =====
+        const RAFFLE_DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+        function getAdminTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        async function createAdminRaffle() {
+            const prizeRays = parseInt(document.getElementById('adminPrizeRays').value) || 0;
+            const statusEl = document.getElementById('adminRaffleCreateStatus');
+            if (prizeRays < 1) { alert('Укажи приз (минимум 1 лучик)'); return; }
+
+            const today = getAdminTodayStr();
+            const existing = await db.collection('diceRaffle').doc('current').get();
+            if (existing.exists && (existing.data().status === 'active' || existing.data().status === 'jackpot_won') && existing.data().date === today) {
+                alert('Сегодня уже есть активный розыгрыш'); return;
+            }
+
+            try {
+                await db.collection('diceRaffle').doc('current').set({
+                    prizeRays, type: 'admin', createdBy: 'admin', createdByNick: 'Администратор',
+                    date: today, status: 'active'
+                });
+                statusEl.textContent = `✅ Розыгрыш на ${prizeRays} лучиков запущен!`;
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+                await loadRaffleAdmin();
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6464';
+                statusEl.style.display = 'block';
+            }
+        }
+
+        async function loadRaffleAdmin() {
+            const today = getAdminTodayStr();
+            const statusEl = document.getElementById('adminRaffleStatus');
+            const lbEl = document.getElementById('adminRaffleLeaderboard');
+
+            try {
+                const raffleDoc = await db.collection('diceRaffle').doc('current').get();
+                if (!raffleDoc.exists || raffleDoc.data().date !== today) {
+                    statusEl.textContent = 'Нет активного розыгрыша сегодня';
+                    lbEl.innerHTML = '';
+                    return;
+                }
+                const data = raffleDoc.data();
+                const statusMap = { active: '🟢 Активен', jackpot_won: '🏆 Джекпот выигран', ended: '🔴 Завершён' };
+                statusEl.innerHTML = `<b>${statusMap[data.status] || data.status}</b> · Приз: ${data.prizeRays} лучиков · От: ${data.createdByNick}`;
+
+                const snap = await db.collection('diceRaffleThrows').where('date', '==', today).get();
+                const throws = snap.docs.map(d => d.data()).sort((a, b) => b.total - a.total || a.thrownAt - b.thrownAt);
+
+                if (!throws.length) { lbEl.innerHTML = '<p style="color:#555;font-size:13px;">Никто ещё не бросил</p>'; return; }
+
+                const maxTotal = throws[0].total;
+                lbEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="color:#888;font-size:11px;text-transform:uppercase;">
+                        <th style="text-align:left;padding:6px 4px;">#</th>
+                        <th style="text-align:left;padding:6px 4px;">Участник</th>
+                        <th style="padding:6px 4px;">Кубики</th>
+                        <th style="padding:6px 4px;">Очки</th>
+                        <th style="text-align:left;padding:6px 4px;">Статус</th>
+                    </tr></thead>
+                    <tbody>${throws.map((t, i) => `<tr style="${i % 2 === 0 ? 'background:rgba(255,255,255,0.02);' : ''}${t.total === maxTotal ? 'color:#ffd700;' : ''}">
+                        <td style="padding:7px 4px;">${i+1}</td>
+                        <td style="padding:7px 4px;">${t.nick}</td>
+                        <td style="padding:7px 4px;text-align:center;font-size:18px;letter-spacing:3px;">${RAFFLE_DICE_FACE[t.die1]}${RAFFLE_DICE_FACE[t.die2]}</td>
+                        <td style="padding:7px 4px;text-align:center;font-weight:700;">${t.total}</td>
+                        <td style="padding:7px 4px;">${t.isJackpot ? '🏆 Джекпот' : t.total === maxTotal ? '👑 Лидер' : ''}</td>
+                    </tr>`).join('')}</tbody>
+                </table>`;
+            } catch (e) {
+                statusEl.textContent = 'Ошибка: ' + e.message;
+            }
+        }
+
+        async function endRaffleAndAward() {
+            const today = getAdminTodayStr();
+            const actionEl = document.getElementById('adminRaffleActionStatus');
+            if (!confirm('Завершить розыгрыш и начислить лучики победителям?')) return;
+
+            try {
+                const raffleDoc = await db.collection('diceRaffle').doc('current').get();
+                if (!raffleDoc.exists || raffleDoc.data().date !== today) { alert('Нет активного розыгрыша'); return; }
+                const raffle = raffleDoc.data();
+                const prizeRays = raffle.prizeRays;
+
+                const snap = await db.collection('diceRaffleThrows').where('date', '==', today).get();
+                const throws = snap.docs.map(d => d.data()).sort((a, b) => b.total - a.total);
+                if (!throws.length) { alert('Никто не бросал кости'); return; }
+
+                const maxTotal = throws[0].total;
+                const jackpotWon = raffle.status === 'jackpot_won';
+                let winners = jackpotWon
+                    ? throws.filter(t => t.isJackpot).slice(0, 4)
+                    : throws.filter(t => t.total === maxTotal).slice(0, 4);
+
+                for (const w of winners) {
+                    if (!jackpotWon) {
+                        await db.collection('users').doc(w.uid).update({ rays: firebase.firestore.FieldValue.increment(prizeRays) });
+                    }
+                }
+
+                await db.collection('diceRaffle').doc('current').update({ status: 'ended', winners: winners.map(w => ({ uid: w.uid, nick: w.nick, total: w.total })) });
+
+                actionEl.textContent = `✅ Завершён! Победители (${winners.length}): ${winners.map(w => `${w.nick} (${w.total} очков)`).join(', ')} — каждый получил ${prizeRays} лучиков`;
+                actionEl.style.color = '#00d084';
+                actionEl.style.display = 'block';
+                await loadRaffleAdmin();
+            } catch (e) {
+                actionEl.textContent = '❌ Ошибка: ' + e.message;
+                actionEl.style.color = '#ff6464';
+                actionEl.style.display = 'block';
+            }
+        }
+
+        async function cancelRaffle() {
+            if (!confirm('Отменить розыгрыш? Участники не получат лучики. Если создавал участник — лучики не вернутся.')) return;
+            try {
+                await db.collection('diceRaffle').doc('current').update({ status: 'ended' });
+                document.getElementById('adminRaffleActionStatus').textContent = '✅ Розыгрыш отменён';
+                document.getElementById('adminRaffleActionStatus').style.color = '#888';
+                document.getElementById('adminRaffleActionStatus').style.display = 'block';
+                await loadRaffleAdmin();
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
 
     </script>
     <script src="mobile-nav.js"></script>
