@@ -487,6 +487,18 @@
             return Math.abs(h);
         }
 
+        const ELEM_VISUALS_VIEW = {
+            fire: 'fiery orange-red ember glow', water: 'aqua blue shimmering water droplets',
+            earth: 'emerald green mossy crystal gems', air: 'silvery white wind wisps',
+            lightning: 'electric blue lightning bolts', moon: 'silver moonlight crescent glow'
+        };
+
+        function buildViewPrompt(stage, totem) {
+            if (!totem || !totem.animal) return stage.prompt;
+            const ev = ELEM_VISUALS_VIEW[totem.element] || '';
+            return `${stage.prompt}, embodying the spirit of ${totem.animal}${totem.qualities ? ', ' + totem.qualities : ''}${ev ? ', ' + ev : ''}`;
+        }
+
         function renderViewYupik(user) {
             const rays = user.rays || 0;
             const stage = YUPIK_STAGES_VIEW.find(s => rays >= s.threshold);
@@ -505,7 +517,9 @@
             document.getElementById('yupikEmoji').style.display = 'block';
             const img = document.getElementById('yupikImg');
             img.style.display = 'none';
-            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(stage.prompt)}?width=400&height=400&nologo=true&seed=${uidToSeedView(user.uid)}`;
+            const prompt = buildViewPrompt(stage, user.totem);
+            const seed = uidToSeedView(user.uid) + stage.threshold;
+            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=400&nologo=true&seed=${seed}`;
         }
     </script>
     <script src="mobile-nav.js"></script>

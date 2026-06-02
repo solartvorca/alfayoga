@@ -452,6 +452,49 @@
             </div>
         </div>
 
+        <!-- ТОТЕМНОЕ ЖИВОТНОЕ -->
+        <div style="margin-bottom:16px;padding:18px 16px;background:rgba(0,208,132,0.05);border:1px solid rgba(0,208,132,0.2);border-radius:16px;">
+            <div style="font-size:14px;font-weight:700;color:#00d084;margin-bottom:2px;">🦅 Тотемное животное</div>
+            <div style="font-size:12px;color:#888;margin-bottom:14px;">ИИ создаст юпика в образе твоего тотема</div>
+
+            <div id="totemDisplay" style="display:none;margin-bottom:12px;padding:12px;background:rgba(0,208,132,0.08);border-radius:10px;">
+                <span id="totemDisplayText" style="font-size:14px;color:#c8d0db;"></span>
+                <button onclick="document.getElementById('totemDisplay').style.display='none';document.getElementById('totemFormWrap').style.display='block';"
+                    style="margin-left:10px;font-size:11px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline;">изменить</button>
+            </div>
+
+            <div id="totemFormWrap">
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    <div>
+                        <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Твоё тотемное животное</label>
+                        <input type="text" id="totemAnimal" placeholder="Волк, орёл, лиса, медведь..."
+                            style="width:100%;margin-top:4px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(0,208,132,0.3);border-radius:8px;color:#c8d0db;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Качества, которые ты в нём видишь</label>
+                        <input type="text" id="totemQualities" placeholder="Мудрость, сила, свобода, интуиция..."
+                            style="width:100%;margin-top:4px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(0,208,132,0.3);border-radius:8px;color:#c8d0db;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Стихия</label>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <button onclick="selectElement(this,'fire')"   class="elem-btn" style="padding:6px 12px;border-radius:20px;border:1px solid rgba(255,100,50,0.4);background:rgba(255,100,50,0.1);color:#ff6432;font-size:13px;cursor:pointer;">🔥 Огонь</button>
+                            <button onclick="selectElement(this,'water')"  class="elem-btn" style="padding:6px 12px;border-radius:20px;border:1px solid rgba(64,164,255,0.4);background:rgba(64,164,255,0.1);color:#40a4ff;font-size:13px;cursor:pointer;">💧 Вода</button>
+                            <button onclick="selectElement(this,'earth')"  class="elem-btn" style="padding:6px 12px;border-radius:20px;border:1px solid rgba(0,208,132,0.4);background:rgba(0,208,132,0.1);color:#00d084;font-size:13px;cursor:pointer;">🌿 Земля</button>
+                            <button onclick="selectElement(this,'air')"    class="elem-btn" style="padding:6px 12px;border-radius:20px;border:1px solid rgba(200,200,255,0.4);background:rgba(200,200,255,0.1);color:#c8c8ff;font-size:13px;cursor:pointer;">🌬️ Воздух</button>
+                            <button onclick="selectElement(this,'lightning')" class="elem-btn" style="padding:6px 12px;border-radius:20px;border:1px solid rgba(255,215,0,0.4);background:rgba(255,215,0,0.1);color:#ffd700;font-size:13px;cursor:pointer;">⚡ Молния</button>
+                            <button onclick="selectElement(this,'moon')"   class="elem-btn" style="padding:6px 12px;border-radius:20px;border:1px solid rgba(161,140,209,0.4);background:rgba(161,140,209,0.1);color:#a18cd1;font-size:13px;cursor:pointer;">🌙 Луна</button>
+                        </div>
+                        <input type="hidden" id="totemElement" value="">
+                    </div>
+                    <button onclick="saveTotem()" style="padding:11px;background:linear-gradient(135deg,#00d084,#00a876);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">
+                        ✨ Сохранить и создать юпика
+                    </button>
+                    <div id="totemSaveStatus" style="font-size:13px;display:none;text-align:center;"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- ЮПИК -->
         <div id="yupikCard" style="display:none;text-align:center;padding:22px 16px;background:rgba(161,140,209,0.06);border:1px solid rgba(161,140,209,0.2);border-radius:16px;margin-bottom:18px;">
             <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Твой юпик</div>
@@ -791,6 +834,7 @@
             }
 
             loadCreativeProfile();
+            loadTotemDisplay(user);
             loadYupik(user, true);
             // loadTransactions();  // Отключено - требуется создание индекса в Firebase
             loadMyReports();
@@ -1467,6 +1511,96 @@
             }
         };
 
+        // ===== ТОТЕМ =====
+        let _selectedElement = '';
+
+        function selectElement(btn, value) {
+            document.querySelectorAll('.elem-btn').forEach(b => b.style.outline = 'none');
+            btn.style.outline = '2px solid #00d084';
+            _selectedElement = value;
+            document.getElementById('totemElement').value = value;
+        }
+
+        function loadTotemDisplay(user) {
+            const t = user.totem;
+            if (!t || !t.animal) return;
+            document.getElementById('totemDisplayText').textContent =
+                `${t.animal}${t.qualities ? ' · ' + t.qualities : ''}${t.element ? ' · ' + t.element : ''}`;
+            document.getElementById('totemDisplay').style.display = 'block';
+            document.getElementById('totemFormWrap').style.display = 'none';
+            // Pre-fill form too
+            document.getElementById('totemAnimal').value = t.animal || '';
+            document.getElementById('totemQualities').value = t.qualities || '';
+            _selectedElement = t.element || '';
+            document.getElementById('totemElement').value = _selectedElement;
+        }
+
+        async function saveTotem() {
+            const user = window.currentUser;
+            if (!user) return;
+            const animal    = document.getElementById('totemAnimal').value.trim();
+            const qualities = document.getElementById('totemQualities').value.trim();
+            const element   = _selectedElement;
+            const statusEl  = document.getElementById('totemSaveStatus');
+
+            if (!animal) { alert('Укажи тотемное животное'); return; }
+
+            statusEl.textContent = '⏳ Сохраняю...';
+            statusEl.style.color = '#888';
+            statusEl.style.display = 'block';
+
+            const totem = { animal, qualities, element };
+            try {
+                await db.collection('users').doc(user.uid).update({ totem });
+                window.currentUser.totem = totem;
+                statusEl.textContent = '✅ Сохранено! Генерирую юпика...';
+                statusEl.style.color = '#00d084';
+                document.getElementById('totemDisplayText').textContent =
+                    `${animal}${qualities ? ' · ' + qualities : ''}${element ? ' · ' + element : ''}`;
+                document.getElementById('totemDisplay').style.display = 'block';
+                document.getElementById('totemFormWrap').style.display = 'none';
+                // Reset yupik stage so new image is generated
+                window.currentUser.yupikStage = 0;
+                await loadYupik(window.currentUser, true);
+                setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6464';
+            }
+        }
+
+        const ELEMENT_VISUALS = {
+            fire:      'fiery orange-red ember glow, flame particles around it',
+            water:     'aqua blue shimmering water droplets, ripple effects',
+            earth:     'emerald green mossy vines, grounded crystal gems',
+            air:       'silvery white wind wisps, feather-light clouds',
+            lightning: 'electric blue lightning bolts, plasma arcs',
+            moon:      'silver moonlight glow, crescent moon symbols, starlight'
+        };
+
+        async function buildYupikPrompt(stage, totem) {
+            if (!totem || !totem.animal) return stage.prompt;
+
+            // Try AI prompt generation first
+            try {
+                const aiPrompt = await callAI([{
+                    role: 'system',
+                    content: 'You are an expert image prompt writer for Pollinations.ai. Write concise English prompts (max 120 words). Focus on visual details only. No explanations.'
+                }, {
+                    role: 'user',
+                    content: `Write a Pollinations.ai prompt for: a cute fluffy teal turquoise chibi baby dragon character that embodies the spirit of "${totem.animal}"${totem.qualities ? ', qualities: ' + totem.qualities : ''}${totem.element ? ', element: ' + totem.element : ''}. Stage: "${stage.name}".
+The dragon must stay teal/turquoise, chibi Pixar 3D render style, white background, big round black eyes, sacred geometry metatrons cube golden lines background. Incorporate the totem animal's visual features naturally (fur/feathers/scales pattern, colors, accessories). ${stage.threshold >= 200 ? 'Show full body with golden crown, teal wings, crystal die.' : stage.threshold >= 100 ? 'Dragon hatching from cracked egg, head visible, shell on head.' : 'Focus on a teal magical egg with totem-element visual effects.'}`
+                }], 150);
+
+                if (aiPrompt && aiPrompt.length > 30) return aiPrompt;
+            } catch (e) {}
+
+            // Fallback: template-based prompt
+            const elementVisual = ELEMENT_VISUALS[totem.element] || '';
+            const animalFeature = `embodying the spirit of ${totem.animal}, ${totem.qualities || 'mystical and wise'}`;
+            return `${stage.prompt}, ${animalFeature}${elementVisual ? ', ' + elementVisual : ''}`;
+        }
+
         // ===== ЮПИК =====
         const YUPIK_STAGES = [
             { threshold: 200, name: '🐉 Юпик', emoji: '🐉',
@@ -1513,7 +1647,12 @@
             document.getElementById('yupikEmoji').textContent = stage.emoji;
             document.getElementById('yupikEmoji').style.display = 'block';
             document.getElementById('yupikImg').style.display = 'none';
-            document.getElementById('yupikImg').src = yupikImageUrl(stage, user.uid);
+
+            // Build personalized prompt using totem
+            const totem = user.totem;
+            const prompt = await buildYupikPrompt(stage, totem);
+            const seed = uidToSeed(user.uid) + stage.threshold; // different seed per stage
+            document.getElementById('yupikImg').src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=400&nologo=true&seed=${seed}`;
 
             // Проверить смену этапа и отправить оповещение (только для своего профиля)
             if (isOwn) {
