@@ -27,8 +27,13 @@ function isMobileDevice() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
+function _parseLocalDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d); // локальная полночь, не UTC
+}
+
 let lunarState = {
-    fullMoonDate: localStorage.getItem('fullMoonDate') ? new Date(localStorage.getItem('fullMoonDate')) : new Date(2026, 4, 2),
+    fullMoonDate: localStorage.getItem('fullMoonDate') ? _parseLocalDate(localStorage.getItem('fullMoonDate')) : new Date(2026, 4, 2),
     lunarCycleDays: 29.5,
 };
 
