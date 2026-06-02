@@ -585,32 +585,43 @@
         async function loadRaffle() {
             const today = getTodayStr();
             const user  = window.currentUser;
+
+            // 1. Загрузить розыгрыши
             try {
-                // Load participant raffles
                 const snap = await db.collection('diceRaffles').where('date', '==', today).get();
                 rafflesData = {};
                 snap.docs.forEach(d => { rafflesData[d.data().raffleKey] = { id: d.id, ...d.data() }; });
+            } catch (e) { console.warn('Ошибка чтения розыгрышей:', e); rafflesData = {}; }
 
-                // Auto-create mining raffle if missing
-                if (!rafflesData.mining) {
-                    const md = { raffleKey:'mining', type:'mining', prizeAmount:30, prizeType:'rays', date:today, status:'active', createdBy:'system', createdByNick:'Система' };
+            // 2. Авто-создать майнинг если нет (только если пользователь авторизован)
+            if (!rafflesData.mining && user) {
+                const md = { raffleKey:'mining', type:'mining', prizeAmount:30, prizeType:'rays', date:today, status:'active', createdBy:'system', createdByNick:'Система' };
+                try {
                     await db.collection('diceRaffles').doc(`${today}_mining`).set(md);
                     rafflesData.mining = md;
+                } catch (e) {
+                    console.warn('Не удалось создать майнинг (возможно нет прав):', e);
+                    rafflesData.mining = md; // показываем UI даже без записи
                 }
+            }
 
-                // Load my throws
-                myThrows = {};
-                if (user) {
+            // 3. Загрузить мои броски
+            myThrows = {};
+            if (user) {
+                try {
                     const docs = await Promise.all(ALL_KEYS.map(k =>
                         db.collection('diceRaffleThrows').doc(`${today}_${k}_${user.uid}`).get()
                     ));
                     docs.forEach((doc, i) => { if (doc.exists) myThrows[ALL_KEYS[i]] = doc.data(); });
-                }
+                } catch (e) { console.warn('Ошибка загрузки бросков:', e); }
+            }
 
-                renderMiningSection();
-                ['slot1','slot2','slot3'].forEach((k,i) => renderSlotSection(k, i+1));
-                await loadAllLeaderboards();
-            } catch (e) { console.warn('Ошибка розыгрышей:', e); }
+            // 4. Рендер — всегда, даже при ошибках
+            renderMiningSection();
+            ['slot1','slot2','slot3'].forEach((k,i) => renderSlotSection(k, i+1));
+
+            // 5. Лидерборд
+            try { await loadAllLeaderboards(); } catch (e) { console.warn('Ошибка лидерборда:', e); }
         }
 
         async function loadAllLeaderboards() {
@@ -661,6 +672,10 @@
 
         function renderMiningSection() {
             const r  = rafflesData.mining;
+            if (!r) {
+                document.getElementById('miningContent').innerHTML = '<div style="font-size:13px;color:#555;">Недоступен — войди в аккаунт или попробуй обновить страницу</div>';
+                return;
+            }
             const td = myThrows.mining;
             const st = r.status === 'ended' ? '🔴 Завершён' : r.status === 'jackpot_won' ? '🏆 Джекпот выигран' : '🟢 Активен';
             document.getElementById('miningContent').innerHTML = `
@@ -752,7 +767,7 @@
                 }
 
                 if (raffleKey === 'mining') renderMiningSection();
-                else renderSlotSection(raffleKey, parseInt(raffleKey.replace('slot','\')));
+                else renderSlotSection(raffleKey, parseInt(raffleKey.replace('slot', '')));
                 await loadAllLeaderboards();
             } catch (e) {
                 alert('Ошибка: ' + e.message);
