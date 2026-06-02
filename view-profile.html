@@ -184,6 +184,20 @@
             </div>
         </div>
 
+        <!-- ЮПИК -->
+        <div id="yupikCard" style="display:none;text-align:center;padding:22px 16px;background:rgba(161,140,209,0.06);border:1px solid rgba(161,140,209,0.2);border-radius:16px;margin-bottom:18px;">
+            <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Юпик участника</div>
+            <div style="font-size:16px;font-weight:700;color:#a18cd1;margin-bottom:4px;" id="yupikStageName">—</div>
+            <div style="font-size:12px;color:#666;margin-bottom:14px;" id="yupikProgress">—</div>
+            <div style="position:relative;display:inline-block;">
+                <div id="yupikEmoji" style="font-size:72px;line-height:1;margin-bottom:4px;">🥚</div>
+                <img id="yupikImg" src="" alt="Юпик" loading="lazy"
+                    style="width:200px;height:200px;object-fit:contain;border-radius:14px;display:none;border:1px solid rgba(161,140,209,0.2);"
+                    onload="this.style.display='block';document.getElementById('yupikEmoji').style.display='none';"
+                    onerror="this.style.display='none';document.getElementById('yupikEmoji').style.display='block';">
+            </div>
+        </div>
+
         <!-- Навигация вкладок -->
         <div class="tabs-nav">
             <button class="tab-btn active" onclick="switchTab('about')">👤 Об авторе</button>
@@ -317,12 +331,13 @@
                     return;
                 }
 
-                const user = userDoc.data();
+                const user = { uid: targetUid, ...userDoc.data() };
                 document.getElementById("profileNick").textContent = user.nick || "Участник";
                 document.getElementById("profileEmail").textContent = user.email || "";
                 document.getElementById("raysCount").textContent = user.rays || 0;
                 document.getElementById("dustCount").textContent = user.dust || 0;
                 document.getElementById("pranaCount").textContent = user.prana || 0;
+                renderViewYupik(user);
 
                 const profile = user.creativeProfile || {};
 
@@ -451,6 +466,47 @@
         }
 
         loadPublicProfile();
+
+        // ===== ЮПИК (просмотр чужого профиля) =====
+        const YUPIK_STAGES_VIEW = [
+            { threshold: 200, name: '🐉 Юпик', emoji: '🐉',
+              prompt: 'cute small magical baby dragon creature, full body standing upright, chibi style, soft pastel colors, white background, big round eyes, tiny wings, magical sparkles, 3D render, fantasy art, adorable' },
+            { threshold: 100, name: '🐣 Юпик вылупляется', emoji: '🐣',
+              prompt: 'cute tiny magical baby dragon emerging from cracked egg, head and upper body visible, piece of white eggshell on head like hat, huge round eyes, chibi style, soft pastel colors, white background, 3D render, adorable fantasy art' },
+            { threshold: 75,  name: '🥚 Яйцо — видны отверстия', emoji: '🥚',
+              prompt: 'magical egg with holes and cracks, bright golden light shining through multiple cracks and holes, movement visible inside, fantasy art, soft pastel colors, white background, 3D render, glowing' },
+            { threshold: 50,  name: '🥚 Трескающееся яйцо', emoji: '🥚',
+              prompt: 'magical egg with thin cracks appearing on surface, soft golden glow emanating from within through cracks, fantasy art, pastel colors, white background, 3D render' },
+            { threshold: 10,  name: '🥚 Яйцо', emoji: '🥚',
+              prompt: 'perfect magical glowing egg, smooth flawless surface, warm soft golden inner light, fantasy art, pastel colors, white background, 3D render, high quality' },
+        ];
+
+        function uidToSeedView(uid) {
+            let h = 0;
+            for (let i = 0; i < uid.length; i++) { h = Math.imul(31, h) + uid.charCodeAt(i) | 0; }
+            return Math.abs(h);
+        }
+
+        function renderViewYupik(user) {
+            const rays = user.rays || 0;
+            const stage = YUPIK_STAGES_VIEW.find(s => rays >= s.threshold);
+            const card  = document.getElementById('yupikCard');
+            if (!card) return;
+            if (!stage) { card.style.display = 'none'; return; }
+
+            card.style.display = 'block';
+            document.getElementById('yupikStageName').textContent = stage.name;
+            const next = [...YUPIK_STAGES_VIEW].reverse().find(s => s.threshold > rays);
+            document.getElementById('yupikProgress').textContent = next
+                ? `До следующего этапа: ещё ${next.threshold - rays} лучиков`
+                : '🏆 Максимальный уровень!';
+
+            document.getElementById('yupikEmoji').textContent = stage.emoji;
+            document.getElementById('yupikEmoji').style.display = 'block';
+            const img = document.getElementById('yupikImg');
+            img.style.display = 'none';
+            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(stage.prompt)}?width=400&height=400&nologo=true&seed=${uidToSeedView(user.uid)}`;
+        }
     </script>
     <script src="mobile-nav.js"></script>
 </body>
