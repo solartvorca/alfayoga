@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raduga-luna-v15';
+const CACHE_NAME = 'raduga-luna-v16';
 
 const STATIC_ASSETS = [
     'index.html',
@@ -51,12 +51,15 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = event.request.url;
 
-    // Firebase и внешние запросы — только сеть
+    // Firebase и внешние API — только сеть (без кеширования)
     if (url.includes('firestore.googleapis.com') ||
         url.includes('googleapis.com') ||
         url.includes('gstatic.com') ||
         url.includes('firebase') ||
-        url.includes('chrome-extension')) {
+        url.includes('chrome-extension') ||
+        url.includes('huggingface.co') ||
+        url.includes('openrouter.ai') ||
+        url.includes('generativelanguage.googleapis.com')) {
         return;
     }
 
