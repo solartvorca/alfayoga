@@ -712,10 +712,22 @@
     <script>
         let currentDayNum = 0;
         let hasSubmitted = false;
+        let _cycleStart = new Date(2026, 5, 1); // фолбек: 1 июня 2026 00:00 local
+
+        async function loadCycleStart() {
+            try {
+                const doc = await db.collection('settings').doc('marathon').get();
+                if (doc.exists && doc.data().cycleStart) {
+                    _cycleStart = doc.data().cycleStart.toDate();
+                }
+            } catch(e) {}
+        }
 
         function getMarathonDay() {
-            const day = getLunarDay();
-            return Math.min(day, 29);
+            const now = new Date();
+            const daysSince = (now - _cycleStart) / (1000 * 60 * 60 * 24);
+            if (daysSince < 0) return 1;
+            return Math.min(Math.floor(daysSince) + 1, 29);
         }
 
         // Предзаполнить отчёт толкованием костей если пришли с dice.html
@@ -1997,9 +2009,11 @@
             console.log("Auth state changed, user:", user ? user.email : "не залогирован");
             if (user) {
                 console.log("Пользователь залогирован:", user.email);
-                // Загрузить день сразу
-                currentDayNum = getMarathonDay();
-                document.getElementById("dayNumber").textContent = currentDayNum;
+                // Загрузить день после загрузки даты старта цикла
+                loadCycleStart().then(() => {
+                    currentDayNum = getMarathonDay();
+                    document.getElementById("dayNumber").textContent = currentDayNum;
+                });
 
                 const userRef = db.collection("users").doc(user.uid);
                 userRef.onSnapshot(doc => {
@@ -2064,7 +2078,7 @@
                         checkAndRemoveIfMissedReport();
 
                         console.log("Вызываю loadDayAssignment...");
-                        loadDayAssignment();
+                        loadCycleStart().then(() => loadDayAssignment());
 
                         // Показать кнопки навигации для администратора
                         if (window.currentUser.email === "wuallar@gmail.com") {

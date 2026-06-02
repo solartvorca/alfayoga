@@ -336,6 +336,24 @@
 
         <!-- Марафоны -->
         <div id="marathons-tab" class="tab-content active">
+            <div class="admin-section" style="border-left: 3px solid #ffd700; background: rgba(255,215,0,0.05);">
+                <div class="section-title" style="color:#ffd700;">🌕 Старт текущего цикла марафона</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">День меняется в 00:00 по местному времени участника, считая от этой даты. Устанавливай в начале каждого нового полнолуния.</p>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:160px;">
+                        <label>Дата старта</label>
+                        <input type="date" id="cycleStartDate" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-size:14px;width:100%;">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:120px;">
+                        <label>Время (00:00 = полночь)</label>
+                        <input type="time" id="cycleStartTime" value="00:00" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-size:14px;width:100%;">
+                    </div>
+                    <button onclick="saveCycleStart()" class="btn" style="margin-top:18px;background:rgba(255,215,0,0.2);border-color:rgba(255,215,0,0.4);color:#ffd700;">💾 Сохранить</button>
+                </div>
+                <div id="cycleStartStatus" style="margin-top:10px;font-size:13px;color:#00d084;display:none;"></div>
+                <div id="cycleStartCurrent" style="margin-top:8px;font-size:13px;color:#888;"></div>
+            </div>
+
             <div class="admin-section">
                 <div class="section-title">🏃 Создать новый марафон</div>
                 <form onsubmit="addMarathon(event)" class="form-grid">
@@ -806,6 +824,7 @@
 
             if (tabName === "marathons") {
                 loadMarathons();
+                loadCurrentCycleStart();
             } else if (tabName === "days") {
                 loadAllDays();
             } else if (tabName === "users") {
@@ -1103,6 +1122,45 @@
             }, 3000);
         }
 
+        // ===== Старт цикла марафона =====
+        async function loadCurrentCycleStart() {
+            try {
+                const doc = await db.collection('settings').doc('marathon').get();
+                const el = document.getElementById('cycleStartCurrent');
+                if (doc.exists && doc.data().cycleStart) {
+                    const d = doc.data().cycleStart.toDate();
+                    el.textContent = `Текущий старт: ${d.toLocaleString('ru-RU')}`;
+                    // Pre-fill inputs
+                    const pad = n => String(n).padStart(2,'0');
+                    document.getElementById('cycleStartDate').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+                    document.getElementById('cycleStartTime').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                } else {
+                    el.textContent = 'Старт цикла не установлен (используется фолбек 1 июня 2026)';
+                }
+            } catch(e) {}
+        }
+
+        async function saveCycleStart() {
+            const dateVal = document.getElementById('cycleStartDate').value;
+            const timeVal = document.getElementById('cycleStartTime').value || '00:00';
+            if (!dateVal) { alert('Выбери дату'); return; }
+
+            const [y,m,d] = dateVal.split('-').map(Number);
+            const [h,min] = timeVal.split(':').map(Number);
+            const cycleStart = new Date(y, m-1, d, h, min, 0); // локальное время
+
+            const statusEl = document.getElementById('cycleStartStatus');
+            try {
+                await db.collection('settings').doc('marathon').set({ cycleStart: firebase.firestore.Timestamp.fromDate(cycleStart) }, { merge: true });
+                statusEl.textContent = `✅ Сохранено: ${cycleStart.toLocaleString('ru-RU')}`;
+                statusEl.style.display = 'block';
+                document.getElementById('cycleStartCurrent').textContent = `Текущий старт: ${cycleStart.toLocaleString('ru-RU')}`;
+            } catch(e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.display = 'block';
+            }
+        }
+
         // ===== HD База знаний =====
         async function saveHDKnowledge(e) {
             e.preventDefault();
@@ -1192,6 +1250,7 @@
                     ...userDoc.data()
                 };
                 loadMarathons();
+                loadCurrentCycleStart();
             } else {
                 window.location.href = "login.html";
             }
