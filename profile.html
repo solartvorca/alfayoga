@@ -1644,15 +1644,21 @@ The dragon must stay teal/turquoise, chibi Pixar 3D render style, white backgrou
                 ? `До следующего этапа: ещё ${next.threshold - rays} лучиков`
                 : '🏆 Максимальный уровень!';
 
-            document.getElementById('yupikEmoji').textContent = stage.emoji;
-            document.getElementById('yupikEmoji').style.display = 'block';
-            document.getElementById('yupikImg').style.display = 'none';
+            const emojiEl = document.getElementById('yupikEmoji');
+            const imgEl   = document.getElementById('yupikImg');
+            emojiEl.textContent = '⏳';
+            emojiEl.style.display = 'block';
+            imgEl.style.display = 'none';
 
             // Build personalized prompt using totem
             const totem = user.totem;
             const prompt = await buildYupikPrompt(stage, totem);
-            const seed = uidToSeed(user.uid) + stage.threshold; // different seed per stage
-            document.getElementById('yupikImg').src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=400&nologo=true&seed=${seed}`;
+            const seed = uidToSeed(user.uid) + stage.threshold;
+            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
+
+            imgEl.onload  = () => { imgEl.style.display = 'block'; emojiEl.style.display = 'none'; };
+            imgEl.onerror = () => { emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
+            imgEl.src = imgUrl;
 
             // Проверить смену этапа и отправить оповещение (только для своего профиля)
             if (isOwn) {

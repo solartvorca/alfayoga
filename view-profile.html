@@ -513,13 +513,16 @@
                 ? `До следующего этапа: ещё ${next.threshold - rays} лучиков`
                 : '🏆 Максимальный уровень!';
 
-            document.getElementById('yupikEmoji').textContent = stage.emoji;
-            document.getElementById('yupikEmoji').style.display = 'block';
+            const emojiEl = document.getElementById('yupikEmoji');
+            emojiEl.textContent = '⏳';
+            emojiEl.style.display = 'block';
             const img = document.getElementById('yupikImg');
             img.style.display = 'none';
             const prompt = buildViewPrompt(stage, user.totem);
             const seed = uidToSeedView(user.uid) + stage.threshold;
-            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=400&height=400&nologo=true&seed=${seed}`;
+            img.onload  = () => { img.style.display = 'block'; emojiEl.style.display = 'none'; };
+            img.onerror = () => { emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
+            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
         }
     </script>
     <script src="mobile-nav.js"></script>
