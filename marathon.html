@@ -2078,7 +2078,11 @@
                         checkAndRemoveIfMissedReport();
 
                         console.log("Вызываю loadDayAssignment...");
-                        loadCycleStart().then(() => loadDayAssignment());
+                        loadCycleStart().then(() => {
+                            loadDayAssignment();
+                            loadReports();
+                            checkUserReport();
+                        });
 
                         // Показать кнопки навигации для администратора
                         if (window.currentUser.email === "wuallar@gmail.com") {
@@ -2087,9 +2091,7 @@
 
                         loadHexagramOfDay();
                         loadDailyPractice();
-                        loadReports();
                         runAICatchUp();
-                        checkUserReport();
                         loadSocialRewardsStatus();
                         loadAdminNotifications();
                         updateAdminLink();
