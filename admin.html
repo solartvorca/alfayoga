@@ -333,6 +333,7 @@
             <button class="tab-btn" onclick="switchTab('book', this)">📖 Книга</button>
             <button class="tab-btn" onclick="switchTab('zhiznetron', this)">⚡ Жизнетрон</button>
             <button class="tab-btn" onclick="switchTab('ai', this)">🤖 ИИ</button>
+            <button class="tab-btn" onclick="switchTab('hd', this)">🔮 HD База</button>
         </div>
 
         <!-- Марафоны -->
@@ -738,6 +739,53 @@
                 </div>
             </div>
         </div>
+
+        <div id="hd-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">🔮 Добавить знание в базу HD</div>
+                <form onsubmit="saveHDKnowledge(event)" class="form-grid">
+                    <input type="hidden" id="hdKnowledgeEditId">
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select id="hdKnowCat" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;">
+                            <option value="types">Типы</option>
+                            <option value="authorities">Авторитеты</option>
+                            <option value="profiles">Профили</option>
+                            <option value="centers">Центры</option>
+                            <option value="channels">Каналы</option>
+                            <option value="gates">Ворота</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ключ (напр: Generator, 1/3, Sacral, 25-51)</label>
+                        <input type="text" id="hdKnowKey" placeholder="Generator" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Заголовок</label>
+                        <input type="text" id="hdKnowTitle" placeholder="Генератор" required>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>Текст знания (для базы Царя)</label>
+                        <textarea id="hdKnowContent" rows="8" required style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-family:inherit;resize:vertical;width:100%;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">💾 Сохранить</button>
+                    <button type="button" class="btn" onclick="resetHDForm()" style="background:rgba(255,255,255,0.05);">Сбросить</button>
+                </form>
+            </div>
+            <div class="admin-section">
+                <div class="section-title">📚 База знаний HD</div>
+                <div style="display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap;">
+                    <button class="btn btn-small" onclick="loadHDKnowledge('')" style="font-size:12px;">Все</button>
+                    <button class="btn btn-small" onclick="loadHDKnowledge('types')" style="font-size:12px;">Типы</button>
+                    <button class="btn btn-small" onclick="loadHDKnowledge('authorities')" style="font-size:12px;">Авторитеты</button>
+                    <button class="btn btn-small" onclick="loadHDKnowledge('profiles')" style="font-size:12px;">Профили</button>
+                    <button class="btn btn-small" onclick="loadHDKnowledge('centers')" style="font-size:12px;">Центры</button>
+                    <button class="btn btn-small" onclick="loadHDKnowledge('channels')" style="font-size:12px;">Каналы</button>
+                    <button class="btn btn-small" onclick="loadHDKnowledge('gates')" style="font-size:12px;">Ворота</button>
+                </div>
+                <div id="hdKnowledgeList"><p style="text-align:center;color:#888;">Выбери категорию выше</p></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -1055,6 +1103,80 @@
             setTimeout(() => {
                 copyStatus.style.display = "none";
             }, 3000);
+        }
+
+        // ===== HD База знаний =====
+        async function saveHDKnowledge(e) {
+            e.preventDefault();
+            const editId = document.getElementById('hdKnowledgeEditId').value;
+            const data = {
+                category: document.getElementById('hdKnowCat').value,
+                key: document.getElementById('hdKnowKey').value.trim(),
+                title: document.getElementById('hdKnowTitle').value.trim(),
+                content: document.getElementById('hdKnowContent').value.trim(),
+                updatedAt: new Date()
+            };
+            try {
+                if (editId) {
+                    await db.collection('hd_knowledge').doc(editId).update(data);
+                } else {
+                    await db.collection('hd_knowledge').add({ ...data, createdAt: new Date() });
+                }
+                alert('✅ Сохранено!');
+                resetHDForm();
+                loadHDKnowledge(data.category);
+            } catch (err) { alert('Ошибка: ' + err.message); }
+        }
+
+        function resetHDForm() {
+            document.getElementById('hdKnowledgeEditId').value = '';
+            document.getElementById('hdKnowKey').value = '';
+            document.getElementById('hdKnowTitle').value = '';
+            document.getElementById('hdKnowContent').value = '';
+        }
+
+        async function loadHDKnowledge(cat) {
+            const list = document.getElementById('hdKnowledgeList');
+            list.innerHTML = '<p style="color:#888;">Загрузка...</p>';
+            try {
+                let query = db.collection('hd_knowledge').orderBy('category');
+                if (cat) query = db.collection('hd_knowledge').where('category','==',cat);
+                const snap = await query.get();
+                if (snap.empty) { list.innerHTML = '<p style="color:#888;">Нет записей</p>'; return; }
+                list.innerHTML = snap.docs.map(doc => {
+                    const d = doc.data();
+                    return `<div style="padding:14px;border:1px solid rgba(180,100,255,0.2);border-radius:10px;margin-bottom:10px;background:rgba(180,100,255,0.04);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <div>
+                                <span style="font-size:11px;color:#888;background:rgba(180,100,255,0.1);padding:2px 8px;border-radius:10px;margin-right:8px;">${d.category}</span>
+                                <span style="font-size:14px;font-weight:700;color:#a18cd1;">${d.title} <span style="color:#666;font-weight:400;">(${d.key})</span></span>
+                            </div>
+                            <div style="display:flex;gap:6px;">
+                                <button class="btn btn-small" onclick="editHDKnowledge('${doc.id}')" style="font-size:11px;padding:4px 10px;">✏️</button>
+                                <button class="btn btn-small" onclick="deleteHDKnowledge('${doc.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,100,100,0.2);">🗑️</button>
+                            </div>
+                        </div>
+                        <div style="font-size:13px;color:#888;line-height:1.6;max-height:60px;overflow:hidden;">${d.content.substring(0,200)}...</div>
+                    </div>`;
+                }).join('');
+            } catch (err) { list.innerHTML = '<p style="color:#f66;">Ошибка: ' + err.message + '</p>'; }
+        }
+
+        async function editHDKnowledge(id) {
+            const doc = await db.collection('hd_knowledge').doc(id).get();
+            const d = doc.data();
+            document.getElementById('hdKnowledgeEditId').value = id;
+            document.getElementById('hdKnowCat').value = d.category;
+            document.getElementById('hdKnowKey').value = d.key;
+            document.getElementById('hdKnowTitle').value = d.title;
+            document.getElementById('hdKnowContent').value = d.content;
+            window.scrollTo(0, 0);
+        }
+
+        async function deleteHDKnowledge(id) {
+            if (!confirm('Удалить запись?')) return;
+            await db.collection('hd_knowledge').doc(id).delete();
+            loadHDKnowledge('');
         }
 
         // Проверить доступ администратора

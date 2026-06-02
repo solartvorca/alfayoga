@@ -12,6 +12,7 @@
         { icon: '🌿', label: 'Образ жизни', path: 'lifestyle.html' },
         { icon: '📅', label: 'Задачи', path: 'planner.html' },
         { icon: '🎲', label: 'И Цзин', path: 'dice.html' },
+        { icon: '🔮', label: 'Чел. Дизайн', path: 'hd.html' },
         { icon: '🌙', label: 'Сновидения', path: 'profile.html?tab=dreams' }
     ];
 

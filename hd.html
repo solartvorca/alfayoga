@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Человеческий Дизайн — Лунный Будильник</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hd-wrap { max-width: 700px; margin: 0 auto; padding: 80px 20px 120px; }
+        .hd-hero { margin-bottom: 30px; }
+        .hd-hero h1 { font-size: 24px; font-weight: 700; color: #a18cd1; margin-bottom: 6px; }
+        .hd-hero p { font-size: 14px; color: #888; }
+
+        .level-card {
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(180,100,255,0.15);
+            background: rgba(180,100,255,0.04);
+            transition: border-color 0.3s;
+        }
+        .level-card.unlocked { border-color: rgba(180,100,255,0.4); }
+        .level-card.locked { opacity: 0.65; }
+
+        .level-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+        .level-title { font-size: 17px; font-weight: 700; color: #a18cd1; margin-bottom: 8px; }
+        .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: rgba(161,140,209,0.12); color: #c8d0db; border: 1px solid rgba(161,140,209,0.2); margin: 2px; }
+        .badge { font-size: 12px; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
+        .badge.locked { background: rgba(255,255,255,0.05); color: #666; }
+        .badge.open { background: rgba(0,208,132,0.15); color: #00d084; }
+
+        .get-chart-btn {
+            display: inline-block; margin-bottom: 18px;
+            padding: 9px 18px; border-radius: 8px;
+            background: rgba(0,208,132,0.12); border: 1px solid rgba(0,208,132,0.35);
+            color: #00d084; text-decoration: none; font-size: 13px; font-weight: 600;
+        }
+
+        .hd-form { display: flex; flex-direction: column; gap: 14px; }
+        .hd-form label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+        .hd-form select, .hd-form input[type="text"] {
+            width: 100%; padding: 10px 13px;
+            background: rgba(180,100,255,0.08); border: 1px solid rgba(180,100,255,0.25);
+            border-radius: 8px; color: #e0e6ed; font-size: 14px;
+        }
+        .centers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+        .center-chk { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c8d0db; cursor: pointer; }
+        .center-chk input { accent-color: #a18cd1; }
+
+        .btn-save {
+            padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;
+            background: linear-gradient(135deg, rgba(161,140,209,0.25), rgba(100,60,180,0.25));
+            border: 1px solid rgba(161,140,209,0.45); color: #fff;
+        }
+        .btn-generate {
+            width: 100%; margin-top: 12px; padding: 12px; border-radius: 8px;
+            background: rgba(161,140,209,0.12); border: 1px solid rgba(161,140,209,0.35);
+            color: #a18cd1; font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+
+        .reading-box {
+            margin-top: 18px; padding: 18px;
+            background: rgba(161,140,209,0.07); border: 1px solid rgba(161,140,209,0.2);
+            border-radius: 12px;
+        }
+        .reading-box .rtitle { font-size: 12px; color: #a18cd1; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .reading-box .rtext { font-size: 14px; color: #c8d0db; line-height: 1.85; font-style: italic; white-space: pre-wrap; }
+
+        .bodygraph-card {
+            border-radius: 16px; padding: 24px; margin-bottom: 20px;
+            background: rgba(255,215,0,0.04); border: 1px solid rgba(255,215,0,0.18);
+        }
+        .bodygraph-card h3 { font-size: 16px; font-weight: 700; color: #ffd700; margin-bottom: 6px; }
+        .bodygraph-card p { font-size: 13px; color: #888; margin-bottom: 14px; }
+        .bodygraph-card input[type="url"] {
+            width: 100%; padding: 10px 13px; margin-bottom: 10px;
+            background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 8px; color: #e0e6ed; font-size: 14px;
+        }
+        .bodygraph-card button {
+            padding: 9px 18px; background: rgba(255,215,0,0.15);
+            border: 1px solid rgba(255,215,0,0.35); border-radius: 8px;
+            color: #ffd700; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        #hdChartPreview img { width: 100%; border-radius: 10px; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <nav class="desktop-nav">
+        <a href="index.html">🌙 Будильник</a>
+        <a href="marathon.html">🏃 Марафон</a>
+        <a href="courses.html">🎓 Курсы</a>
+        <a href="profile.html">👤 Профиль</a>
+        <a href="wishes.html">✨ Желания</a>
+        <a href="lifestyle.html">🌿 Образ жизни</a>
+        <a href="habits.html">📋 Привычки</a>
+        <a href="planner.html">📅 Планировщик</a>
+        <a href="notifications.html">🔔 Уведомления</a>
+        <a href="rating.html">🏆 Рейтинг</a>
+        <a href="dice.html">🎲 Кости И Цзин</a>
+        <a href="hd.html" style="color:#a18cd1;font-weight:700;">🔮 ЧД</a>
+        <a href="admin.html" id="adminLink" style="display:none">⚙️ Администратор</a>
+        <a href="#" onclick="firebase.auth().signOut().then(()=>location.href='login.html')" style="background:rgba(255,100,100,0.2);padding:6px 14px;border-radius:6px;color:#ff6464;">Выход</a>
+    </nav>
+
+    <div class="hd-wrap">
+        <div class="hd-hero">
+            <h1>🔮 Квест Человеческого Дизайна</h1>
+            <p>Открывай уровни, вводи данные своего чарта — Царь даёт персональную расшифровку</p>
+        </div>
+
+        <!-- BodyGraph -->
+        <div class="bodygraph-card">
+            <h3>📊 Моя Бодиграф-карта</h3>
+            <p>Вставь URL изображения своего чарта</p>
+            <input type="url" id="hdChartUrl" placeholder="https://...">
+            <button onclick="saveChartUrl()">Сохранить карту</button>
+            <div id="hdChartPreview"></div>
+        </div>
+
+        <!-- Level 1 -->
+        <div class="level-card" id="l1card">
+            <div class="level-header">
+                <div>
+                    <div class="level-title">Уровень 1</div>
+                    <div>
+                        <span class="tag">Тип</span>
+                        <span class="tag">Стратегия</span>
+                        <span class="tag">Авторитет</span>
+                    </div>
+                </div>
+                <span class="badge locked" id="l1badge">🔒 29 лучиков</span>
+            </div>
+            <div id="l1body"><p style="color:#666;font-size:13px;">Копи лучики через отчёты марафона</p></div>
+        </div>
+
+        <!-- Level 2 -->
+        <div class="level-card" id="l2card">
+            <div class="level-header">
+                <div>
+                    <div class="level-title">Уровень 2</div>
+                    <div>
+                        <span class="tag">Профиль</span>
+                        <span class="tag">Центры</span>
+                        <span class="tag">Каналы</span>
+                    </div>
+                </div>
+                <span class="badge locked" id="l2badge">🔒 58 лучиков</span>
+            </div>
+            <div id="l2body"><p style="color:#666;font-size:13px;">Нужно 58 лучиков</p></div>
+        </div>
+
+        <!-- Level 3 -->
+        <div class="level-card" id="l3card">
+            <div class="level-header">
+                <div>
+                    <div class="level-title">Уровень 3 — Специалистский</div>
+                    <div>
+                        <span class="tag">Ворота</span>
+                        <span class="tag">Кресты</span>
+                        <span class="tag">Углублённо</span>
+                    </div>
+                </div>
+                <span class="badge locked" id="l3badge">🔒 Premium / 10 рефералов</span>
+            </div>
+            <div id="l3body"><p style="color:#666;font-size:13px;">Нужна Premium-подписка или 10 рефералов с Уровнем 1</p></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    <script src="auth.js"></script>
+    <script src="ai.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        let hdData = {};
+
+        const TYPES = ['Generator','Manifesting Generator','Projector','Manifestor','Reflector'];
+        const TYPES_RU = ['Генератор','Манифестирующий Генератор','Проектор','Манифестор','Рефлектор'];
+        const AUTHS = ['Sacral','Emotional','Splenic','Ego','G-Center','Mental','Lunar'];
+        const AUTHS_RU = ['Сакральный','Эмоциональный','Селезёночный','Эго','Самость','Ментальный','Лунный'];
+        const PROFILES = ['1/3','1/4','2/4','2/5','3/5','3/6','4/6','4/1','5/1','5/2','6/2','6/3'];
+        const CENTERS = ['Head','Ajna','Throat','G-Center','Heart','Sacral','Root','Spleen','Solar Plexus'];
+        const CENTERS_RU = ['Голова','Аджна','Горло','G-центр','Сердце','Сакральный','Корень','Селезёнка','Солн. сплетение'];
+
+        function sel(arr, arrRu, id, val) {
+            return `<select id="${id}"><option value="">Выбери...</option>${arr.map((v,i)=>`<option value="${v}"${val===v?' selected':''}>${arrRu[i]}</option>`).join('')}</select>`;
+        }
+
+        function renderLevel1() {
+            const d = hdData;
+            return `
+                <a class="get-chart-btn" href="https://www.mybodygraph.com" target="_blank">📊 Получить чарт (mybodygraph.com)</a>
+                <form class="hd-form" onsubmit="saveL1(event)">
+                    <div><label>Тип</label>${sel(TYPES,TYPES_RU,'hdType',d.type)}</div>
+                    <div><label>Стратегия</label><input type="text" id="hdStrategy" value="${d.strategy||''}" placeholder="Реагировать, Ждать приглашения..."></div>
+                    <div><label>Авторитет</label>${sel(AUTHS,AUTHS_RU,'hdAuth',d.authority)}</div>
+                    <div><label>Не-Я тема (Shadow)</label><input type="text" id="hdShadow" value="${d.shadow||''}" placeholder="Фрустрация, Горечь..."></div>
+                    <div><label>Подпись (Signature)</label><input type="text" id="hdSig" value="${d.signature||''}" placeholder="Удовлетворение, Успех..."></div>
+                    <button type="submit" class="btn-save">💾 Сохранить</button>
+                </form>
+                <div id="r1box">${d.aiReadings?.level1 ? readingHtml(d.aiReadings.level1, 1) : genBtn(1)}</div>
+            `;
+        }
+
+        function renderLevel2() {
+            const d = hdData;
+            const centersHtml = CENTERS.map((c,i)=>`
+                <label class="center-chk"><input type="checkbox" name="hdCenter" value="${c}"${(d.definedCenters||[]).includes(c)?' checked':''}> ${CENTERS_RU[i]}</label>
+            `).join('');
+            return `
+                <form class="hd-form" onsubmit="saveL2(event)">
+                    <div><label>Профиль</label><select id="hdProfile"><option value="">Выбери...</option>${PROFILES.map(p=>`<option value="${p}"${d.profile===p?' selected':''}>${p}</option>`).join('')}</select></div>
+                    <div><label>Определённые центры</label><div class="centers-grid">${centersHtml}</div></div>
+                    <div><label>Каналы (через запятую: 25-51, 34-57)</label><input type="text" id="hdChannels" value="${(d.channels||[]).join(', ')}" placeholder="25-51, 34-57, ..."></div>
+                    <button type="submit" class="btn-save">💾 Сохранить</button>
+                </form>
+                <div id="r2box">${d.aiReadings?.level2 ? readingHtml(d.aiReadings.level2, 2) : genBtn(2)}</div>
+            `;
+        }
+
+        function renderLevel3() {
+            const d = hdData;
+            return `
+                <form class="hd-form" onsubmit="saveL3(event)">
+                    <div><label>Инкарнационный крест</label><input type="text" id="hdCross" value="${d.cross||''}" placeholder="Правый угол креста Объяснения 4/1"></div>
+                    <div><label>Ворота (через запятую)</label><input type="text" id="hdGates" value="${(d.gates||[]).join(', ')}" placeholder="1, 2, 8, 12, 43, ..."></div>
+                    <div><label>Дополнительные каналы / заметки</label><input type="text" id="hdNotes" value="${d.notes||''}" placeholder="Любые уточнения..."></div>
+                    <button type="submit" class="btn-save">💾 Сохранить</button>
+                </form>
+                <div id="r3box">${d.aiReadings?.level3 ? readingHtml(d.aiReadings.level3, 3) : genBtn(3)}</div>
+            `;
+        }
+
+        function readingHtml(text, level) {
+            return `<div class="reading-box">
+                <div class="rtitle">👑 Расшифровка Царя</div>
+                <div class="rtext">${text}</div>
+            </div>
+            <button class="btn-generate" onclick="generateReading(${level},this)">🔄 Обновить расшифровку</button>`;
+        }
+
+        function genBtn(level) {
+            return `<button class="btn-generate" onclick="generateReading(${level},this)">✨ Получить расшифровку от Царя</button>`;
+        }
+
+        async function saveL1(e) {
+            e.preventDefault();
+            const type = document.getElementById('hdType').value;
+            const authority = document.getElementById('hdAuth').value;
+            if (!type || !authority) { alert('Выбери тип и авторитет'); return; }
+            const data = {
+                'hdData.type': type,
+                'hdData.strategy': document.getElementById('hdStrategy').value.trim(),
+                'hdData.authority': authority,
+                'hdData.shadow': document.getElementById('hdShadow').value.trim(),
+                'hdData.signature': document.getElementById('hdSig').value.trim(),
+                'hdData.level': Math.max(hdData.level||0, 1)
+            };
+            await db.collection('users').doc(window.currentUser.uid).update(data);
+            Object.assign(hdData, { type, strategy: data['hdData.strategy'], authority, shadow: data['hdData.shadow'], signature: data['hdData.signature'], level: data['hdData.level'] });
+            alert('✅ Сохранено!');
+            if (!hdData.aiReadings?.level1) document.getElementById('r1box').innerHTML = genBtn(1);
+        }
+
+        async function saveL2(e) {
+            e.preventDefault();
+            const profile = document.getElementById('hdProfile').value;
+            if (!profile) { alert('Выбери профиль'); return; }
+            const definedCenters = [...document.querySelectorAll('input[name="hdCenter"]:checked')].map(c=>c.value);
+            const channels = document.getElementById('hdChannels').value.split(',').map(s=>s.trim()).filter(Boolean);
+            const data = { 'hdData.profile': profile, 'hdData.definedCenters': definedCenters, 'hdData.channels': channels, 'hdData.level': Math.max(hdData.level||0, 2) };
+            await db.collection('users').doc(window.currentUser.uid).update(data);
+            Object.assign(hdData, { profile, definedCenters, channels, level: data['hdData.level'] });
+            alert('✅ Сохранено!');
+            if (!hdData.aiReadings?.level2) document.getElementById('r2box').innerHTML = genBtn(2);
+        }
+
+        async function saveL3(e) {
+            e.preventDefault();
+            const cross = document.getElementById('hdCross').value.trim();
+            const gates = document.getElementById('hdGates').value.split(',').map(s=>s.trim()).filter(Boolean);
+            const notes = document.getElementById('hdNotes').value.trim();
+            const data = { 'hdData.cross': cross, 'hdData.gates': gates, 'hdData.notes': notes, 'hdData.level': Math.max(hdData.level||0, 3) };
+            await db.collection('users').doc(window.currentUser.uid).update(data);
+            Object.assign(hdData, { cross, gates, notes, level: data['hdData.level'] });
+            alert('✅ Сохранено!');
+            if (!hdData.aiReadings?.level3) document.getElementById('r3box').innerHTML = genBtn(3);
+        }
+
+        async function generateReading(level, btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ Царь думает...';
+            try {
+                const catMap = { 1: ['types','authorities'], 2: ['profiles','centers','channels'], 3: ['gates','channels'] };
+                const cats = catMap[level] || [];
+                const parts = [];
+                for (const cat of cats) {
+                    const snap = await db.collection('hd_knowledge').where('category','==',cat).get();
+                    snap.docs.forEach(doc => {
+                        const d = doc.data();
+                        parts.push(`[${cat} / ${d.key}]: ${d.content}`);
+                    });
+                }
+                const knowledge = parts.join('\n\n');
+                const text = await generateHDReading(hdData, knowledge, level, window.currentUser?.gender);
+                if (!text) { btn.disabled=false; btn.textContent='✨ Получить расшифровку от Царя'; alert('Нет ответа от AI — попробуй позже'); return; }
+
+                const key = `hdData.aiReadings.level${level}`;
+                await db.collection('users').doc(window.currentUser.uid).update({ [key]: text });
+                hdData.aiReadings = { ...(hdData.aiReadings||{}), [`level${level}`]: text };
+
+                const box = document.getElementById(`r${level}box`);
+                if (box) box.innerHTML = readingHtml(text, level);
+            } catch(err) {
+                btn.disabled = false;
+                btn.textContent = '✨ Получить расшифровку от Царя';
+                alert('Ошибка: ' + err.message);
+            }
+        }
+
+        async function saveChartUrl() {
+            const url = document.getElementById('hdChartUrl').value.trim();
+            if (!url) return;
+            await db.collection('users').doc(window.currentUser.uid).update({ hdChartUrl: url });
+            document.getElementById('hdChartPreview').innerHTML = `<img src="${url}" alt="BodyGraph">`;
+            alert('✅ Карта сохранена!');
+        }
+
+        async function checkLevel3() {
+            const u = window.currentUser;
+            if (u.subscription === 'premium') return true;
+            if ((u.totalReferrals||0) < 10) return false;
+            try {
+                const snap = await db.collection('users').where('referredBy','==',u.uid).get();
+                let cnt = 0;
+                snap.docs.forEach(d => { if ((d.data().hdData?.level||0) >= 1) cnt++; });
+                return cnt >= 10;
+            } catch { return false; }
+        }
+
+        async function init(user) {
+            const doc = await db.collection('users').doc(user.uid).get();
+            window.currentUser = { uid: user.uid, email: user.email, ...doc.data() };
+            const u = window.currentUser;
+
+            if (u.isAdmin || u.email === 'wuallar@gmail.com') document.getElementById('adminLink').style.display = 'inline';
+
+            hdData = u.hdData || {};
+            const rays = u.rays || 0;
+
+            if (u.hdChartUrl) {
+                document.getElementById('hdChartUrl').value = u.hdChartUrl;
+                document.getElementById('hdChartPreview').innerHTML = `<img src="${u.hdChartUrl}" alt="BodyGraph">`;
+            }
+
+            // Level 1
+            if (rays >= 29) {
+                document.getElementById('l1card').classList.add('unlocked');
+                document.getElementById('l1badge').textContent = '✅ Открыт';
+                document.getElementById('l1badge').className = 'badge open';
+                document.getElementById('l1body').innerHTML = renderLevel1();
+            } else {
+                document.getElementById('l1card').classList.add('locked');
+                document.getElementById('l1badge').textContent = `🔒 Нужно ещё ${29-rays} лучиков`;
+            }
+
+            // Level 2
+            if (rays >= 58) {
+                document.getElementById('l2card').classList.add('unlocked');
+                document.getElementById('l2badge').textContent = '✅ Открыт';
+                document.getElementById('l2badge').className = 'badge open';
+                document.getElementById('l2body').innerHTML = renderLevel2();
+            } else {
+                document.getElementById('l2card').classList.add('locked');
+                document.getElementById('l2badge').textContent = `🔒 Нужно ещё ${58-rays} лучиков`;
+            }
+
+            // Level 3
+            const l3ok = await checkLevel3();
+            if (l3ok) {
+                document.getElementById('l3card').classList.add('unlocked');
+                document.getElementById('l3badge').textContent = '✅ Открыт';
+                document.getElementById('l3badge').className = 'badge open';
+                document.getElementById('l3body').innerHTML = renderLevel3();
+            } else {
+                document.getElementById('l3card').classList.add('locked');
+            }
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            init(user);
+        });
+    </script>
+</body>
+</html>

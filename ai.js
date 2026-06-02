@@ -139,6 +139,30 @@ async function postAIReactionToReply(reportId, commentId, replyId, replyText, ge
     });
 }
 
+async function generateHDReading(hdData, knowledge, level, gender) {
+    const address = gender === 'female' ? 'царевна' : 'царевич';
+    const levelTopics = { 1: 'Тип, Стратегия и Авторитет', 2: 'Профиль, Определённые центры и Каналы', 3: 'Инкарнационный крест, Ворота и углублённый анализ' };
+    const topic = levelTopics[level] || '';
+
+    const userSummary = JSON.stringify({
+        type: hdData.type, strategy: hdData.strategy, authority: hdData.authority,
+        shadow: hdData.shadow, signature: hdData.signature,
+        profile: hdData.profile, definedCenters: hdData.definedCenters, channels: hdData.channels,
+        cross: hdData.cross, gates: hdData.gates
+    });
+
+    return await callAI([
+        {
+            role: 'system',
+            content: `Ты — Царь, мудрый толкователь Человеческого Дизайна. Обращайся к участнику "${address}". База знаний:\n\n${knowledge}\n\nПиши тепло, лично, вдохновляюще. 5-8 предложений. Только по-русски.`
+        },
+        {
+            role: 'user',
+            content: `Данные участника: ${userSummary}\n\nДай персональную расшифровку Уровня ${level} — тема: ${topic}.`
+        }
+    ], 600);
+}
+
 async function getAIDiceInterpretation(entry) {
     return await callAI([
         {
