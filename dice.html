@@ -203,6 +203,10 @@
                 <div class="balance-label">Прана</div>
                 <div class="balance-value prana" id="pranaDisplay">—</div>
             </div>
+            <div class="balance-item">
+                <div class="balance-label">Манна</div>
+                <div class="balance-value" style="color:#4fc3f7;" id="mannaDisplay">—</div>
+            </div>
         </div>
 
         <div class="dice-cost">Стоимость броска: <span>−10 лучиков</span> · Награда: <span>+20 пыльцы</span> · <span style="color:#00d084;">+1 прана</span></div>
@@ -261,54 +265,27 @@
             </div>
         </div>
 
-        <!-- === РОЗЫГРЫШ ЛУЧИКОВ === -->
+        <!-- === РОЗЫГРЫШИ === -->
         <div style="margin-top:30px;padding-top:24px;border-top:1px solid rgba(161,140,209,0.2);">
             <div style="text-align:center;margin-bottom:20px;">
-                <h2 style="font-size:20px;color:#ffd700;margin-bottom:6px;">🎲 Розыгрыш лучиков</h2>
-                <p style="font-size:13px;color:#888;line-height:1.5;">Брось два кубика — набери максимум и выиграй лучики!<br>Стоимость броска: <span style="color:#a18cd1;">−10 пыльцы</span></p>
+                <h2 style="font-size:20px;color:#ffd700;margin-bottom:6px;">🎲 Розыгрыши</h2>
+                <p style="font-size:13px;color:#888;line-height:1.5;">Брось два кубика — набери максимум и выиграй валюту!<br>Стоимость броска: <span style="color:#a18cd1;">−10 пыльцы</span> · 6:6 = мгновенный выигрыш</p>
             </div>
 
-            <!-- Активный розыгрыш -->
-            <div id="raffleActive" style="display:none;">
-                <div style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;">
-                    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Приз розыгрыша</div>
-                    <div style="font-size:28px;font-weight:700;color:#ffd700;" id="rafflePrize">—</div>
-                    <div style="font-size:12px;color:#888;margin-top:4px;" id="raffleMeta">—</div>
-                    <div style="font-size:11px;color:#a18cd1;margin-top:6px;">6:6 — мгновенный выигрыш · в конце дня побеждает максимум (до 4 победителей)</div>
+            <!-- МАЙНИНГ -->
+            <div style="margin-bottom:16px;background:rgba(0,208,132,0.05);border:1px solid rgba(0,208,132,0.3);border-radius:16px;padding:16px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                    <span style="font-size:15px;font-weight:700;color:#00d084;">⛏️ Режим майнинга</span>
+                    <span style="font-size:11px;color:#888;background:rgba(0,208,132,0.1);padding:2px 8px;border-radius:10px;">Ежедневно · 30 🔥 от системы</span>
                 </div>
-
-                <div id="myRaffleResult" style="display:none;background:rgba(161,140,209,0.1);border:1px solid rgba(161,140,209,0.3);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;">
-                    <div style="font-size:11px;color:#888;margin-bottom:8px;">Твой бросок</div>
-                    <div style="font-size:52px;letter-spacing:8px;" id="myDiceEmoji">—</div>
-                    <div style="font-size:18px;font-weight:700;color:#ffd700;margin-top:6px;" id="myDiceScore">—</div>
-                    <div id="myJackpotBanner" style="display:none;margin-top:10px;padding:8px 14px;background:linear-gradient(135deg,#ffd700,#ff9500);border-radius:8px;color:#0a0e27;font-weight:700;font-size:15px;">🏆 ДЖЕКПОТ 6:6 — ты выиграл!</div>
-                </div>
-
-                <button id="raffleDiceBtn" onclick="throwRaffleDice()" style="display:block;width:100%;padding:16px;background:linear-gradient(135deg,#ffd700 0%,#ff9500 100%);border:none;border-radius:14px;color:#0a0e27;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:14px;transition:all 0.2s;">
-                    🎲🎲 Бросить два кубика (−10 пыльцы)
-                </button>
-
-                <div style="background:rgba(10,14,39,0.6);border:1px solid rgba(161,140,209,0.2);border-radius:12px;padding:14px;">
-                    <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Броски сегодня 🏅</div>
-                    <div id="raffleLeaderboard"><div style="font-size:13px;color:#555;">Загрузка...</div></div>
-                </div>
+                <div id="miningContent">Загрузка...</div>
             </div>
 
-            <!-- Нет активного розыгрыша -->
-            <div id="raffleInactive">
-                <div style="text-align:center;padding:10px 0 16px;color:#555;font-size:13px;">Сейчас нет активного розыгрыша</div>
-                <div style="background:rgba(161,140,209,0.06);border:1px solid rgba(161,140,209,0.2);border-radius:12px;padding:16px;">
-                    <div style="font-size:13px;color:#a18cd1;font-weight:600;margin-bottom:8px;">✨ Разыграть свои лучики</div>
-                    <div style="font-size:12px;color:#888;margin-bottom:12px;">Укажи количество лучиков — другие участники будут бросать кубики за них</div>
-                    <div style="display:flex;gap:10px;align-items:center;">
-                        <input type="number" id="myPrizeRays" min="1" max="500" placeholder="Сколько лучиков"
-                            style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#c8d0db;font-size:14px;">
-                        <button onclick="createParticipantRaffle()" style="padding:10px 16px;background:rgba(161,140,209,0.2);border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">
-                            Создать
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <!-- СЛОТЫ УЧАСТНИКОВ -->
+            <div style="font-size:12px;color:#666;margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">✨ Розыгрыши участников (до 3 в день)</div>
+            <div id="slot1Section" style="margin-bottom:10px;"></div>
+            <div id="slot2Section" style="margin-bottom:10px;"></div>
+            <div id="slot3Section" style="margin-bottom:10px;"></div>
         </div>
     </div>
 
@@ -431,6 +408,7 @@
             document.getElementById('raysDisplay').textContent = '🔥 ' + (user.rays || 0);
             document.getElementById('dustDisplay').textContent = '✨ ' + (user.dust || 0);
             document.getElementById('pranaDisplay').textContent = '🌿 ' + (user.prana || 0);
+            document.getElementById('mannaDisplay').textContent = '💧 ' + (user.manna || 0);
         }
 
         async function rollDice() {
@@ -589,10 +567,15 @@
             });
         }
 
-        // ===== РОЗЫГРЫШ ЛУЧИКОВ =====
+        // ===== РОЗЫГРЫШИ =====
         const DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-        let currentRaffle = null;
-        let myRaffleThrow = null;
+        const CUR_LABEL = { rays: '🔥 лучики', dust: '✨ пыльца', manna: '💧 манна' };
+        const CUR_COLOR = { rays: '#ffd700', dust: '#a18cd1', manna: '#4fc3f7' };
+        const CUR_FIELD = { rays: 'rays', dust: 'dust', manna: 'manna' };
+        const ALL_KEYS  = ['mining', 'slot1', 'slot2', 'slot3'];
+
+        let rafflesData = {};
+        let myThrows    = {};
 
         function getTodayStr() {
             const d = new Date();
@@ -600,82 +583,148 @@
         }
 
         async function loadRaffle() {
-            const user = window.currentUser;
             const today = getTodayStr();
+            const user  = window.currentUser;
             try {
-                const raffleDoc = await db.collection('diceRaffle').doc('current').get();
-                if (raffleDoc.exists) {
-                    const data = raffleDoc.data();
-                    if (data.date === today && (data.status === 'active' || data.status === 'jackpot_won')) {
-                        currentRaffle = data;
-                        document.getElementById('raffleActive').style.display = 'block';
-                        document.getElementById('raffleInactive').style.display = 'none';
-                        document.getElementById('rafflePrize').textContent = `🔥 ${data.prizeRays} лучиков`;
-                        document.getElementById('raffleMeta').textContent = `Розыгрыш от: ${data.createdByNick}`;
-                    }
+                // Load participant raffles
+                const snap = await db.collection('diceRaffles').where('date', '==', today).get();
+                rafflesData = {};
+                snap.docs.forEach(d => { rafflesData[d.data().raffleKey] = { id: d.id, ...d.data() }; });
+
+                // Auto-create mining raffle if missing
+                if (!rafflesData.mining) {
+                    const md = { raffleKey:'mining', type:'mining', prizeAmount:30, prizeType:'rays', date:today, status:'active', createdBy:'system', createdByNick:'Система' };
+                    await db.collection('diceRaffles').doc(`${today}_mining`).set(md);
+                    rafflesData.mining = md;
                 }
+
+                // Load my throws
+                myThrows = {};
                 if (user) {
-                    const myDoc = await db.collection('diceRaffleThrows').doc(`${today}_${user.uid}`).get();
-                    if (myDoc.exists) {
-                        myRaffleThrow = myDoc.data();
-                        showMyRaffleResult(myRaffleThrow);
-                    }
+                    const docs = await Promise.all(ALL_KEYS.map(k =>
+                        db.collection('diceRaffleThrows').doc(`${today}_${k}_${user.uid}`).get()
+                    ));
+                    docs.forEach((doc, i) => { if (doc.exists) myThrows[ALL_KEYS[i]] = doc.data(); });
                 }
-                await loadRaffleLeaderboard();
-            } catch (e) {
-                console.warn('Ошибка загрузки розыгрыша:', e);
-            }
+
+                renderMiningSection();
+                ['slot1','slot2','slot3'].forEach((k,i) => renderSlotSection(k, i+1));
+                await loadAllLeaderboards();
+            } catch (e) { console.warn('Ошибка розыгрышей:', e); }
         }
 
-        async function loadRaffleLeaderboard() {
+        async function loadAllLeaderboards() {
             const today = getTodayStr();
             try {
                 const snap = await db.collection('diceRaffleThrows').where('date', '==', today).get();
-                const throws = snap.docs.map(d => d.data()).sort((a, b) => b.total - a.total || a.thrownAt - b.thrownAt);
-                renderRaffleLeaderboard(throws);
+                const all  = snap.docs.map(d => d.data());
+                ALL_KEYS.forEach(k => {
+                    const throws = all.filter(t => t.raffleKey === k).sort((a,b) => b.total - a.total || a.thrownAt - b.thrownAt);
+                    renderLeaderboard(k, throws);
+                });
             } catch (e) { console.warn('Ошибка лидерборда:', e); }
         }
 
-        function renderRaffleLeaderboard(throws) {
-            const el = document.getElementById('raffleLeaderboard');
-            if (!throws.length) {
-                el.innerHTML = '<div style="font-size:13px;color:#555;">Пока никто не бросил — будь первым!</div>';
-                return;
-            }
+        function renderLeaderboard(key, throws) {
+            const el = document.getElementById(`lb_${key}`);
+            if (!el) return;
+            if (!throws.length) { el.innerHTML = '<div style="font-size:12px;color:#555;padding:4px 0;">Пока никто не бросил</div>'; return; }
             const maxTotal = throws[0].total;
             const user = window.currentUser;
             el.innerHTML = throws.map((t, i) => {
-                const isLeader = t.total === maxTotal;
-                const isMe = user && t.uid === user.uid;
-                return `<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;${i < throws.length-1 ? 'border-bottom:1px solid rgba(255,255,255,0.05);' : ''}${isLeader ? 'background:rgba(255,215,0,0.05);border-radius:6px;' : ''}">
-                    <span style="font-size:12px;color:#555;width:22px;">#${i+1}</span>
-                    <span style="font-size:13px;color:${isMe ? '#ffd700' : '#c8d0db'};flex:1;${isMe ? 'font-weight:700;' : ''}">${t.nick}${isLeader ? ' 👑' : ''}${t.isJackpot ? ' 🏆' : ''}</span>
-                    <span style="font-size:22px;letter-spacing:4px;">${DICE_FACE[t.die1]}${DICE_FACE[t.die2]}</span>
-                    <span style="font-size:15px;font-weight:700;color:${isLeader ? '#ffd700' : '#a18cd1'};width:30px;text-align:right;">${t.total}</span>
+                const leader = t.total === maxTotal;
+                const me     = user && t.uid === user.uid;
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;${i<throws.length-1?'border-bottom:1px solid rgba(255,255,255,0.04);':''}${leader?'background:rgba(255,215,0,0.05);border-radius:5px;':''}">
+                    <span style="font-size:11px;color:#555;width:18px;">#${i+1}</span>
+                    <span style="font-size:12px;color:${me?'#ffd700':'#c8d0db'};flex:1;${me?'font-weight:700;':''}">${t.nick}${leader?' 👑':''}${t.isJackpot?' 🏆':''}</span>
+                    <span style="font-size:18px;letter-spacing:3px;">${DICE_FACE[t.die1]}${DICE_FACE[t.die2]}</span>
+                    <span style="font-size:13px;font-weight:700;color:${leader?'#ffd700':'#a18cd1'};width:24px;text-align:right;">${t.total}</span>
                 </div>`;
             }).join('');
         }
 
-        function showMyRaffleResult(throwData) {
-            document.getElementById('myDiceEmoji').textContent = `${DICE_FACE[throwData.die1]} ${DICE_FACE[throwData.die2]}`;
-            document.getElementById('myDiceScore').textContent = `${throwData.die1} + ${throwData.die2} = ${throwData.total} очков`;
-            document.getElementById('myRaffleResult').style.display = 'block';
-            if (throwData.isJackpot) document.getElementById('myJackpotBanner').style.display = 'block';
-            const btn = document.getElementById('raffleDiceBtn');
-            if (btn) { btn.textContent = '✅ Ты уже бросил сегодня'; btn.disabled = true; btn.style.opacity = '0.5'; }
+        function myThrowHTML(td) {
+            return `<div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;text-align:center;margin-bottom:10px;">
+                <div style="font-size:10px;color:#888;margin-bottom:4px;">Твой бросок</div>
+                <div style="font-size:44px;letter-spacing:6px;">${DICE_FACE[td.die1]} ${DICE_FACE[td.die2]}</div>
+                <div style="font-size:16px;font-weight:700;color:#ffd700;margin-top:4px;">${td.die1} + ${td.die2} = ${td.total} очков</div>
+                ${td.isJackpot?'<div style="margin-top:8px;padding:6px 12px;background:linear-gradient(135deg,#ffd700,#ff9500);border-radius:6px;color:#0a0e27;font-weight:700;font-size:13px;">🏆 ДЖЕКПОТ 6:6!</div>':''}
+            </div>`;
         }
 
-        async function throwRaffleDice() {
+        function lbBox(key) {
+            return `<div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px;margin-top:10px;">
+                <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Броски сегодня 🏅</div>
+                <div id="lb_${key}"></div>
+            </div>`;
+        }
+
+        function renderMiningSection() {
+            const r  = rafflesData.mining;
+            const td = myThrows.mining;
+            const st = r.status === 'ended' ? '🔴 Завершён' : r.status === 'jackpot_won' ? '🏆 Джекпот выигран' : '🟢 Активен';
+            document.getElementById('miningContent').innerHTML = `
+                <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                    <div style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);border-radius:10px;padding:8px 14px;text-align:center;">
+                        <div style="font-size:11px;color:#888;margin-bottom:2px;">Приз дня</div>
+                        <div style="font-size:20px;font-weight:700;color:#ffd700;">🔥 30 лучиков</div>
+                    </div>
+                    <div style="font-size:12px;color:#888;">${st} · 6:6 = мгновенный выигрыш<br>победитель дня получает приз от системы</div>
+                </div>
+                ${td ? myThrowHTML(td) : r.status !== 'ended' ? `<button onclick="throwInRaffle('mining')" id="btn_mining" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#00d084,#00a876);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🎲🎲 Участвовать в майнинге (−10 пыльцы)</button>` : ''}
+                ${lbBox('mining')}`;
+        }
+
+        function renderSlotSection(slotKey, slotNum) {
+            const el = document.getElementById(`${slotKey}Section`);
+            if (!el) return;
+            const r = rafflesData[slotKey];
+
+            if (!r) {
+                el.innerHTML = `<div style="border:1px dashed rgba(161,140,209,0.2);border-radius:14px;padding:14px;">
+                    <div style="font-size:11px;color:#555;margin-bottom:10px;">Слот ${slotNum} · свободен</div>
+                    <div style="font-size:13px;color:#a18cd1;font-weight:600;margin-bottom:8px;">✨ Разыграть свою валюту</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <input type="number" id="prize_${slotKey}" min="1" placeholder="Кол-во" style="width:80px;padding:8px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#c8d0db;font-size:13px;">
+                        <select id="type_${slotKey}" style="flex:1;min-width:100px;padding:8px 10px;background:#1a1f3a;border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#c8d0db;font-size:13px;">
+                            <option value="rays">🔥 Лучики</option>
+                            <option value="dust">✨ Пыльца</option>
+                            <option value="manna">💧 Манна</option>
+                        </select>
+                        <button onclick="createParticipantRaffle('${slotKey}')" style="padding:8px 14px;background:rgba(161,140,209,0.2);border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:13px;font-weight:600;cursor:pointer;">Создать</button>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            const td  = myThrows[slotKey];
+            const col = CUR_COLOR[r.prizeType] || '#ffd700';
+            const lbl = CUR_LABEL[r.prizeType] || 'лучики';
+            const st  = r.status === 'ended' ? '🔴 Завершён' : r.status === 'jackpot_won' ? '🏆 Джекпот!' : '🟢';
+
+            el.innerHTML = `<div style="border:1px solid ${col}33;background:${col}08;border-radius:14px;padding:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:11px;color:#888;margin-bottom:2px;">Слот ${slotNum} · от ${r.createdByNick}</div>
+                        <div style="font-size:20px;font-weight:700;color:${col};">${lbl.split(' ')[0]} ${r.prizeAmount} ${lbl.split(' ').slice(1).join(' ')}</div>
+                    </div>
+                    <span style="font-size:11px;color:#888;">${st}</span>
+                </div>
+                ${td ? myThrowHTML(td) : r.status !== 'ended' ? `<button onclick="throwInRaffle('${slotKey}')" id="btn_${slotKey}" style="display:block;width:100%;padding:12px;background:linear-gradient(135deg,${col},${col}bb);border:none;border-radius:10px;color:#0a0e27;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🎲🎲 Бросить (−10 пыльцы)</button>` : ''}
+                ${lbBox(slotKey)}
+            </div>`;
+        }
+
+        async function throwInRaffle(raffleKey) {
             const user = window.currentUser;
-            if (!user) { alert('Нужно войти в аккаунт'); return; }
-            if (!currentRaffle) { alert('Нет активного розыгрыша'); return; }
-            if (currentRaffle.status === 'ended') { alert('Розыгрыш завершён'); return; }
-            if (myRaffleThrow) { alert('Ты уже бросал сегодня'); return; }
+            if (!user) { alert('Нужно войти'); return; }
+            const r = rafflesData[raffleKey];
+            if (!r || r.status === 'ended') { alert('Розыгрыш недоступен'); return; }
+            if (myThrows[raffleKey]) { alert('Ты уже бросал в этом розыгрыше'); return; }
             if ((user.dust || 0) < 10) { alert('Недостаточно пыльцы! Нужно минимум 10.'); return; }
 
-            const btn = document.getElementById('raffleDiceBtn');
-            btn.disabled = true;
-            btn.textContent = '🎲 Бросаю...';
+            const btn = document.getElementById(`btn_${raffleKey}`);
+            if (btn) { btn.disabled = true; btn.textContent = '🎲 Бросаю...'; }
 
             const die1 = Math.floor(Math.random() * 6) + 1;
             const die2 = Math.floor(Math.random() * 6) + 1;
@@ -684,65 +733,60 @@
             const today = getTodayStr();
 
             try {
-                await db.collection('users').doc(user.uid).update({
-                    dust: firebase.firestore.FieldValue.increment(-10)
-                });
+                await db.collection('users').doc(user.uid).update({ dust: firebase.firestore.FieldValue.increment(-10) });
                 user.dust = (user.dust || 0) - 10;
                 updateBalance();
 
-                const throwData = { uid: user.uid, nick: user.nick || user.email, die1, die2, total, isJackpot, date: today, thrownAt: Date.now() };
-                await db.collection('diceRaffleThrows').doc(`${today}_${user.uid}`).set(throwData);
-                myRaffleThrow = throwData;
-                showMyRaffleResult(throwData);
+                const td = { uid: user.uid, nick: user.nick || user.email, die1, die2, total, isJackpot, date: today, raffleKey, thrownAt: Date.now() };
+                await db.collection('diceRaffleThrows').doc(`${today}_${raffleKey}_${user.uid}`).set(td);
+                myThrows[raffleKey] = td;
 
-                if (isJackpot && currentRaffle.status === 'active') {
-                    const prizeRays = currentRaffle.prizeRays;
-                    await db.collection('users').doc(user.uid).update({ rays: firebase.firestore.FieldValue.increment(prizeRays) });
-                    user.rays = (user.rays || 0) + prizeRays;
+                if (isJackpot && r.status === 'active') {
+                    const field = CUR_FIELD[r.prizeType] || 'rays';
+                    await db.collection('users').doc(user.uid).update({ [field]: firebase.firestore.FieldValue.increment(r.prizeAmount) });
+                    user[field] = (user[field] || 0) + r.prizeAmount;
                     updateBalance();
-                    await db.collection('diceRaffle').doc('current').update({ status: 'jackpot_won' });
-                    currentRaffle.status = 'jackpot_won';
-                    alert(`🏆 ДЖЕКПОТ! Выбросил 6:6 и выиграл ${prizeRays} лучиков!`);
+                    await db.collection('diceRaffles').doc(`${today}_${raffleKey}`).update({ status: 'jackpot_won' });
+                    rafflesData[raffleKey].status = 'jackpot_won';
+                    alert(`🏆 ДЖЕКПОТ! Выбросил 6:6 и выиграл ${r.prizeAmount} ${CUR_LABEL[r.prizeType] || 'лучиков'}!`);
                 }
 
-                await loadRaffleLeaderboard();
+                if (raffleKey === 'mining') renderMiningSection();
+                else renderSlotSection(raffleKey, parseInt(raffleKey.replace('slot','\')));
+                await loadAllLeaderboards();
             } catch (e) {
                 alert('Ошибка: ' + e.message);
-                btn.disabled = false;
-                btn.textContent = '🎲🎲 Бросить два кубика (−10 пыльцы)';
+                if (btn) { btn.disabled = false; btn.textContent = '🎲🎲 Бросить (−10 пыльцы)'; }
             }
         }
 
-        async function createParticipantRaffle() {
+        async function createParticipantRaffle(slotKey) {
             const user = window.currentUser;
-            if (!user) { alert('Нужно войти в аккаунт'); return; }
-            const prizeRays = parseInt(document.getElementById('myPrizeRays').value) || 0;
-            if (prizeRays < 1) { alert('Укажи количество лучиков (минимум 1)'); return; }
-            if ((user.rays || 0) < prizeRays) { alert(`Недостаточно лучиков! У тебя: ${user.rays || 0}`); return; }
+            if (!user) { alert('Нужно войти'); return; }
+            if (rafflesData[slotKey]) { alert('Этот слот уже занят'); return; }
+
+            const prizeAmount = parseInt(document.getElementById(`prize_${slotKey}`)?.value) || 0;
+            const prizeType   = document.getElementById(`type_${slotKey}`)?.value || 'rays';
+            if (prizeAmount < 1) { alert('Укажи количество (минимум 1)'); return; }
+
+            const field = CUR_FIELD[prizeType];
+            if ((user[field] || 0) < prizeAmount) {
+                alert(`Недостаточно! У тебя: ${user[field] || 0} ${CUR_LABEL[prizeType] || ''}`); return;
+            }
 
             const today = getTodayStr();
-            const existing = await db.collection('diceRaffle').doc('current').get();
-            if (existing.exists && (existing.data().status === 'active' || existing.data().status === 'jackpot_won') && existing.data().date === today) {
-                alert('Сегодня уже есть активный розыгрыш'); return;
-            }
-
+            const slotNum = parseInt(slotKey.replace('slot',''));
             try {
-                await db.collection('users').doc(user.uid).update({ rays: firebase.firestore.FieldValue.increment(-prizeRays) });
-                user.rays = (user.rays || 0) - prizeRays;
+                await db.collection('users').doc(user.uid).update({ [field]: firebase.firestore.FieldValue.increment(-prizeAmount) });
+                user[field] = (user[field] || 0) - prizeAmount;
                 updateBalance();
 
-                const raffleData = { prizeRays, type: 'participant', createdBy: user.uid, createdByNick: user.nick || user.email, date: today, status: 'active' };
-                await db.collection('diceRaffle').doc('current').set(raffleData);
-                currentRaffle = raffleData;
-
-                document.getElementById('rafflePrize').textContent = `🔥 ${prizeRays} лучиков`;
-                document.getElementById('raffleMeta').textContent = `Розыгрыш от: ${user.nick || user.email}`;
-                document.getElementById('raffleActive').style.display = 'block';
-                document.getElementById('raffleInactive').style.display = 'none';
-                await loadRaffleLeaderboard();
-            } catch (e) {
-                alert('Ошибка: ' + e.message);
-            }
+                const rd = { raffleKey: slotKey, type:'participant', prizeAmount, prizeType, date: today, status:'active', createdBy: user.uid, createdByNick: user.nick || user.email };
+                await db.collection('diceRaffles').doc(`${today}_${slotKey}`).set(rd);
+                rafflesData[slotKey] = rd;
+                renderSlotSection(slotKey, slotNum);
+                await loadAllLeaderboards();
+            } catch (e) { alert('Ошибка: ' + e.message); }
         }
 
         // Инициализация
