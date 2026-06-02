@@ -470,6 +470,17 @@
                         <input type="text" id="nickField" placeholder="Введите ваше имя" required>
                     </div>
                     <div class="form-group">
+                        <label>Пол</label>
+                        <div style="display: flex; gap: 12px; margin-top: 4px;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #c8d0db; text-transform: none; cursor: pointer;">
+                                <input type="radio" name="genderField" id="genderMale" value="male" style="accent-color: #a18cd1;"> Царевич
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #c8d0db; text-transform: none; cursor: pointer;">
+                                <input type="radio" name="genderField" id="genderFemale" value="female" style="accent-color: #a18cd1;"> Царевна
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label>О себе и своем творчестве</label>
                         <textarea class="textarea-field" id="bioField" placeholder="Расскажите о себе, своем творчестве, интересах..."></textarea>
                     </div>
@@ -786,6 +797,10 @@
                 }
 
                 document.getElementById("nickField").value = user.nick || "";
+                if (user.gender) {
+                    const genderRadio = document.querySelector(`input[name="genderField"][value="${user.gender}"]`);
+                    if (genderRadio) genderRadio.checked = true;
+                }
                 document.getElementById("bioField").value = profile.bio || "";
                 document.getElementById("servicesField").value = profile.services || "";
                 document.getElementById("giftsField").value = profile.gifts || "";
@@ -951,6 +966,8 @@
             if (!user) return;
 
             const nick = document.getElementById("nickField").value.trim();
+            const genderRadio = document.querySelector('input[name="genderField"]:checked');
+            const gender = genderRadio ? genderRadio.value : null;
             const bio = document.getElementById("bioField").value.trim();
             const services = document.getElementById("servicesField").value.trim();
             const gifts = document.getElementById("giftsField").value.trim();
@@ -966,7 +983,8 @@
                 const hasProfileFields = bio || services || gifts || creativeProfileLinks.length > 0 || partnerLinks.length > 0;
 
                 const profileData = {
-                    nick
+                    nick,
+                    ...(gender && { gender })
                 };
 
                 // Обновить творческий профиль только если есть поля для сохранения

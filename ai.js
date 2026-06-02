@@ -55,9 +55,12 @@ async function callAI(messages, maxTokens = 250) {
     }
 }
 
-const TSAR_PERSONA = 'Ты — Царь, мудрый и тёплый покровитель марафона "Йога царевича". Отвечаешь коротко: 1-2 предложения. Говоришь с достоинством и теплотой, иногда с мягким юмором. Обращаешься на "ты". Только по-русски.';
+function TSAR_PERSONA(gender) {
+    const address = gender === 'female' ? 'царевна' : 'царевич';
+    return `Ты — Царь, мудрый и тёплый покровитель марафона "Йога царевича". Обращайся к участнику: "${address}". Отвечаешь коротко: 1-2 предложения. Говоришь с достоинством и теплотой, иногда с мягким юмором. Обращаешься на "ты". Только по-русски.`;
+}
 
-async function postAIReactionToReport(reportId, reportText) {
+async function postAIReactionToReport(reportId, reportText, gender) {
     // Проверить до обращения к AI (dice-комментарии не считаются — нужна текстовая реакция)
     const existing = await db.collection('comments')
         .where('reportId', '==', reportId)
@@ -68,7 +71,7 @@ async function postAIReactionToReport(reportId, reportText) {
     if (hasTextReaction) return;
 
     const text = await callAI([
-        { role: 'system', content: TSAR_PERSONA },
+        { role: 'system', content: TSAR_PERSONA(gender) },
         { role: 'user', content: `Участник написал отчёт о своей практике: "${reportText}"\n\nОтветь как Царь — поддержи или отметь что-то важное в 1-2 предложения.` }
     ]);
     if (!text) return;
@@ -83,7 +86,7 @@ async function postAIReactionToReport(reportId, reportText) {
     });
 }
 
-async function postAIReactionToComment(reportId, commentId, commentText) {
+async function postAIReactionToComment(reportId, commentId, commentText, gender) {
     // Пропустить только если уже есть прямая реакция Царя на этот комментарий (без replyToId)
     const existing = await db.collection('replies')
         .where('commentId', '==', commentId)
@@ -93,7 +96,7 @@ async function postAIReactionToComment(reportId, commentId, commentText) {
     if (hasDirectReaction) return;
 
     const text = await callAI([
-        { role: 'system', content: TSAR_PERSONA },
+        { role: 'system', content: TSAR_PERSONA(gender) },
         { role: 'user', content: `Участник оставил комментарий в марафоне: "${commentText}"\n\nОтветь как Царь — коротко и тепло.` }
     ]);
     if (!text) return;
@@ -109,7 +112,7 @@ async function postAIReactionToComment(reportId, commentId, commentText) {
     });
 }
 
-async function postAIReactionToReply(reportId, commentId, replyId, replyText) {
+async function postAIReactionToReply(reportId, commentId, replyId, replyText, gender) {
     // Пропустить если уже ответил на именно этот ответ
     const existing = await db.collection('replies')
         .where('commentId', '==', commentId)
@@ -119,7 +122,7 @@ async function postAIReactionToReply(reportId, commentId, replyId, replyText) {
     if (!existing.empty) return;
 
     const text = await callAI([
-        { role: 'system', content: TSAR_PERSONA },
+        { role: 'system', content: TSAR_PERSONA(gender) },
         { role: 'user', content: `Участник написал в беседе марафона: "${replyText}"\n\nОтветь как Царь — коротко и тепло.` }
     ]);
     if (!text) return;
