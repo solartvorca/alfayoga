@@ -766,9 +766,10 @@
 
             document.getElementById("profileNick").textContent = user.nick;
             document.getElementById("profileEmail").textContent = user.email;
-            document.getElementById("raysCount").textContent = user.rays || 0;
-            document.getElementById("dustCount").textContent = user.dust || 0;
-            document.getElementById("pranaCount").textContent = user.prana || 0;
+            const fmt = v => Math.round((v || 0) * 100) / 100;
+            document.getElementById("raysCount").textContent = fmt(user.rays);
+            document.getElementById("dustCount").textContent = fmt(user.dust);
+            document.getElementById("pranaCount").textContent = fmt(user.prana);
 
             if (user.isAdmin === true || user.email === "wuallar@gmail.com") {
                 document.getElementById("adminLink").style.display = "block";
@@ -1019,7 +1020,7 @@
                 window.currentUser.nick = nick;
                 window.currentUser.rays = updatedUser.data().rays;
                 document.getElementById("profileNick").textContent = nick;
-                document.getElementById("raysCount").textContent = window.currentUser.rays;
+                document.getElementById("raysCount").textContent = Math.round((window.currentUser.rays || 0) * 100) / 100;
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }
@@ -1279,7 +1280,7 @@
                 document.getElementById("dreamText").value = "";
                 alert("✓ Сновидение сохранено! +1 лучик");
                 window.currentUser.rays = (window.currentUser.rays || 0) + 1;
-                document.getElementById("raysCount").textContent = window.currentUser.rays;
+                document.getElementById("raysCount").textContent = Math.round((window.currentUser.rays || 0) * 100) / 100;
                 loadMyDreams();
             } catch (error) {
                 alert("Ошибка: " + error.message);

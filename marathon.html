@@ -1470,12 +1470,16 @@
             }
         }
 
+        let _commentSubmitting = false;
         async function addComment(reportId, text, event) {
             if (!text.trim()) return;
+            if (_commentSubmitting) return;
+            _commentSubmitting = true;
 
             const user = window.currentUser;
             if (!user) {
                 alert("Нужно войти в аккаунт");
+                _commentSubmitting = false;
                 return;
             }
 
@@ -1509,6 +1513,8 @@
                     .then(() => loadComments(reportId)).catch(() => {});
             } catch (error) {
                 alert("Ошибка: " + error.message);
+            } finally {
+                _commentSubmitting = false;
             }
         }
 
