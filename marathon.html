@@ -993,6 +993,24 @@
             }
         }
 
+        // Восстановить премиум-участника если он был исключён
+        async function checkAndRestoreIfPremium() {
+            const currentStatus = window.currentUser.status || "active";
+            if (currentStatus !== "removed") return;
+            const subscription = window.currentUser.subscription || "free";
+            if (subscription !== "premium" && subscription !== "vip") return;
+
+            try {
+                await db.collection("users").doc(window.currentUser.uid).update({
+                    status: "active", removedAt: null, removedReason: null,
+                    restoredAt: new Date(), restoredReason: "premium_subscription"
+                });
+                window.currentUser.status = "active";
+                console.log("[Premium Restore] Restored premium user");
+                location.reload();
+            } catch(e) { console.error("[Premium Restore] Error:", e); }
+        }
+
         // Проверить и восстановить пользователя если это полнолуние
         async function checkAndRestoreIfFullMoon() {
             const currentStatus = window.currentUser.status || "active";
@@ -1063,6 +1081,13 @@
             // Не исключать новых пользователей (lastReportDay = 0)
             if (lastReportDay === 0) {
                 console.log(`[Auto-removal check] Skipping new user - no reports yet`);
+                return;
+            }
+
+            // Не исключать премиум-участников
+            const subscription = window.currentUser.subscription || "free";
+            if (subscription === "premium" || subscription === "vip") {
+                console.log(`[Auto-removal check] Skipping premium user`);
                 return;
             }
 
@@ -2106,6 +2131,9 @@
                             email: user.email,
                             ...doc.data()
                         };
+
+                        // Восстановить премиум если был исключён
+                        checkAndRestoreIfPremium();
 
                         // Проверить восстановление на полнолуние
                         checkAndRestoreIfFullMoon();
