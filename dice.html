@@ -694,7 +694,7 @@
                     </div>
                     <div style="font-size:12px;color:#888;">${st} · 6:6 = мгновенный выигрыш<br>победитель дня получает приз от системы</div>
                 </div>
-                ${td ? myThrowHTML(td) : r.status !== 'ended' ? `<button onclick="throwInRaffle('mining')" id="btn_mining" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#00d084,#00a876);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🎲🎲 Участвовать в майнинге (−10 пыльцы)</button>` : ''}
+                ${td ? myThrowHTML(td) : r.status !== 'ended' ? `<button onclick="throwInRaffle('mining')" id="btn_mining" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#00d084,#00a876);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🎲🎲 Участвовать в майнинге (−1 пыльца)</button>` : ''}
                 ${lbBox('mining')}`;
         }
 
@@ -744,7 +744,8 @@
             const r = rafflesData[raffleKey];
             if (!r || r.status === 'ended') { alert('Розыгрыш недоступен'); return; }
             if (myThrows[raffleKey]) { alert('Ты уже бросал в этом розыгрыше'); return; }
-            if ((user.dust || 0) < 10) { alert('Недостаточно пыльцы! Нужно минимум 10.'); return; }
+            const throwCost = raffleKey === 'mining' ? 1 : 10;
+            if ((user.dust || 0) < throwCost) { alert(`Недостаточно пыльцы! Нужно минимум ${throwCost}.`); return; }
 
             const btn = document.getElementById(`btn_${raffleKey}`);
             if (btn) { btn.disabled = true; btn.textContent = '🎲 Бросаю...'; }
@@ -756,8 +757,8 @@
             const today = getTodayStr();
 
             try {
-                await db.collection('users').doc(user.uid).update({ dust: firebase.firestore.FieldValue.increment(-10) });
-                user.dust = (user.dust || 0) - 10;
+                await db.collection('users').doc(user.uid).update({ dust: firebase.firestore.FieldValue.increment(-throwCost) });
+                user.dust = (user.dust || 0) - throwCost;
                 updateBalance();
 
                 const td = { uid: user.uid, nick: user.nick || user.email, die1, die2, total, isJackpot, date: today, raffleKey, thrownAt: Date.now() };
