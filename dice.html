@@ -284,7 +284,7 @@
             <div style="margin-bottom:16px;background:rgba(0,208,132,0.05);border:1px solid rgba(0,208,132,0.3);border-radius:16px;padding:16px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
                     <span style="font-size:15px;font-weight:700;color:#00d084;">⛏️ Режим майнинга</span>
-                    <span style="font-size:11px;color:#888;background:rgba(0,208,132,0.1);padding:2px 8px;border-radius:10px;">Ежедневно · 30 🔥 от системы</span>
+                    <span style="font-size:11px;color:#888;background:rgba(0,208,132,0.1);padding:2px 8px;border-radius:10px;">Ежедневно · 1 🔥 от системы</span>
                 </div>
                 <div id="miningContent">Загрузка...</div>
             </div>
@@ -603,7 +603,7 @@
 
             // 2. Авто-создать майнинг если нет (только если пользователь авторизован)
             if (!rafflesData.mining && user) {
-                const md = { raffleKey:'mining', type:'mining', prizeAmount:30, prizeType:'rays', date:today, status:'active', createdBy:'system', createdByNick:'Система' };
+                const md = { raffleKey:'mining', type:'mining', prizeAmount:1, prizeType:'rays', date:today, status:'active', createdBy:'system', createdByNick:'Система' };
                 try {
                     await db.collection('diceRaffles').doc(`${today}_mining`).set(md);
                     rafflesData.mining = md;
