@@ -259,9 +259,17 @@
             <div id="aiInterpretation" style="display:none; margin-top:16px; padding:16px; background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.3); border-radius:12px;">
                 <div style="font-size:12px; color:#a18cd1; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">🌙 Толкование ИИ</div>
                 <div id="aiInterpretationText" style="font-size:14px; color:#c8d0db; line-height:1.7; font-style:italic;"></div>
-                <button id="sendToReportBtn" onclick="sendDiceToReport()" style="display:none; margin-top:12px; width:100%; padding:10px; background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.4); border-radius:8px; color:#a18cd1; font-size:13px; font-weight:600; cursor:pointer;">
-                    📋 Отправить толкование в отчёт
-                </button>
+
+                <div id="diceReportSection" style="display:none; margin-top:14px; border-top:1px solid rgba(161,140,209,0.2); padding-top:14px;">
+                    <div style="font-size:11px; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Твои мысли (необязательно)</div>
+                    <textarea id="diceReflectionText" placeholder="Что это значит для тебя сегодня?..."
+                        style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(161,140,209,0.25);border-radius:8px;color:#c8d0db;font-size:13px;resize:vertical;min-height:60px;box-sizing:border-box;"></textarea>
+                    <button id="sendToReportBtn" onclick="submitDiceReport()"
+                        style="margin-top:8px;width:100%;padding:11px;background:rgba(161,140,209,0.15);border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:13px;font-weight:600;cursor:pointer;">
+                        📋 Отправить как отчёт дня (осталось: <span id="diceReportLeft">...</span>)
+                    </button>
+                    <div id="diceReportStatus" style="font-size:12px;margin-top:6px;display:none;"></div>
+                </div>
             </div>
         </div>
 
@@ -521,8 +529,8 @@
                 getAIDiceInterpretation(entry).then(interpretation => {
                     if (interpretation) {
                         document.getElementById('aiInterpretationText').textContent = interpretation;
-                        document.getElementById('sendToReportBtn').style.display = 'block';
                         localStorage.setItem('diceAIText', interpretation);
+                        showDiceReportSection();
                     } else {
                         console.warn('[AI Dice] Толкование не получено (AI вернул null — проверь настройки ИИ)');
                         document.getElementById('aiInterpretationText').textContent = '⚠️ Толкование временно недоступно';
@@ -818,23 +826,104 @@
 
         loadIching();
 
-        function sendDiceToReport() {
-            // Сохраняем данные броска чтобы marathon.html мог показать их как комментарий
-            const entryData = window._lastDiceEntry;
-            if (entryData) {
-                localStorage.setItem('diceEntryData', JSON.stringify({
-                    no: entryData.no,
-                    hex: entryData.hex,
-                    line: entryData.line,
-                    gates: entryData.gates,
-                    hieroglyph: entryData.hieroglyph || '',
-                    wilhelm: entryData.wilhelm || '',
-                    shadow: entryData.shadow || '',
-                    gift: entryData.gift || '',
-                    siddhi: entryData.siddhi || ''
-                }));
+        // ===== ОТЧЁТЫ ПО КУБИКАМ =====
+        let _diceDay = 0;
+
+        async function loadDiceDay() {
+            if (_diceDay) return _diceDay;
+            try {
+                const doc = await db.collection('settings').doc('marathon').get();
+                let start = new Date(2026, 5, 1);
+                if (doc.exists && doc.data().cycleStart) start = doc.data().cycleStart.toDate();
+                const days = (new Date() - start) / 86400000;
+                _diceDay = Math.min(Math.max(Math.floor(days) + 1, 1), 29);
+            } catch(e) { _diceDay = 1; }
+            return _diceDay;
+        }
+
+        async function getDiceReportCount(uid) {
+            const day = await loadDiceDay();
+            const ids = [1, 2, 3].map(i => `${day}_${uid}_d${i}`);
+            const docs = await Promise.all(ids.map(id => db.collection('reports').doc(id).get()));
+            return docs.filter(d => d.exists).length;
+        }
+
+        async function showDiceReportSection() {
+            const user = window.currentUser;
+            if (!user) return;
+            const count = await getDiceReportCount(user.uid);
+            const left = 3 - count;
+            const section = document.getElementById('diceReportSection');
+            const leftEl  = document.getElementById('diceReportLeft');
+            const btn     = document.getElementById('sendToReportBtn');
+            if (!section) return;
+            section.style.display = 'block';
+            if (leftEl) leftEl.textContent = left;
+            if (left <= 0) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.textContent = '✅ Все 3 отчёта-предсказания отправлены';
             }
-            window.location.href = 'marathon.html?fromDice=1';
+        }
+
+        async function submitDiceReport() {
+            const user = window.currentUser;
+            if (!user) { alert('Нужно войти'); return; }
+
+            const day   = await loadDiceDay();
+            const count = await getDiceReportCount(user.uid);
+            if (count >= 3) { alert('Ты уже отправил 3 отчёта-предсказания сегодня'); return; }
+
+            const btn      = document.getElementById('sendToReportBtn');
+            const statusEl = document.getElementById('diceReportStatus');
+            btn.disabled = true;
+            btn.textContent = '⏳ Отправляю...';
+
+            const slot      = count + 1;
+            const docId     = `${day}_${user.uid}_d${slot}`;
+            const entry     = window._lastDiceEntry;
+            const aiText    = localStorage.getItem('diceAIText') || '';
+            const userText  = (document.getElementById('diceReflectionText')?.value || '').trim();
+
+            let text = '';
+            if (entry) text += `🎲 ${entry.hieroglyph} «${entry.wilhelm}»\nГексаграмма ${entry.hex} · Линия ${entry.line} · Ворота ${entry.gates}\n✦ Тень: ${entry.shadow} · Дар: ${entry.gift} · Сиддхи: ${entry.siddhi}`;
+            if (aiText)    text += `\n\n🌙 Толкование:\n${aiText}`;
+            if (userText)  text += `\n\n💭 Моё отражение:\n${userText}`;
+
+            try {
+                await db.collection('reports').doc(docId).set({
+                    uid: user.uid, nick: user.nick || user.email, email: user.email,
+                    dayNumber: day, text, isDiceReport: true, diceSlot: slot,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await db.collection('users').doc(user.uid).update({
+                    rays: firebase.firestore.FieldValue.increment(1)
+                });
+                user.rays = (user.rays || 0) + 1;
+                updateBalance();
+                localStorage.removeItem('diceAIText');
+
+                statusEl.textContent = `✅ Отчёт-предсказание ${slot}/3 отправлен! +1 лучик`;
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                if (document.getElementById('diceReflectionText')) document.getElementById('diceReflectionText').value = '';
+
+                const left = 3 - slot;
+                if (left > 0) {
+                    btn.disabled = false;
+                    btn.innerHTML = `📋 Отправить как отчёт дня (осталось: <span id="diceReportLeft">${left}</span>)`;
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.textContent = '✅ Все 3 отчёта-предсказания отправлены';
+                }
+            } catch (err) {
+                statusEl.textContent = '❌ Ошибка: ' + err.message;
+                statusEl.style.color = '#ff6464';
+                statusEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '📋 Попробовать снова';
+            }
         }
     </script>
 </body>

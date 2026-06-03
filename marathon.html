@@ -966,6 +966,7 @@
                 if (!isAdminUser) {
                     hasSubmitted = true;
                     document.getElementById("submitBtn").disabled = true;
+                    document.getElementById("submitBtn").textContent = "✅ Личный отчёт отправлен (1/1)";
                 }
 
                 try {
@@ -1332,14 +1333,19 @@
 
                 const authorEl = data.isAI
                     ? `<span class="report-nick" style="cursor:default;">👑 Царь</span>`
-                    : `<a href="view-profile.html?uid=${data.uid}" class="report-nick">${data.nick}</a>`;
+                    : `<a href="view-profile.html?uid=${data.uid}" class="report-nick">${data.isDiceReport ? '🎲 ' : ''}${data.nick}</a>`;
+
+                const diceLabel = data.isDiceReport
+                    ? `<div style="font-size:11px;color:#a18cd1;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🎲 Отчёт-предсказание · кубик ${data.diceSlot || ''}/3</div>`
+                    : '';
 
                 return `
-                    <div class="report-item">
+                    <div class="report-item" ${data.isDiceReport ? 'style="border-left:3px solid rgba(161,140,209,0.5);"' : ''}>
                         <div class="report-header">
                             ${authorEl}
                             <span class="report-time">${timeStr}</span>
                         </div>
+                        ${diceLabel}
                         <div class="report-text">${data.text}</div>
                         ${data.isAI ? '' : `<div class="report-actions">
                             <button class="like-btn ${likedByUser ? 'liked' : ''}"
@@ -1716,14 +1722,17 @@
         async function checkUserReport() {
             const user = window.currentUser;
             if (!user) return;
+            const isAdminCheck = user.isAdmin || user.email === "wuallar@gmail.com";
 
+            // Личный отчёт
             const docId = currentDayNum + "_" + user.uid;
             const doc = await db.collection("reports").doc(docId).get();
-
-            const isAdminCheck = user.isAdmin || user.email === "wuallar@gmail.com";
             if (doc.exists && !isAdminCheck) {
                 hasSubmitted = true;
                 document.getElementById("submitBtn").disabled = true;
+                document.getElementById("submitBtn").textContent = "✅ Личный отчёт отправлен (1/1)";
+            } else if (!isAdminCheck) {
+                document.getElementById("submitBtn").textContent = "Отправить личный отчёт (+1 лучик) [1/4]";
             }
         }
 
