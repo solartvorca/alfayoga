@@ -730,17 +730,61 @@
             return Math.min(Math.floor(daysSince) + 1, 29);
         }
 
-        // Предзаполнить отчёт толкованием костей если пришли с dice.html
-        if (new URLSearchParams(location.search).get('fromDice') && localStorage.getItem('diceAIText')) {
-            document.addEventListener('DOMContentLoaded', () => {
-                const ta = document.getElementById('reportText');
-                if (ta) {
-                    ta.value = localStorage.getItem('diceAIText');
-                    localStorage.removeItem('diceAIText');
-                    ta.focus();
-                    ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Обработка возврата с dice.html
+        const _fromDice = new URLSearchParams(location.search).get('fromDice');
+        if (_fromDice) {
+            // Отложим до загрузки пользователя — см. handleDiceReturn()
+            window._pendingDiceReturn = true;
+        }
+
+        async function handleDiceReturn() {
+            if (!window._pendingDiceReturn) return;
+            window._pendingDiceReturn = false;
+
+            const diceAIText  = localStorage.getItem('diceAIText');
+            const diceEntryRaw = localStorage.getItem('diceEntryData');
+            const user = window.currentUser;
+            if (!user) return;
+
+            const docId = currentDayNum + '_' + user.uid;
+            const existingReport = await db.collection('reports').doc(docId).get();
+
+            if (existingReport.exists) {
+                // Отчёт уже есть — добавляем кубик комментарием, не трогаем отчёт
+                const parts = [];
+                if (diceEntryRaw) {
+                    try {
+                        const e = JSON.parse(diceEntryRaw);
+                        parts.push(`🎲 Выпало в И Цзин:\n${e.hieroglyph} «${e.wilhelm}» · Гексаграмма ${e.hex} · Линия ${e.line} · Ворота ${e.gates}\n✦ Тень: ${e.shadow} · Дар: ${e.gift} · Сиддхи: ${e.siddhi}`);
+                    } catch(err) {}
                 }
-            });
+                if (diceAIText) parts.push(`\n💬 Толкование И Цзин:\n${diceAIText}`);
+
+                if (parts.length) {
+                    await db.collection('comments').add({
+                        reportId: docId,
+                        uid: AI_BOT_UID,
+                        nick: AI_BOT_NICK,
+                        text: parts.join('\n'),
+                        isAI: true,
+                        isDiceComment: true,
+                        createdAt: new Date()
+                    }).catch(() => {});
+                }
+                localStorage.removeItem('diceAIText');
+                localStorage.removeItem('diceEntryData');
+            } else {
+                // Отчёт ещё не отправлен — предзаполнить поле
+                if (diceAIText) {
+                    const ta = document.getElementById('reportText');
+                    if (ta) {
+                        ta.value = diceAIText;
+                        localStorage.removeItem('diceAIText');
+                        ta.focus();
+                        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }
         }
 
         async function loadDayAssignment() {
@@ -888,7 +932,7 @@
             try {
                 const docId = currentDayNum + "_" + user.uid;
 
-                // Добавить отчет
+                // Добавить отчет (merge чтобы не затереть другие поля)
                 await db.collection("reports").doc(docId).set({
                     uid: user.uid,
                     nick: user.nick,
@@ -896,7 +940,7 @@
                     dayNumber: currentDayNum,
                     text,
                     createdAt: new Date()
-                });
+                }, { merge: true });
 
                 // Добавить лучик
                 await db.collection("users").doc(user.uid).update({
@@ -934,24 +978,7 @@
 
                 alert("✓ Отчет отправлен! +1 лучик");
 
-                // Если пришли с dice.html — показать данные броска как комментарий
-                const diceEntryRaw = localStorage.getItem('diceEntryData');
-                if (diceEntryRaw) {
-                    localStorage.removeItem('diceEntryData');
-                    try {
-                        const e = JSON.parse(diceEntryRaw);
-                        const diceComment = `🎲 Выпало в И Цзин:\n${e.hieroglyph} «${e.wilhelm}» · Гексаграмма ${e.hex} · Линия ${e.line} · Ворота ${e.gates}\n✦ Тень: ${e.shadow} · Дар: ${e.gift} · Сиддхи: ${e.siddhi}`;
-                        db.collection('comments').add({
-                            reportId: docId,
-                            uid: AI_BOT_UID,
-                            nick: AI_BOT_NICK,
-                            text: diceComment,
-                            isAI: true,
-                            isDiceComment: true,
-                            createdAt: new Date()
-                        }).then(() => loadComments(docId)).catch(() => {});
-                    } catch(e) {}
-                }
+                // Dice-комментарий теперь добавляется через handleDiceReturn() при загрузке страницы
 
                 // AI реакция (фоновая, не блокирует UI)
                 postAIReactionToReport(docId, text, window.currentUser?.gender).then(() => loadComments(docId)).catch(() => {});
@@ -2082,6 +2109,7 @@
                             loadDayAssignment();
                             loadReports();
                             checkUserReport();
+                            handleDiceReturn();
                         });
 
                         // Показать кнопки навигации для администратора
