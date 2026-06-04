@@ -199,7 +199,7 @@
                                 <div class="rating-nick">${u.nick || u.email}</div>
                                 <div class="rating-day">День ${u.lastReportDay || 0}</div>
                             </div>
-                            <div class="rating-rays">🔥 ${u.rays || 0}</div>
+                            <div class="rating-rays">🔥 ${Math.round(u.rays || 0)}</div>
                         </div>
                     `;
                 }).join('');

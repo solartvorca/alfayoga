@@ -507,6 +507,18 @@
                     onload="this.style.display='block';document.getElementById('yupikEmoji').style.display='none';"
                     onerror="this.style.display='none';document.getElementById('yupikEmoji').style.display='block';">
             </div>
+            <div style="margin-top:14px;">
+                <button id="yupikUrlToggle" onclick="toggleYupikUrlForm()" style="background:none;border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 12px;cursor:pointer;">🖼 Своё фото юпика</button>
+                <div id="yupikUrlForm" style="display:none;margin-top:10px;">
+                    <input id="yupikUrlInput" type="url" placeholder="Вставь ссылку с postimages.org"
+                        style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid rgba(161,140,209,0.3);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;margin-bottom:8px;">
+                    <div style="display:flex;gap:8px;justify-content:center;">
+                        <button onclick="saveYupikUrl()" style="padding:8px 16px;background:linear-gradient(135deg,#a18cd1,#7b5ea7);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Сохранить</button>
+                        <button onclick="clearYupikUrl()" style="padding:8px 16px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#888;font-size:13px;cursor:pointer;">Сбросить</button>
+                    </div>
+                    <div id="yupikUrlStatus" style="font-size:12px;margin-top:6px;display:none;"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Навигация вкладок -->
@@ -823,7 +835,7 @@
 
             document.getElementById("profileNick").textContent = user.nick;
             document.getElementById("profileEmail").textContent = user.email;
-            const fmt = v => Math.round((v || 0) * 100) / 100;
+            const fmt = v => Math.round(v || 0);
             document.getElementById("raysCount").textContent = fmt(user.rays);
             document.getElementById("dustCount").textContent = fmt(user.dust);
             document.getElementById("pranaCount").textContent = fmt(user.prana);
@@ -1079,7 +1091,7 @@
                 window.currentUser.nick = nick;
                 window.currentUser.rays = updatedUser.data().rays;
                 document.getElementById("profileNick").textContent = nick;
-                document.getElementById("raysCount").textContent = Math.round((window.currentUser.rays || 0) * 100) / 100;
+                document.getElementById("raysCount").textContent = Math.round(window.currentUser.rays || 0);
             } catch (error) {
                 alert("Ошибка: " + error.message);
             }
@@ -1339,7 +1351,7 @@
                 document.getElementById("dreamText").value = "";
                 alert("✓ Сновидение сохранено! +1 лучик");
                 window.currentUser.rays = (window.currentUser.rays || 0) + 1;
-                document.getElementById("raysCount").textContent = Math.round((window.currentUser.rays || 0) * 100) / 100;
+                document.getElementById("raysCount").textContent = Math.round(window.currentUser.rays || 0);
                 loadMyDreams();
             } catch (error) {
                 alert("Ошибка: " + error.message);
@@ -1629,6 +1641,48 @@ The dragon must stay teal/turquoise, chibi Pixar 3D render style, white backgrou
             return `https://image.pollinations.ai/prompt/${encodeURIComponent(stage.prompt)}?width=400&height=400&nologo=true&seed=${uidToSeed(uid)}`;
         }
 
+        function toggleYupikUrlForm() {
+            const form = document.getElementById('yupikUrlForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function saveYupikUrl() {
+            const url = document.getElementById('yupikUrlInput').value.trim();
+            const statusEl = document.getElementById('yupikUrlStatus');
+            if (!url) return;
+            try {
+                await db.collection('users').doc(window.currentUser.uid).update({ yupikCustomUrl: url });
+                window.currentUser.yupikCustomUrl = url;
+                document.getElementById('yupikImg').src = url;
+                statusEl.textContent = '✅ Сохранено';
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                setTimeout(() => { statusEl.style.display = 'none'; document.getElementById('yupikUrlForm').style.display = 'none'; }, 2000);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6b6b';
+                statusEl.style.display = 'block';
+            }
+        }
+
+        async function clearYupikUrl() {
+            const statusEl = document.getElementById('yupikUrlStatus');
+            try {
+                await db.collection('users').doc(window.currentUser.uid).update({ yupikCustomUrl: firebase.firestore.FieldValue.delete() });
+                delete window.currentUser.yupikCustomUrl;
+                document.getElementById('yupikUrlInput').value = '';
+                statusEl.textContent = '✅ Сброшено';
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                await loadYupik(window.currentUser, true);
+                setTimeout(() => { statusEl.style.display = 'none'; document.getElementById('yupikUrlForm').style.display = 'none'; }, 2000);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6b6b';
+                statusEl.style.display = 'block';
+            }
+        }
+
         async function loadYupik(user, isOwn) {
             const rays = user.rays || 0;
             const stage = getYupikStage(rays);
@@ -1650,15 +1704,19 @@ The dragon must stay teal/turquoise, chibi Pixar 3D render style, white backgrou
             emojiEl.style.display = 'block';
             imgEl.style.display = 'none';
 
-            // Build personalized prompt using totem
-            const totem = user.totem;
-            const prompt = await buildYupikPrompt(stage, totem);
-            const seed = uidToSeed(user.uid) + stage.threshold;
-            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
-
             imgEl.onload  = () => { imgEl.style.display = 'block'; emojiEl.style.display = 'none'; };
             imgEl.onerror = () => { emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
-            imgEl.src = imgUrl;
+
+            if (user.yupikCustomUrl) {
+                document.getElementById('yupikUrlInput').value = user.yupikCustomUrl;
+                imgEl.src = user.yupikCustomUrl;
+            } else {
+                // Build personalized prompt using totem
+                const totem = user.totem;
+                const prompt = await buildYupikPrompt(stage, totem);
+                const seed = uidToSeed(user.uid) + stage.threshold;
+                imgEl.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
+            }
 
             // Проверить смену этапа и отправить оповещение (только для своего профиля)
             if (isOwn) {

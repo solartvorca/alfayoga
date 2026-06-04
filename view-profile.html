@@ -334,9 +334,9 @@
                 const user = { uid, ...userDoc.data() };
                 document.getElementById("profileNick").textContent = user.nick || "Участник";
                 document.getElementById("profileEmail").textContent = user.email || "";
-                document.getElementById("raysCount").textContent = user.rays || 0;
-                document.getElementById("dustCount").textContent = user.dust || 0;
-                document.getElementById("pranaCount").textContent = user.prana || 0;
+                document.getElementById("raysCount").textContent = Math.round(user.rays || 0);
+                document.getElementById("dustCount").textContent = Math.round(user.dust || 0);
+                document.getElementById("pranaCount").textContent = Math.round(user.prana || 0);
                 renderViewYupik(user);
 
                 const profile = user.creativeProfile || {};
@@ -518,11 +518,15 @@
             emojiEl.style.display = 'block';
             const img = document.getElementById('yupikImg');
             img.style.display = 'none';
-            const prompt = buildViewPrompt(stage, user.totem);
-            const seed = uidToSeedView(user.uid) + stage.threshold;
             img.onload  = () => { img.style.display = 'block'; emojiEl.style.display = 'none'; };
             img.onerror = () => { emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
-            img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
+            if (user.yupikCustomUrl) {
+                img.src = user.yupikCustomUrl;
+            } else {
+                const prompt = buildViewPrompt(stage, user.totem);
+                const seed = uidToSeedView(user.uid) + stage.threshold;
+                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
+            }
         }
     </script>
     <script src="mobile-nav.js"></script>
