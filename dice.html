@@ -863,9 +863,14 @@
             section.style.display = 'block';
             if (leftEl) leftEl.textContent = left;
             if (left <= 0) {
+                btn.style.display = 'block';
                 btn.disabled = true;
                 btn.style.opacity = '0.5';
                 btn.textContent = '✅ Все 3 отчёта-предсказания отправлены';
+            } else {
+                btn.style.display = 'block';
+                btn.disabled = false;
+                btn.style.opacity = '1';
             }
         }
 
