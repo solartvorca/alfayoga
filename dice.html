@@ -530,14 +530,16 @@
                     if (interpretation) {
                         document.getElementById('aiInterpretationText').textContent = interpretation;
                         localStorage.setItem('diceAIText', interpretation);
-                        showDiceReportSection();
                     } else {
-                        console.warn('[AI Dice] Толкование не получено (AI вернул null — проверь настройки ИИ)');
+                        localStorage.removeItem('diceAIText');
                         document.getElementById('aiInterpretationText').textContent = '⚠️ Толкование временно недоступно';
                     }
+                    showDiceReportSection();
                 }).catch(err => {
                     console.error('[AI Dice] Ошибка:', err);
+                    localStorage.removeItem('diceAIText');
                     document.getElementById('aiInterpretationText').textContent = '⚠️ Толкование временно недоступно';
+                    showDiceReportSection();
                 });
             } catch (dispErr) {
                 console.error('Ошибка отображения результата:', dispErr, entry);
