@@ -590,7 +590,6 @@
                     🔮 Получить послание
                 </button>
                 <div id="destinyLoading" style="display: none; color: #a18cd1; font-size: 13px; margin-bottom: 12px;">Царь читает знаки...</div>
-                <div id="destinyWords" style="display: none; margin-bottom: 12px;"></div>
                 <div id="destinyResult" style="display: none; background: rgba(161, 140, 209, 0.08); border: 1px solid rgba(161, 140, 209, 0.3); border-radius: 8px; padding: 16px; font-size: 14px; color: #e0e6ed; line-height: 1.7;"></div>
                 <div id="destinyError" style="display: none; color: #ff6b6b; font-size: 13px;"></div>
             </div>
@@ -1179,13 +1178,11 @@
 
             const btn = document.getElementById("destinyBtn");
             const loading = document.getElementById("destinyLoading");
-            const wordsEl = document.getElementById("destinyWords");
             const resultEl = document.getElementById("destinyResult");
             const errorEl = document.getElementById("destinyError");
 
             btn.disabled = true;
             loading.style.display = "block";
-            wordsEl.style.display = "none";
             resultEl.style.display = "none";
             errorEl.style.display = "none";
 
@@ -1209,9 +1206,6 @@
                     return;
                 }
 
-                wordsEl.innerHTML = `<div style="font-size:12px;color:#888;margin-bottom:8px;">Слова в вашем имени (${words.length}):</div><div style="font-size:13px;color:#a18cd1;line-height:1.8;">${words.join(' · ')}</div>`;
-                wordsEl.style.display = "block";
-
                 const gender = window.currentUser?.gender || 'male';
                 const text = await generateNameDestiny(lastName, firstName, patronymic, words, gender);
 
@@ -1221,12 +1215,43 @@
                     return;
                 }
 
-                resultEl.textContent = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/#+\s?/g, '');
+                const cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/#+\s?/g, '');
+                resultEl.textContent = cleanText;
                 resultEl.style.display = "block";
 
-                await db.collection("users").doc(window.currentUser.uid).update({
-                    destinyReading: { text, words, generatedAt: new Date() }
+                const user = window.currentUser;
+
+                // Сохранить в профиль
+                await db.collection("users").doc(user.uid).update({
+                    destinyReading: { text: cleanText, words, generatedAt: new Date() }
                 });
+
+                // Определить текущий день марафона
+                let dayNumber = 1;
+                try {
+                    const marathonDoc = await db.collection("settings").doc("marathon").get();
+                    if (marathonDoc.exists && marathonDoc.data().cycleStart) {
+                        const cycleStart = marathonDoc.data().cycleStart.toDate();
+                        const daysSince = (new Date() - cycleStart) / (1000 * 60 * 60 * 24);
+                        dayNumber = Math.max(1, Math.min(28, Math.floor(daysSince) + 1));
+                    }
+                } catch (_) {}
+
+                // Опубликовать как отчёт на странице марафона
+                const reportDocId = `destiny_${user.uid}`;
+                await db.collection("reports").doc(reportDocId).set({
+                    uid: user.uid,
+                    nick: user.nick,
+                    email: user.email,
+                    dayNumber,
+                    text: cleanText,
+                    isDestiny: true,
+                    createdAt: new Date()
+                }, { merge: true });
+
+                // Реакция Царя на послание
+                postAIReactionToReport(reportDocId, cleanText, gender).catch(() => {});
+
             } catch (e) {
                 errorEl.textContent = "Ошибка: " + e.message;
                 errorEl.style.display = "block";
