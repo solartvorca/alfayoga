@@ -1320,8 +1320,10 @@
             const errorEl = document.getElementById("destinyError");
 
             const hasExisting = document.getElementById("destinyExisting").style.display !== "none";
-            if (hasExisting) {
-                const userRays = window.currentUser?.rays || 0;
+            const user = window.currentUser;
+            const isAdmin = user?.isAdmin === true || user?.email === "wuallar@gmail.com";
+            if (hasExisting && !isAdmin) {
+                const userRays = user?.rays || 0;
                 if (userRays < 100) {
                     alert(`Для обновления послания нужно 100 лучиков. У вас: ${Math.floor(userRays)}.`);
                     return;
@@ -1370,8 +1372,8 @@
 
                 const user = window.currentUser;
 
-                // Списать 100 лучиков если это обновление
-                if (hasExisting) {
+                // Списать 100 лучиков если это обновление (не для админа)
+                if (hasExisting && !isAdmin) {
                     await db.collection("users").doc(user.uid).update({
                         rays: firebase.firestore.FieldValue.increment(-100)
                     });
