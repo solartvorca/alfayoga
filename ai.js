@@ -163,6 +163,19 @@ async function generateHDReading(hdData, knowledge, level, gender) {
     ], 600);
 }
 
+async function getDreamImagePrompt(dreamText) {
+    return await callAI([
+        {
+            role: 'system',
+            content: 'You are an expert at creating image generation prompts. Based on a dream description, create a vivid, atmospheric English prompt for Stable Diffusion. Focus on key visual elements, mood, and symbols from the dream. Make it painterly and cinematic. Return ONLY the prompt, no explanations, max 200 characters.'
+        },
+        {
+            role: 'user',
+            content: `Dream: ${dreamText}`
+        }
+    ], 150);
+}
+
 async function getAIDiceInterpretation(entry) {
     return await callAI([
         {

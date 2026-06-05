@@ -2240,9 +2240,15 @@
             const prompt = dreamText.slice(0, 500);
 
             btn.disabled = true;
-            btn.textContent = '⏳ Генерирую...';
+            btn.textContent = '🌙 Создаю промпт...';
 
             try {
+                // Шаг 1: Царь создаёт английский промпт по тексту сна
+                const aiPrompt = await getDreamImagePrompt(dreamText);
+                const prompt = aiPrompt || dreamText.slice(0, 200);
+
+                btn.textContent = '🎨 Рисую...';
+
                 const resp = await fetch(IMAGE_WORKER_URL, {
                     method: 'POST',
                     headers: {
