@@ -1290,6 +1290,17 @@
             return str.toLowerCase().replace(/ё/g, 'е').replace(/[^а-яa-z]/g, '');
         }
 
+        function looksLikeRealWord(w) {
+            if (w.length < 3) return false;
+            // Двойные гласные — признак мусора (в русском не бывает аа, ии, оо...)
+            if (/[аеёиоуыэюя]{2,}/i.test(w)) return false;
+            // Тройные любые буквы
+            if (/(.)\1\1/.test(w)) return false;
+            // Подряд 5+ согласных — нереально
+            if (/[бвгджзйклмнпрстфхцчшщ]{5,}/i.test(w)) return false;
+            return true;
+        }
+
         function findWordsFromName(lastName, firstName, patronymic, dictionary) {
             const fullName = normalizeRu(lastName + firstName + patronymic);
             if (!fullName) return [];
@@ -1298,7 +1309,7 @@
 
             return dictionary.filter(word => {
                 const w = normalizeRu(word);
-                if (w.length < 2) return false;
+                if (!looksLikeRealWord(w)) return false;
                 const needed = {};
                 for (const ch of w) needed[ch] = (needed[ch] || 0) + 1;
                 return Object.entries(needed).every(([ch, cnt]) => (nameLetters[ch] || 0) >= cnt);
