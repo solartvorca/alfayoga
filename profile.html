@@ -585,7 +585,11 @@
             <!-- Послание о предназначении -->
             <div class="section" id="destinySection" style="display: none; border-left: 3px solid #a18cd1; background: rgba(161, 140, 209, 0.06);">
                 <div class="section-title" style="color: #a18cd1;">✨ Послание о предназначении</div>
-                <p style="font-size: 13px; color: #888; margin-bottom: 16px; line-height: 1.6;">Царь прочтёт слова, сокрытые в буквах твоего имени, и составит личное послание о твоём предназначении.</p>
+                <div id="destinyExisting" style="display: none; margin-bottom: 16px;">
+                    <div id="destinyExistingText" style="background: rgba(161, 140, 209, 0.08); border: 1px solid rgba(161, 140, 209, 0.3); border-radius: 8px; padding: 16px; font-size: 14px; color: #e0e6ed; line-height: 1.7; margin-bottom: 12px;"></div>
+                    <div style="font-size: 12px; color: #666;" id="destinyDate"></div>
+                </div>
+                <p id="destinyHint" style="font-size: 13px; color: #888; margin-bottom: 16px; line-height: 1.6;">Царь прочтёт слова, сокрытые в буквах твоего имени, и составит личное послание о твоём предназначении.</p>
                 <button type="button" class="btn" id="destinyBtn" onclick="requestNameDestiny()" style="margin-bottom: 16px;">
                     🔮 Получить послание
                 </button>
@@ -919,6 +923,7 @@
                 renderReferralLink();
                 checkProfileCompletion();
                 updateDestinySection();
+                renderExistingDestiny(userData.destinyReading);
             } catch (error) {
                 console.error("Ошибка загрузки профиля:", error);
             }
@@ -1140,6 +1145,20 @@
             }
         }
 
+        function renderExistingDestiny(reading) {
+            if (!reading || !reading.text) return;
+            const existingEl = document.getElementById("destinyExisting");
+            document.getElementById("destinyExistingText").textContent = reading.text;
+            if (reading.generatedAt) {
+                const d = reading.generatedAt.toDate ? reading.generatedAt.toDate() : new Date(reading.generatedAt);
+                document.getElementById("destinyDate").textContent = "Получено " + d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+            }
+            existingEl.style.display = "block";
+            document.getElementById("destinyHint").style.display = "none";
+            document.getElementById("destinyBtn").textContent = "🔄 Обновить послание (−100 лучиков)";
+            document.getElementById("destinyResult").style.display = "none";
+        }
+
         function updateDestinySection() {
             const lastName = document.getElementById("lastNameField").value.trim();
             const firstName = document.getElementById("firstNameField").value.trim();
@@ -1181,6 +1200,16 @@
             const resultEl = document.getElementById("destinyResult");
             const errorEl = document.getElementById("destinyError");
 
+            const hasExisting = document.getElementById("destinyExisting").style.display !== "none";
+            if (hasExisting) {
+                const userRays = window.currentUser?.rays || 0;
+                if (userRays < 100) {
+                    alert(`Для обновления послания нужно 100 лучиков. У вас: ${Math.floor(userRays)}.`);
+                    return;
+                }
+                if (!confirm("Обновить послание? Будет списано 100 лучиков.")) return;
+            }
+
             btn.disabled = true;
             loading.style.display = "block";
             resultEl.style.display = "none";
@@ -1218,8 +1247,18 @@
                 const cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/#+\s?/g, '');
                 resultEl.textContent = cleanText;
                 resultEl.style.display = "block";
+                renderExistingDestiny({ text: cleanText, generatedAt: new Date() });
 
                 const user = window.currentUser;
+
+                // Списать 100 лучиков если это обновление
+                if (hasExisting) {
+                    await db.collection("users").doc(user.uid).update({
+                        rays: firebase.firestore.FieldValue.increment(-100)
+                    });
+                    window.currentUser.rays = (window.currentUser.rays || 0) - 100;
+                    document.getElementById("raysCount").textContent = Math.round(window.currentUser.rays);
+                }
 
                 // Сохранить в профиль
                 await db.collection("users").doc(user.uid).update({

@@ -361,6 +361,23 @@
                     `;
                 }
 
+                // Послание о предназначении
+                if (user.destinyReading && user.destinyReading.text) {
+                    const dr = user.destinyReading;
+                    let dateStr = '';
+                    if (dr.generatedAt) {
+                        const d = dr.generatedAt.toDate ? dr.generatedAt.toDate() : new Date(dr.generatedAt);
+                        dateStr = `<div style="font-size:12px;color:#666;margin-top:10px;">Получено ${d.toLocaleDateString("ru-RU", { day:"numeric", month:"long", year:"numeric" })}</div>`;
+                    }
+                    aboutHTML = `
+                        <div class="section" style="border-left: 3px solid #a18cd1; background: rgba(161,140,209,0.06);">
+                            <div class="section-title" style="color:#a18cd1;">✨ Послание о предназначении</div>
+                            <div class="section-text" style="line-height:1.8;">${dr.text}</div>
+                            ${dateStr}
+                        </div>
+                    ` + aboutHTML;
+                }
+
                 document.getElementById("profileAboutSection").innerHTML = aboutHTML || '<div class="empty-state">Информация не заполнена</div>';
 
                 // Заполнить вкладку "Услуги и товары"
