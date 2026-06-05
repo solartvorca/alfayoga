@@ -2,18 +2,18 @@
     const bottomItems = [
         { icon: '🌙', label: 'Луна', path: 'index.html' },
         { icon: '🏃', label: 'Марафон', path: 'marathon.html' },
-        { icon: '🏆', label: 'Рейтинг', path: 'rating.html' },
+        { icon: '📚', label: 'База', path: 'base.html' },
         { icon: '👤', label: 'Профиль', path: 'profile.html' }
     ];
 
     const drawerItems = [
+        { icon: '🏆', label: 'Рейтинг', path: 'rating.html' },
         { icon: '🎓', label: 'Курсы', path: 'courses.html' },
         { icon: '✨', label: 'Желания', path: 'wishes.html' },
         { icon: '🌿', label: 'Образ жизни', path: 'lifestyle.html' },
         { icon: '📅', label: 'Задачи', path: 'planner.html' },
         { icon: '🎲', label: 'И Цзин', path: 'dice.html' },
-        { icon: '🌙', label: 'Сновидения', path: 'profile.html?tab=dreams' },
-        { icon: '📚', label: 'База', path: 'base.html' }
+        { icon: '🌙', label: 'Сновидения', path: 'profile.html?tab=dreams' }
     ];
 
     function getCurrentPage() {
