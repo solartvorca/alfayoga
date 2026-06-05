@@ -1437,6 +1437,7 @@
                 .get();
 
             const list = document.getElementById(`comments-${reportId}`);
+            if (!list) return;
 
             if (snapshot.empty) {
                 list.innerHTML = "";
@@ -2244,8 +2245,16 @@
 
             try {
                 // Шаг 1: Царь создаёт английский промпт по тексту сна
-                const aiPrompt = await getDreamImagePrompt(dreamText);
-                const prompt = aiPrompt || dreamText.slice(0, 200);
+                let prompt = dreamText.slice(0, 300);
+                try {
+                    const fn = typeof getDreamImagePrompt === 'function' ? getDreamImagePrompt : null;
+                    if (fn) {
+                        const aiPrompt = await fn(dreamText);
+                        if (aiPrompt) prompt = aiPrompt;
+                    }
+                } catch(promptErr) {
+                    console.warn('[Dream Image] Не удалось получить промпт от ИИ:', promptErr);
+                }
 
                 btn.textContent = '🎨 Рисую...';
 
