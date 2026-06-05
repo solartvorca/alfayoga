@@ -1402,14 +1402,23 @@
                 const statusText = doc.isPublic ? "🌐 Публичное" : "🔒 Приватное";
                 const statusColor = doc.isPublic ? "#00d084" : "#a18cd1";
 
+                const btnStyle = "border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;";
                 return `
-                    <div style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(200, 150, 255, 0.5); padding: 12px; border-radius: 4px;">
+                    <div id="dream-card-${doc.id}" style="background: rgba(180, 100, 255, 0.1); border-left: 3px solid rgba(200, 150, 255, 0.5); padding: 12px; border-radius: 4px;">
                         <div style="font-size: 13px; color: ${statusColor}; font-weight: 600; margin-bottom: 8px;">🌙 ${statusText}</div>
-                        <div style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px;">${doc.text}</div>
-                        <div style="font-size: 11px; color: #888;">${dateStr}</div>
-                        <button onclick="toggleDreamPublic('${doc.id}', ${!doc.isPublic})" style="margin-top: 8px; background: rgba(180, 100, 255, 0.2); border: none; color: #a18cd1; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
-                            ${doc.isPublic ? "Сделать приватным" : "Сделать публичным"}
-                        </button>
+                        <div id="dream-text-${doc.id}" style="font-size: 13px; color: #c8d0db; line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap;">${doc.text}</div>
+                        <div style="font-size: 11px; color: #888; margin-bottom: 8px;">${dateStr}</div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button onclick="toggleDreamPublic('${doc.id}', ${!doc.isPublic})" style="${btnStyle} background: rgba(180, 100, 255, 0.2); color: #a18cd1;">
+                                ${doc.isPublic ? "🔒 Сделать приватным" : "🌐 Сделать публичным"}
+                            </button>
+                            <button onclick="startEditDream('${doc.id}')" style="${btnStyle} background: rgba(100, 180, 255, 0.15); color: #64b4ff;">
+                                ✏️ Редактировать
+                            </button>
+                            <button onclick="deleteDream('${doc.id}')" style="${btnStyle} background: rgba(255, 100, 100, 0.15); color: #ff6464;">
+                                🗑️ Удалить
+                            </button>
+                        </div>
                     </div>
                 `;
             };
@@ -1422,9 +1431,41 @@
 
         async function toggleDreamPublic(dreamId, isPublic) {
             try {
-                await db.collection("dreams").doc(dreamId).update({
-                    isPublic
-                });
+                await db.collection("dreams").doc(dreamId).update({ isPublic });
+                loadMyDreams();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        function startEditDream(dreamId) {
+            const textEl = document.getElementById(`dream-text-${dreamId}`);
+            if (!textEl) return;
+            const current = textEl.textContent;
+            textEl.innerHTML = `
+                <textarea id="dream-edit-${dreamId}" style="width:100%;min-height:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(200,150,255,0.4);border-radius:6px;color:#c8d0db;font-size:13px;padding:8px;resize:vertical;box-sizing:border-box;font-family:inherit;">${current}</textarea>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                    <button onclick="saveEditDream('${dreamId}')" style="border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;background:rgba(0,208,132,0.2);color:#00d084;">💾 Сохранить</button>
+                    <button onclick="loadMyDreams()" style="border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;background:rgba(255,255,255,0.05);color:#888;">Отмена</button>
+                </div>
+            `;
+        }
+
+        async function saveEditDream(dreamId) {
+            const newText = document.getElementById(`dream-edit-${dreamId}`)?.value.trim();
+            if (!newText) { alert("Текст не может быть пустым"); return; }
+            try {
+                await db.collection("dreams").doc(dreamId).update({ text: newText });
+                loadMyDreams();
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function deleteDream(dreamId) {
+            if (!confirm("Удалить это сновидение?")) return;
+            try {
+                await db.collection("dreams").doc(dreamId).delete();
                 loadMyDreams();
             } catch (error) {
                 alert("Ошибка: " + error.message);
