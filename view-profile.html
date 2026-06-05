@@ -191,10 +191,8 @@
             <div style="font-size:12px;color:#666;margin-bottom:14px;" id="yupikProgress">—</div>
             <div style="position:relative;display:inline-block;">
                 <div id="yupikEmoji" style="font-size:72px;line-height:1;margin-bottom:4px;">🥚</div>
-                <img id="yupikImg" src="" alt="Юпик" loading="lazy"
-                    style="width:200px;height:200px;object-fit:contain;border-radius:14px;display:none;border:1px solid rgba(161,140,209,0.2);"
-                    onload="this.style.display='block';document.getElementById('yupikEmoji').style.display='none';"
-                    onerror="this.style.display='none';document.getElementById('yupikEmoji').style.display='block';">
+                <img id="yupikImg" alt="Юпик"
+                    style="width:200px;height:200px;object-fit:contain;border-radius:14px;display:none;border:1px solid rgba(161,140,209,0.2);">
             </div>
         </div>
 
@@ -518,15 +516,19 @@
             emojiEl.style.display = 'block';
             const img = document.getElementById('yupikImg');
             img.style.display = 'none';
+            img.removeAttribute('src'); // сброс перед новым URL
+
+            const url = user.yupikCustomUrl
+                ? user.yupikCustomUrl
+                : (() => {
+                    const prompt = buildViewPrompt(stage, user.totem);
+                    const seed = uidToSeedView(user.uid) + stage.threshold;
+                    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
+                })();
+
             img.onload  = () => { img.style.display = 'block'; emojiEl.style.display = 'none'; };
-            img.onerror = () => { emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
-            if (user.yupikCustomUrl) {
-                img.src = user.yupikCustomUrl;
-            } else {
-                const prompt = buildViewPrompt(stage, user.totem);
-                const seed = uidToSeedView(user.uid) + stage.threshold;
-                img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=512&nologo=true&seed=${seed}&enhance=true`;
-            }
+            img.onerror = () => { img.style.display = 'none'; emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
+            img.src = url;
         }
     </script>
     <script src="mobile-nav.js"></script>

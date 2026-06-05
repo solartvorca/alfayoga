@@ -502,10 +502,8 @@
             <div style="font-size:12px;color:#666;margin-bottom:14px;" id="yupikProgress">—</div>
             <div style="position:relative;display:inline-block;">
                 <div id="yupikEmoji" style="font-size:72px;line-height:1;margin-bottom:4px;">🥚</div>
-                <img id="yupikImg" src="" alt="Юпик" loading="lazy"
-                    style="width:200px;height:200px;object-fit:contain;border-radius:14px;display:none;border:1px solid rgba(161,140,209,0.2);"
-                    onload="this.style.display='block';document.getElementById('yupikEmoji').style.display='none';"
-                    onerror="this.style.display='none';document.getElementById('yupikEmoji').style.display='block';">
+                <img id="yupikImg" alt="Юпик"
+                    style="width:200px;height:200px;object-fit:contain;border-radius:14px;display:none;border:1px solid rgba(161,140,209,0.2);">
             </div>
             <div style="margin-top:14px;">
                 <button id="yupikUrlToggle" onclick="toggleYupikUrlForm()" style="background:none;border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 12px;cursor:pointer;">🖼 Своё фото юпика</button>
@@ -1764,9 +1762,10 @@ The dragon must stay teal/turquoise, chibi Pixar 3D render style, white backgrou
             emojiEl.textContent = '⏳';
             emojiEl.style.display = 'block';
             imgEl.style.display = 'none';
+            imgEl.removeAttribute('src'); // сброс перед новым URL
 
             imgEl.onload  = () => { imgEl.style.display = 'block'; emojiEl.style.display = 'none'; };
-            imgEl.onerror = () => { emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
+            imgEl.onerror = () => { imgEl.style.display = 'none'; emojiEl.textContent = stage.emoji; emojiEl.style.display = 'block'; };
 
             if (user.yupikCustomUrl) {
                 document.getElementById('yupikUrlInput').value = user.yupikCustomUrl;
