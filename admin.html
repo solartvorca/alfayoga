@@ -805,9 +805,17 @@
                     <label>Текущий словарь</label>
                     <textarea id="dictionaryWords" rows="10" placeholder="солнце, луна, свет, путь, мир..." style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;resize:vertical;font-family:inherit;font-size:13px;line-height:1.6;"></textarea>
                 </div>
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:12px;color:#888;text-transform:uppercase;display:block;margin-bottom:8px;">Загрузить из файла (.txt — слова через запятую, пробел или построчно)</label>
+                    <input type="file" id="dictFileInput" accept=".txt,text/plain" style="display:none;" onchange="handleDictFileUpload(event)">
+                    <button type="button" onclick="document.getElementById('dictFileInput').click()" class="btn" style="background:rgba(161,140,209,0.15);border-color:rgba(161,140,209,0.35);color:#a18cd1;">
+                        📂 Выбрать файл
+                    </button>
+                    <span id="dictFileName" style="font-size:12px;color:#666;margin-left:10px;"></span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">
                     <button onclick="saveDictionary()" class="btn" style="background:rgba(161,140,209,0.2);border-color:rgba(161,140,209,0.4);color:#a18cd1;">💾 Сохранить словарь</button>
-                    <button onclick="loadDictionaryAdmin()" class="btn" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:#888;">🔄 Загрузить</button>
+                    <button onclick="loadDictionaryAdmin()" class="btn" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:#888;">🔄 Обновить из базы</button>
                     <span id="dictWordCount" style="font-size: 12px; color: #666;"></span>
                 </div>
                 <div id="dictSaveStatus" style="margin-top: 10px; font-size: 13px; display: none;"></div>
@@ -2602,6 +2610,22 @@
             } catch (e) {
                 alert('Ошибка загрузки: ' + e.message);
             }
+        }
+
+        function handleDictFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('dictFileName').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const words = text.split(/[\n,\s]+/).map(w => w.trim().toLowerCase()).filter(w => w.length >= 2);
+                const unique = [...new Set(words)];
+                document.getElementById('dictionaryWords').value = unique.join('\n');
+                document.getElementById('dictWordCount').textContent = `${unique.length} слов из файла`;
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
         }
 
         async function saveDictionary() {
