@@ -1258,10 +1258,14 @@
             }
         }
 
+        function stripMd(text) {
+            return (text || '').replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/#+\s?/g, '').trim();
+        }
+
         function renderExistingDestiny(reading) {
             if (!reading || !reading.text) return;
             const existingEl = document.getElementById("destinyExisting");
-            document.getElementById("destinyExistingText").textContent = reading.text;
+            document.getElementById("destinyExistingText").textContent = stripMd(reading.text);
             if (reading.generatedAt) {
                 const d = reading.generatedAt.toDate ? reading.generatedAt.toDate() : new Date(reading.generatedAt);
                 document.getElementById("destinyDate").textContent = "Получено " + d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
@@ -1357,7 +1361,7 @@
                     return;
                 }
 
-                const cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/#+\s?/g, '');
+                const cleanText = stripMd(text);
                 resultEl.textContent = cleanText;
                 resultEl.style.display = "block";
                 renderExistingDestiny({ text: cleanText, generatedAt: new Date() });

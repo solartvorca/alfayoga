@@ -220,12 +220,16 @@ async function postAIReactionToDream(dreamId, dreamText, gender) {
     });
 }
 
+function _stripMd(text) {
+    return (text || '').replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/#+\s?/g, '').trim();
+}
+
 async function generateNameDestiny(lastName, firstName, patronymic, wordList, gender) {
     const address = gender === 'female' ? 'царевна' : 'царевич';
     const fullName = [lastName, firstName, patronymic].filter(Boolean).join(' ');
     const words = wordList.slice(0, 40).join(', ');
 
-    return await callAI([
+    const result = await callAI([
         {
             role: 'system',
             content: `Ты — Царь, мудрый провидец марафона "Йога царевича". Обращайся к участнику: "${address}". Создай поэтическое послание о предназначении этого человека, опираясь на слова, скрытые в буквах его имени. Пиши образно, вдохновляюще, с теплотой и мудростью. 5-7 предложений. Только по-русски. Без markdown-разметки — никаких звёздочек, решёток и прочих символов форматирования.`
@@ -235,6 +239,7 @@ async function generateNameDestiny(lastName, firstName, patronymic, wordList, ge
             content: `Полное имя участника: ${fullName}\n\nСлова, сокрытые в буквах этого имени:\n${words}\n\nСоздай послание о предназначении, используя эти слова как символы судьбы.`
         }
     ], 700);
+    return result ? _stripMd(result) : null;
 }
 
 async function postAIDailyReport(dayNumber, assignmentTitle, assignmentContent) {
