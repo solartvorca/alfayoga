@@ -507,6 +507,14 @@
             </div>
             <div style="margin-top:14px;">
                 <button id="yupikUrlToggle" onclick="toggleYupikUrlForm()" style="background:none;border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 12px;cursor:pointer;">🖼 Своё фото юпика</button>
+                <button onclick="generateYupikAI(this)" style="background:linear-gradient(135deg,rgba(161,140,209,0.2),rgba(100,60,180,0.2));border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 12px;cursor:pointer;margin-top:8px;">🎨 Сгенерировать юпика</button>
+                <div id="yupikGenResult" style="display:none;margin-top:12px;">
+                    <img id="yupikGenImg" style="width:200px;height:200px;object-fit:cover;border-radius:14px;display:block;margin:0 auto;" alt="Сгенерированный юпик">
+                    <div style="font-size:11px;color:#666;text-align:center;margin-top:4px;">Удерживай чтобы сохранить на телефон</div>
+                    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+                        <button onclick="setGeneratedAsYupik()" style="padding:6px 14px;background:linear-gradient(135deg,#a18cd1,#7b5ea7);border:none;border-radius:8px;color:#fff;font-size:12px;cursor:pointer;">✅ Поставить как юпик</button>
+                    </div>
+                </div>
                 <div id="yupikUrlForm" style="display:none;margin-top:10px;">
                     <input id="yupikUrlInput" type="url" placeholder="https://i.postimg.cc/xxx/photo.jpg"
                         style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid rgba(161,140,209,0.3);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;margin-bottom:4px;">
@@ -1426,6 +1434,57 @@
 
         function filterDreamsByMonth(monthStr) {
             renderDreams(monthStr);
+        }
+
+        const IMAGE_WORKER_URL = 'https://mute-morning-683f.wuallar.workers.dev';
+        const IMAGE_API_KEY    = 'alfayoga2026';
+
+        async function generateYupikAI(btn) {
+            const user = window.currentUser;
+            if (!user) return;
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Генерирую...';
+
+            // Строим промпт из тотема пользователя
+            const totem = user.totem;
+            let prompt = 'cute magical creature, chibi Pixar 3D render, teal turquoise colors, sacred geometry golden background, adorable big eyes, high quality';
+            if (totem?.animal) {
+                prompt = `cute chibi ${totem.animal}, Pixar 3D render style, teal turquoise magical colors, sacred geometry golden background, adorable big eyes, fluffy, glowing, high quality fantasy art`;
+            }
+
+            try {
+                const resp = await fetch(IMAGE_WORKER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${IMAGE_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+                if (!resp.ok) throw new Error('Ошибка генерации');
+
+                const blob = await resp.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                window._generatedYupikBlob = blob;
+
+                document.getElementById('yupikGenImg').src = objectUrl;
+                document.getElementById('yupikGenResult').style.display = 'block';
+                btn.textContent = '🎨 Сгенерировать ещё';
+                btn.disabled = false;
+            } catch(e) {
+                btn.disabled = false;
+                btn.textContent = '🎨 Сгенерировать юпика';
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        async function setGeneratedAsYupik() {
+            const blob = window._generatedYupikBlob;
+            if (!blob) return;
+            // Конвертируем в base64 для загрузки на postimage не нужна —
+            // просто показываем инструкцию сохранить и загрузить
+            alert('Удерживай изображение → сохрани на телефон → загрузи на postimage.org → скопируй Direct link → вставь в поле "Своё фото юпика"');
         }
 
         async function toggleDreamPublic(dreamId, isPublic) {

@@ -1345,6 +1345,7 @@
                 });
 
                 if (item.type === "dream") {
+                    const hasImg = !!data.imageBase64;
                     return `
                         <div class="report-item" style="border-left: 3px solid rgba(200, 150, 255, 0.5);">
                             <div class="report-header">
@@ -1354,9 +1355,9 @@
                             <div style="font-size:11px;color:#a18cd1;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🌙 Сновидение</div>
                             <div class="report-text">${data.text}</div>
                             <div style="margin-top:10px;">
-                                <button onclick="generateDreamImage('${item.id}', this)" style="background:linear-gradient(135deg,rgba(161,140,209,0.2),rgba(100,60,180,0.2));border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 14px;cursor:pointer;">✨ Визуализировать</button>
-                                <div id="dream-img-${item.id}" style="margin-top:10px;display:none;">
-                                    <img style="width:100%;max-width:400px;border-radius:12px;display:block;" alt="Визуализация сновидения">
+                                ${hasImg ? '' : `<button onclick="generateDreamImage('${item.id}', this)" style="background:linear-gradient(135deg,rgba(161,140,209,0.2),rgba(100,60,180,0.2));border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 14px;cursor:pointer;">✨ Визуализировать</button>`}
+                                <div id="dream-img-${item.id}" style="margin-top:10px;${hasImg ? '' : 'display:none;'}">
+                                    <img src="${hasImg ? 'data:image/jpeg;base64,' + data.imageBase64 : ''}" style="width:100%;max-width:400px;border-radius:12px;display:block;" alt="Визуализация сновидения">
                                     <div style="font-size:11px;color:#666;margin-top:4px;">Удерживай изображение чтобы сохранить</div>
                                 </div>
                             </div>
@@ -2253,9 +2254,21 @@
                 if (!resp.ok) throw new Error('Ошибка генерации');
 
                 const blob = await resp.blob();
-                img.src = URL.createObjectURL(blob);
+
+                // Конвертируем в base64 и сохраняем в Firestore
+                const base64 = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(blob);
+                });
+
+                img.src = `data:image/jpeg;base64,${base64}`;
                 container.style.display = 'block';
                 btn.style.display = 'none';
+
+                // Сохраняем в Firestore (фоново)
+                db.collection('dreams').doc(dreamId).update({ imageBase64: base64 }).catch(() => {});
+
             } catch(e) {
                 btn.disabled = false;
                 btn.textContent = '✨ Визуализировать';
