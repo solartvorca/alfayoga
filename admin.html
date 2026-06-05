@@ -820,6 +820,31 @@
                 </div>
                 <div id="dictSaveStatus" style="margin-top: 10px; font-size: 13px; display: none;"></div>
             </div>
+
+            <div class="admin-section" style="border-left: 3px solid #7c4dff; background: rgba(124,77,255,0.05);">
+                <div class="section-title" style="color: #c8a0ff;">🧬 База знаний Human Design</div>
+                <p style="font-size: 13px; color: #888; margin-bottom: 12px; line-height: 1.6;">
+                    Текст базы знаний используется для углублённого расчёта HD за 1 000 лучиков. Пиши свободно: описания типов, профилей, авторитетов, каналов, кармических крестов — всё что Царь должен знать.<br>
+                    Можно загружать текстовый файл (.txt) или вводить вручную.
+                </p>
+                <div class="form-group">
+                    <label>Текст базы знаний HD</label>
+                    <textarea id="hdKnowledgeText" rows="14" placeholder="Тип Генератор: Генераторы составляют около 35% населения. Их стратегия — Ждать и Реагировать. Авторитет — Сакральный..." style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;resize:vertical;font-family:inherit;font-size:13px;line-height:1.6;"></textarea>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <input type="file" id="hdKbFileInput" accept=".txt,text/plain" style="display:none;" onchange="handleHDKbFileUpload(event)">
+                    <button type="button" onclick="document.getElementById('hdKbFileInput').click()" class="btn" style="background:rgba(124,77,255,0.15);border-color:rgba(124,77,255,0.35);color:#c8a0ff;">
+                        📂 Загрузить файл .txt
+                    </button>
+                    <span id="hdKbFileName" style="font-size:12px;color:#666;margin-left:10px;"></span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button onclick="saveHDKnowledge()" class="btn" style="background:rgba(124,77,255,0.2);border-color:rgba(124,77,255,0.4);color:#c8a0ff;">💾 Сохранить базу HD</button>
+                    <button onclick="loadHDKnowledgeAdmin()" class="btn" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:#888;">🔄 Обновить</button>
+                    <span id="hdKbCharCount" style="font-size:12px;color:#666;"></span>
+                </div>
+                <div id="hdKbSaveStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+            </div>
         </div>
 
         <!-- ===== БАЗА ЗНАНИЙ ===== -->
@@ -2669,8 +2694,48 @@
             }
         }
 
+        async function loadHDKnowledgeAdmin() {
+            try {
+                const doc = await db.collection('settings').doc('hdKnowledge').get();
+                const text = doc.exists ? (doc.data().text || '') : '';
+                document.getElementById('hdKnowledgeText').value = text;
+                document.getElementById('hdKbCharCount').textContent = text ? `${text.length.toLocaleString('ru-RU')} символов` : 'База пуста';
+            } catch (e) { alert('Ошибка: ' + e.message); }
+        }
+
+        async function saveHDKnowledge() {
+            const text = document.getElementById('hdKnowledgeText').value.trim();
+            const statusEl = document.getElementById('hdKbSaveStatus');
+            try {
+                await db.collection('settings').doc('hdKnowledge').set({ text, updatedAt: new Date() });
+                document.getElementById('hdKbCharCount').textContent = `${text.length.toLocaleString('ru-RU')} символов сохранено`;
+                statusEl.textContent = '✅ База знаний HD сохранена';
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6b6b';
+                statusEl.style.display = 'block';
+            }
+        }
+
+        function handleHDKbFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('hdKbFileName').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                document.getElementById('hdKnowledgeText').value = text;
+                document.getElementById('hdKbCharCount').textContent = `${text.length.toLocaleString('ru-RU')} символов из файла`;
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
+        }
+
         // Загрузить AI настройки при открытии вкладки
-        document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', () => { loadAISettingsAdmin(); loadDictionaryAdmin(); });
+        document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', () => { loadAISettingsAdmin(); loadDictionaryAdmin(); loadHDKnowledgeAdmin(); });
         document.querySelector('[onclick="switchTab(\'base\', this)"]').addEventListener('click', loadBaseItems);
 
         // ===== РОЗЫГРЫШИ (ADMIN) =====

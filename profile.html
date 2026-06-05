@@ -706,14 +706,49 @@
                 </div>
             </div>
 
-            <!-- Консультация -->
+            <!-- Расчёты и консультация -->
+            <div class="section-title" style="color: #a18cd1; font-size: 15px; font-weight: 600; margin-bottom: 16px;">🔮 Расчёты и консультация</div>
+
+            <!-- Уровень 1: Бесплатно -->
+            <div class="section" style="border-left: 3px solid #00d084; background: rgba(0,208,132,0.04); margin-bottom: 14px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:15px; font-weight:600; color:#00d084;">🌿 Базовый расчёт от Царя</div>
+                        <div style="font-size:13px; color:#888; margin-top:4px;">ИИ-разбор твоих данных HD: тип, авторитет, профиль, предназначение</div>
+                    </div>
+                    <div style="font-size:16px; font-weight:700; color:#00d084; white-space:nowrap;">Бесплатно</div>
+                </div>
+                <div id="basicHDStatus" style="display:none; font-size:13px; margin-bottom:10px;"></div>
+                <div id="basicHDResult" style="display:none; background:rgba(0,208,132,0.06); border:1px solid rgba(0,208,132,0.2); border-radius:8px; padding:14px; font-size:14px; color:#e0e6ed; line-height:1.75; margin-bottom:10px;"></div>
+                <button type="button" class="btn" id="basicHDBtn" onclick="requestBasicHDReading()" style="background:rgba(0,208,132,0.15); border-color:rgba(0,208,132,0.4); color:#00d084;">
+                    🌿 Получить базовый расчёт
+                </button>
+            </div>
+
+            <!-- Уровень 2: 1000 лучиков -->
+            <div class="section" style="border-left: 3px solid #a18cd1; background: rgba(161,140,209,0.05); margin-bottom: 14px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:15px; font-weight:600; color:#a18cd1;">🔮 Расчёт по базе знаний HD</div>
+                        <div style="font-size:13px; color:#888; margin-top:4px;">Углублённый анализ с опорой на авторскую базу Человеческого Дизайна</div>
+                    </div>
+                    <div style="font-size:16px; font-weight:700; color:#ffd700; white-space:nowrap;">🔥 1 000 лучиков</div>
+                </div>
+                <div id="kbHDStatus" style="display:none; font-size:13px; margin-bottom:10px;"></div>
+                <div id="kbHDResult" style="display:none; background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.3); border-radius:8px; padding:14px; font-size:14px; color:#e0e6ed; line-height:1.75; margin-bottom:10px;"></div>
+                <button type="button" class="btn" id="kbHDBtn" onclick="requestKBHDReading()">
+                    🔮 Получить расчёт по базе HD (−1 000 лучиков)
+                </button>
+            </div>
+
+            <!-- Уровень 3: 30 000 лучиков -->
             <div class="section" style="border-left: 3px solid #ffd700; background: rgba(255,215,0,0.04); text-align: center;">
-                <div class="section-title" style="color: #ffd700;">👑 Личная консультация с Царём</div>
-                <p style="font-size: 14px; color: #c8d0db; margin-bottom: 8px; line-height: 1.7;">Получи персональный разбор своего предназначения, карты Человеческого Дизайна и послания имени от Царя в живом формате.</p>
+                <div class="section-title" style="color: #ffd700;">👑 Консультация с автором марафона</div>
+                <p style="font-size: 14px; color: #c8d0db; margin-bottom: 8px; line-height: 1.7;">Живая персональная консультация с автором марафона — глубокий разбор твоего предназначения, карты HD и послания имени.</p>
                 <div style="font-size: 22px; font-weight: 700; color: #ffd700; margin: 16px 0;">🔥 30 000 лучиков</div>
                 <div id="consultationStatus" style="display:none; font-size:13px; margin-bottom:12px;"></div>
                 <button type="button" class="btn" id="consultationBtn" onclick="bookConsultation()" style="background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,160,0,0.15)); border-color: rgba(255,215,0,0.5); color: #ffd700; font-size: 15px; padding: 14px 24px;">
-                    ✨ Получить консультацию
+                    ✨ Записаться на консультацию
                 </button>
                 <p style="font-size: 12px; color: #666; margin-top: 12px;">После оплаты с тобой свяжутся в течение 24 часов</p>
             </div>
@@ -1467,6 +1502,101 @@
                 statusEl.textContent = "Ошибка: " + e.message;
                 statusEl.style.color = "#ff6b6b";
                 statusEl.style.display = "block";
+            }
+        }
+
+        function _getHDFormData() {
+            return {
+                type:      document.getElementById("hdType").value,
+                profile:   document.getElementById("hdProfile").value,
+                color:     document.getElementById("hdColor").value,
+                tone:      document.getElementById("hdTone").value,
+                authority: document.getElementById("hdAuthority").value,
+                channels:  document.getElementById("hdChannels").value.trim(),
+                cross:     document.getElementById("hdCross").value.trim()
+            };
+        }
+
+        async function requestBasicHDReading() {
+            const hdData = _getHDFormData();
+            if (!hdData.type && !hdData.profile && !hdData.authority) {
+                alert("Заполни хотя бы Тип, Профиль или Авторитет HD перед расчётом.");
+                return;
+            }
+            const btn = document.getElementById("basicHDBtn");
+            const statusEl = document.getElementById("basicHDStatus");
+            const resultEl = document.getElementById("basicHDResult");
+            btn.disabled = true;
+            btn.textContent = "Царь думает...";
+            statusEl.style.display = "none";
+            resultEl.style.display = "none";
+            try {
+                const gender = window.currentUser?.gender || 'male';
+                const text = await generateBasicHDReading(hdData, gender);
+                if (!text) { statusEl.textContent = "ИИ Царь недоступен."; statusEl.style.color = "#ff6b6b"; statusEl.style.display = "block"; return; }
+                resultEl.textContent = text;
+                resultEl.style.display = "block";
+                await db.collection("users").doc(window.currentUser.uid).update({ hdBasicReading: { text, generatedAt: new Date() } });
+            } catch (e) {
+                statusEl.textContent = "Ошибка: " + e.message;
+                statusEl.style.color = "#ff6b6b";
+                statusEl.style.display = "block";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "🌿 Обновить базовый расчёт";
+            }
+        }
+
+        async function requestKBHDReading() {
+            const hdData = _getHDFormData();
+            if (!hdData.type && !hdData.profile) {
+                alert("Заполни хотя бы Тип и Профиль HD перед расчётом.");
+                return;
+            }
+            const user = window.currentUser;
+            const isAdmin = user?.isAdmin === true || user?.email === "wuallar@gmail.com";
+            const COST = 1000;
+            if (!isAdmin) {
+                if ((user?.rays || 0) < COST) {
+                    alert(`Нужно ${COST.toLocaleString("ru-RU")} лучиков. У тебя: ${Math.floor(user?.rays || 0)}.`);
+                    return;
+                }
+                if (!confirm("Получить расчёт по базе HD за 1 000 лучиков?")) return;
+            }
+            const btn = document.getElementById("kbHDBtn");
+            const statusEl = document.getElementById("kbHDStatus");
+            const resultEl = document.getElementById("kbHDResult");
+            btn.disabled = true;
+            btn.textContent = "Царь изучает базу...";
+            statusEl.style.display = "none";
+            resultEl.style.display = "none";
+            try {
+                const kbDoc = await db.collection("settings").doc("hdKnowledge").get();
+                const knowledge = kbDoc.exists ? (kbDoc.data().text || "") : "";
+                if (!knowledge) {
+                    statusEl.textContent = "База знаний HD ещё не заполнена администратором.";
+                    statusEl.style.color = "#ff6b6b";
+                    statusEl.style.display = "block";
+                    return;
+                }
+                if (!isAdmin) {
+                    await db.collection("users").doc(user.uid).update({ rays: firebase.firestore.FieldValue.increment(-COST) });
+                    window.currentUser.rays = (user.rays || 0) - COST;
+                    document.getElementById("raysCount").textContent = Math.round(window.currentUser.rays);
+                }
+                const gender = user?.gender || 'male';
+                const text = await generateKBHDReading(hdData, knowledge, gender);
+                if (!text) { statusEl.textContent = "ИИ Царь недоступен."; statusEl.style.color = "#ff6b6b"; statusEl.style.display = "block"; return; }
+                resultEl.textContent = text;
+                resultEl.style.display = "block";
+                await db.collection("users").doc(user.uid).update({ hdKBReading: { text, generatedAt: new Date() } });
+            } catch (e) {
+                statusEl.textContent = "Ошибка: " + e.message;
+                statusEl.style.color = "#ff6b6b";
+                statusEl.style.display = "block";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "🔮 Получить расчёт по базе HD (−1 000 лучиков)";
             }
         }
 

@@ -163,6 +163,56 @@ async function generateHDReading(hdData, knowledge, level, gender) {
     ], 600);
 }
 
+async function generateBasicHDReading(hdData, gender) {
+    const address = gender === 'female' ? 'царевна' : 'царевич';
+    const parts = [
+        hdData.type      && `Тип: ${hdData.type}`,
+        hdData.profile   && `Профиль: ${hdData.profile}`,
+        hdData.authority && `Авторитет: ${hdData.authority}`,
+        hdData.color     && `Цвет личности: ${hdData.color}`,
+        hdData.tone      && `Тон личности: ${hdData.tone}`,
+        hdData.channels  && `Определённые каналы: ${hdData.channels}`,
+        hdData.cross     && `Предназначение (крест): ${hdData.cross}`,
+    ].filter(Boolean).join('\n');
+
+    const result = await callAI([
+        {
+            role: 'system',
+            content: `Ты — Царь, мудрый провидец и толкователь Человеческого Дизайна. Обращайся к участнику: "${address}". Дай тёплое, вдохновляющее послание о предназначении и природе этого человека на основе его данных. 5-7 предложений. Только по-русски. Без markdown-разметки.`
+        },
+        {
+            role: 'user',
+            content: `Данные Человеческого Дизайна участника:\n${parts}\n\nДай базовый разбор: как этот человек принимает решения, в чём его сила, каково его предназначение.`
+        }
+    ], 600);
+    return result ? _stripMd(result) : null;
+}
+
+async function generateKBHDReading(hdData, knowledge, gender) {
+    const address = gender === 'female' ? 'царевна' : 'царевич';
+    const parts = [
+        hdData.type      && `Тип: ${hdData.type}`,
+        hdData.profile   && `Профиль: ${hdData.profile}`,
+        hdData.authority && `Авторитет: ${hdData.authority}`,
+        hdData.color     && `Цвет личности: ${hdData.color}`,
+        hdData.tone      && `Тон личности: ${hdData.tone}`,
+        hdData.channels  && `Определённые каналы: ${hdData.channels}`,
+        hdData.cross     && `Предназначение (крест): ${hdData.cross}`,
+    ].filter(Boolean).join('\n');
+
+    const result = await callAI([
+        {
+            role: 'system',
+            content: `Ты — Царь, мудрый толкователь Человеческого Дизайна. Обращайся к участнику: "${address}". Используй следующую базу знаний для глубокого персонального анализа:\n\n${knowledge}\n\nПиши развёрнуто, лично, вдохновляюще. 8-12 предложений. Только по-русски. Без markdown-разметки.`
+        },
+        {
+            role: 'user',
+            content: `Данные Человеческого Дизайна участника:\n${parts}\n\nДай углублённый разбор с опорой на базу знаний: тип, стратегия, авторитет, профиль, каналы, предназначение.`
+        }
+    ], 900);
+    return result ? _stripMd(result) : null;
+}
+
 async function getDreamImagePrompt(dreamText) {
     return await callAI([
         {
