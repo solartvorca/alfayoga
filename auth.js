@@ -75,25 +75,33 @@ async function checkMarathonStatus() {
         if (hoursSinceRestore < 48) return;
     }
 
-    const today = getLunarDay();
+    // Загрузить cycleStart марафона — та же база что marathon.html
+    let cycleStart = new Date(2026, 5, 1);
+    try {
+        const cycleDoc = await db.collection('settings').doc('marathon').get();
+        if (cycleDoc.exists && cycleDoc.data().cycleStart) {
+            cycleStart = cycleDoc.data().cycleStart.toDate();
+        }
+    } catch(e) {}
+
+    const nowMs = Date.now();
+    const daysSince = (nowMs - cycleStart.getTime()) / (1000 * 60 * 60 * 24);
+    const today = daysSince < 0 ? 1 : Math.min(Math.floor(daysSince) + 1, 29);
     const lastReport = user.lastReportDay || 0;
 
     let shouldRemove = false;
 
     if (lastReport === 0) {
-        // Пользователь ещё не писал отчётов — проверяем по дате регистрации
+        // Новый пользователь — даём 2 дня с регистрации чтобы написать первый отчёт
         const joinedAt = user.joinedAt?.toDate ? user.joinedAt.toDate() : (user.joinedAt ? new Date(user.joinedAt) : null);
         if (joinedAt) {
-            const fullMoonDate = new Date(localStorage.getItem('fullMoonDate') || new Date(2026, 4, 2));
-            const daysSinceFullMoon = (joinedAt - fullMoonDate) / (1000 * 60 * 60 * 24);
-            const joinedLunarDay = Math.floor(Math.abs(daysSinceFullMoon) % 29.5) + 1;
-            // Если прошло больше 1 дня с регистрации и отчёт так и не написан
-            if (today > joinedLunarDay + 1) {
+            const daysSinceJoin = (nowMs - joinedAt.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceJoin > 2) {
                 shouldRemove = true;
             }
         }
     } else {
-        // Если пропустил день — вывести из марафона
+        // Пропустил позавчера или раньше — исключаем (grace period на сегодня)
         if (today > lastReport + 1) {
             shouldRemove = true;
         }

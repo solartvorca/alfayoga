@@ -1705,21 +1705,26 @@
             statusDiv.style.color = "#a18cd1";
 
             try {
-                // Получить текущий лунный день
-                // Копируем логику из app.js
-                const fullMoonDate = localStorage.getItem('fullMoonDate') ? new Date(localStorage.getItem('fullMoonDate')) : new Date(2026, 4, 2);
-                const lunarCycleDays = 29.5;
-                const now = new Date();
-                const daysSinceFullMoon = (now - fullMoonDate) / (1000 * 60 * 60 * 24);
-                const cycleDays = daysSinceFullMoon % lunarCycleDays;
-                const currentLunarDay = Math.floor(cycleDays) + 1;
+                // Загрузить cycleStart марафона — та же логика что в marathon.html
+                let cycleStart = new Date(2026, 5, 1);
+                try {
+                    const cycleDoc = await db.collection('settings').doc('marathon').get();
+                    if (cycleDoc.exists && cycleDoc.data().cycleStart) {
+                        cycleStart = cycleDoc.data().cycleStart.toDate();
+                    }
+                } catch(e) {}
 
-                console.log(`[Daily Check] Current lunar day: ${currentLunarDay}`);
+                const now = new Date();
+                const daysSince = (now - cycleStart) / (1000 * 60 * 60 * 24);
+                const currentMarathonDay = daysSince < 0 ? 1 : Math.min(Math.floor(daysSince) + 1, 29);
+
+                console.log(`[Daily Check] Marathon day: ${currentMarathonDay}, cycleStart: ${cycleStart.toISOString()}`);
 
                 // Получить всех пользователей
                 const snapshot = await db.collection("users").get();
                 let removedCount = 0;
                 let activeCount = 0;
+                let skippedCount = 0;
 
                 // Проверить каждого пользователя
                 const updates = [];
@@ -1728,19 +1733,31 @@
                     const lastReportDay = user.lastReportDay || 0;
                     const currentStatus = user.status || "active";
 
-                    // Если пользователь активен и не написал отчёт за сегодня
-                    if (currentStatus === "active" && lastReportDay < currentLunarDay) {
-                        console.log(`[Daily Check] Removing ${user.nick} (last report: ${lastReportDay}, current day: ${currentLunarDay})`);
+                    // Пропускаем не-активных
+                    if (currentStatus !== "active") return;
+
+                    // Пропускаем администраторов
+                    if (user.isAdmin || user.email === "wuallar@gmail.com") { skippedCount++; return; }
+
+                    // Пропускаем premium
+                    if (currentStatus === "premium" || user.subscription === "premium" || user.subscription === "vip") { skippedCount++; return; }
+
+                    // Пропускаем новых без ни одного отчёта (присоединились сегодня)
+                    if (lastReportDay === 0) { skippedCount++; return; }
+
+                    // Пропустил позавчера или раньше — исключаем (даём grace period на сегодня)
+                    if (lastReportDay < currentMarathonDay - 1) {
+                        console.log(`[Daily Check] Removing ${user.nick || user.email} (last report: day ${lastReportDay}, current: day ${currentMarathonDay})`);
                         updates.push(
                             db.collection("users").doc(doc.id).update({
                                 status: "removed",
                                 removedAt: new Date(),
                                 removedReason: "missed_daily_report",
-                                removedDay: currentLunarDay
+                                removedDay: currentMarathonDay
                             })
                         );
                         removedCount++;
-                    } else if (currentStatus === "active") {
+                    } else {
                         activeCount++;
                     }
                 });
