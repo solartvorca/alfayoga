@@ -1191,7 +1191,9 @@
 
             try {
                 const dictDoc = await db.collection("settings").doc("dictionary").get();
-                const dictionary = dictDoc.exists ? (dictDoc.data().words || []) : [];
+                const dictData = dictDoc.exists ? dictDoc.data() : {};
+                const dictRaw = dictData.wordsText || (dictData.words || []).join('\n');
+                const dictionary = dictRaw ? dictRaw.split('\n').map(w => w.trim()).filter(w => w.length >= 2) : [];
 
                 if (dictionary.length === 0) {
                     errorEl.textContent = "Словарь ещё не загружен. Обратитесь к администратору.";

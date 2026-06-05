@@ -2604,9 +2604,15 @@
         async function loadDictionaryAdmin() {
             try {
                 const doc = await db.collection('settings').doc('dictionary').get();
-                const words = doc.exists ? (doc.data().words || []) : [];
-                document.getElementById('dictionaryWords').value = words.join('\n');
-                document.getElementById('dictWordCount').textContent = words.length ? `${words.length} слов в словаре` : 'Словарь пуст';
+                if (!doc.exists) {
+                    document.getElementById('dictWordCount').textContent = 'Словарь пуст';
+                    return;
+                }
+                const data = doc.data();
+                const text = data.wordsText || (data.words || []).join('\n');
+                const count = data.wordCount || (text ? text.split('\n').filter(Boolean).length : 0);
+                document.getElementById('dictionaryWords').value = text;
+                document.getElementById('dictWordCount').textContent = count ? `${count} слов в словаре` : 'Словарь пуст';
             } catch (e) {
                 alert('Ошибка загрузки: ' + e.message);
             }
@@ -2630,12 +2636,12 @@
 
         async function saveDictionary() {
             const raw = document.getElementById('dictionaryWords').value;
-            const words = raw.split(/[\n,]+/).map(w => w.trim().toLowerCase()).filter(w => w.length >= 2);
+            const words = raw.split(/[\n,\s]+/).map(w => w.trim().toLowerCase()).filter(w => w.length >= 2);
             const unique = [...new Set(words)];
             const statusEl = document.getElementById('dictSaveStatus');
             try {
                 await db.collection('settings').doc('dictionary').set({
-                    words: unique,
+                    wordsText: unique.join('\n'),
                     wordCount: unique.length,
                     updatedAt: new Date()
                 });
