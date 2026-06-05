@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raduga-luna-v18';
+const CACHE_NAME = 'raduga-luna-v19';
 
 const STATIC_ASSETS = [
     'index.html',
@@ -19,9 +19,11 @@ const STATIC_ASSETS = [
     'removed.html',
     'welcome.html',
     'view-profile.html',
+    'base.html',
     'styles.css',
     'app.js',
     'auth.js',
+    'ai.js',
     'mobile-nav.js',
     'firebase-config.js',
     'icon.png',
