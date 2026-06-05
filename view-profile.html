@@ -378,6 +378,32 @@
                     ` + aboutHTML;
                 }
 
+                // Базовый расчёт HD
+                if (user.hdBasicReading && user.hdBasicReading.text && !user.hdBasicReading.isPrivate) {
+                    const r = user.hdBasicReading;
+                    const d = r.generatedAt ? (r.generatedAt.toDate ? r.generatedAt.toDate() : new Date(r.generatedAt)) : null;
+                    aboutHTML += `
+                        <div class="section" style="border-left:3px solid #00d084; background:rgba(0,208,132,0.04);">
+                            <div class="section-title" style="color:#00d084;">🌿 Базовый расчёт по Человеческому Дизайну</div>
+                            <div class="section-text" style="line-height:1.8;">${r.text}</div>
+                            ${d ? `<div style="font-size:12px;color:#666;margin-top:10px;">Получено ${d.toLocaleDateString("ru-RU", {day:"numeric",month:"long",year:"numeric"})}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                // Расчёт по базе HD
+                if (user.hdKBReading && user.hdKBReading.text && !user.hdKBReading.isPrivate) {
+                    const r = user.hdKBReading;
+                    const d = r.generatedAt ? (r.generatedAt.toDate ? r.generatedAt.toDate() : new Date(r.generatedAt)) : null;
+                    aboutHTML += `
+                        <div class="section" style="border-left:3px solid #a18cd1; background:rgba(161,140,209,0.05);">
+                            <div class="section-title" style="color:#a18cd1;">🔮 Расчёт по базе знаний HD</div>
+                            <div class="section-text" style="line-height:1.8;">${r.text}</div>
+                            ${d ? `<div style="font-size:12px;color:#666;margin-top:10px;">Получено ${d.toLocaleDateString("ru-RU", {day:"numeric",month:"long",year:"numeric"})}</div>` : ''}
+                        </div>
+                    `;
+                }
+
                 document.getElementById("profileAboutSection").innerHTML = aboutHTML || '<div class="empty-state">Информация не заполнена</div>';
 
                 // Заполнить вкладку "Услуги и товары"

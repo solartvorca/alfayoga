@@ -720,6 +720,12 @@
                 </div>
                 <div id="basicHDStatus" style="display:none; font-size:13px; margin-bottom:10px;"></div>
                 <div id="basicHDResult" style="display:none; background:rgba(0,208,132,0.06); border:1px solid rgba(0,208,132,0.2); border-radius:8px; padding:14px; font-size:14px; color:#e0e6ed; line-height:1.75; margin-bottom:10px;"></div>
+                <div id="basicHDPrivacyRow" style="display:none; margin-bottom:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#888; cursor:pointer;">
+                        <input type="checkbox" id="basicHDPrivate" style="accent-color:#a18cd1;" onchange="saveHDReadingPrivacy('basic', this.checked)">
+                        🔒 Скрыть от других участников
+                    </label>
+                </div>
                 <button type="button" class="btn" id="basicHDBtn" onclick="requestBasicHDReading()" style="background:rgba(0,208,132,0.15); border-color:rgba(0,208,132,0.4); color:#00d084;">
                     🌿 Получить базовый расчёт
                 </button>
@@ -736,6 +742,12 @@
                 </div>
                 <div id="kbHDStatus" style="display:none; font-size:13px; margin-bottom:10px;"></div>
                 <div id="kbHDResult" style="display:none; background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.3); border-radius:8px; padding:14px; font-size:14px; color:#e0e6ed; line-height:1.75; margin-bottom:10px;"></div>
+                <div id="kbHDPrivacyRow" style="display:none; margin-bottom:12px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#888; cursor:pointer;">
+                        <input type="checkbox" id="kbHDPrivate" style="accent-color:#a18cd1;" onchange="saveHDReadingPrivacy('kb', this.checked)">
+                        🔒 Скрыть от других участников
+                    </label>
+                </div>
                 <button type="button" class="btn" id="kbHDBtn" onclick="requestKBHDReading()">
                     🔮 Получить расчёт по базе HD (−1 000 лучиков)
                 </button>
@@ -1476,6 +1488,32 @@
             if (hd.authority) document.getElementById("hdAuthority").value = hd.authority;
             if (hd.channels)  document.getElementById("hdChannels").value = hd.channels;
             if (hd.cross)     document.getElementById("hdCross").value = hd.cross;
+
+            // Показать сохранённые расчёты
+            _showSavedHDReading('basic', userData.hdBasicReading);
+            _showSavedHDReading('kb',    userData.hdKBReading);
+        }
+
+        function _showSavedHDReading(type, reading) {
+            if (!reading || !reading.text) return;
+            const resultEl  = document.getElementById(type === 'basic' ? 'basicHDResult'     : 'kbHDResult');
+            const privacyEl = document.getElementById(type === 'basic' ? 'basicHDPrivacyRow' : 'kbHDPrivacyRow');
+            const chkEl     = document.getElementById(type === 'basic' ? 'basicHDPrivate'    : 'kbHDPrivate');
+            const btnEl     = document.getElementById(type === 'basic' ? 'basicHDBtn'        : 'kbHDBtn');
+            resultEl.textContent = reading.text;
+            resultEl.style.display = 'block';
+            chkEl.checked = !!reading.isPrivate;
+            privacyEl.style.display = 'block';
+            btnEl.textContent = type === 'basic' ? '🌿 Обновить базовый расчёт' : '🔮 Обновить расчёт по базе HD (−1 000 лучиков)';
+        }
+
+        async function saveHDReadingPrivacy(type, isPrivate) {
+            const user = window.currentUser;
+            if (!user) return;
+            const field = type === 'basic' ? 'hdBasicReading' : 'hdKBReading';
+            try {
+                await db.collection("users").doc(user.uid).update({ [`${field}.isPrivate`]: isPrivate });
+            } catch (e) { console.warn('Ошибка сохранения приватности:', e); }
         }
 
         async function saveHDData() {
@@ -1536,7 +1574,9 @@
                 if (!text) { statusEl.textContent = "ИИ Царь недоступен."; statusEl.style.color = "#ff6b6b"; statusEl.style.display = "block"; return; }
                 resultEl.textContent = text;
                 resultEl.style.display = "block";
-                await db.collection("users").doc(window.currentUser.uid).update({ hdBasicReading: { text, generatedAt: new Date() } });
+                const basicPrivate = document.getElementById("basicHDPrivate").checked;
+                await db.collection("users").doc(window.currentUser.uid).update({ hdBasicReading: { text, generatedAt: new Date(), isPrivate: basicPrivate } });
+                document.getElementById("basicHDPrivacyRow").style.display = "block";
             } catch (e) {
                 statusEl.textContent = "Ошибка: " + e.message;
                 statusEl.style.color = "#ff6b6b";
@@ -1589,7 +1629,9 @@
                 if (!text) { statusEl.textContent = "ИИ Царь недоступен."; statusEl.style.color = "#ff6b6b"; statusEl.style.display = "block"; return; }
                 resultEl.textContent = text;
                 resultEl.style.display = "block";
-                await db.collection("users").doc(user.uid).update({ hdKBReading: { text, generatedAt: new Date() } });
+                const kbPrivate = document.getElementById("kbHDPrivate").checked;
+                await db.collection("users").doc(user.uid).update({ hdKBReading: { text, generatedAt: new Date(), isPrivate: kbPrivate } });
+                document.getElementById("kbHDPrivacyRow").style.display = "block";
             } catch (e) {
                 statusEl.textContent = "Ошибка: " + e.message;
                 statusEl.style.color = "#ff6b6b";
