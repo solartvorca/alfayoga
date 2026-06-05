@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>База знаний — Лунный Будильник</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d0b1e; color: #c8d0db; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding-bottom: 80px; }
+
+        .page-header { padding: 20px 16px 12px; border-bottom: 1px solid rgba(161,140,209,0.15); }
+        .page-header h1 { font-size: 20px; color: #a18cd1; font-weight: 700; }
+        .page-header p { font-size: 13px; color: #666; margin-top: 4px; }
+
+        .filters { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; scrollbar-width: none; }
+        .filters::-webkit-scrollbar { display: none; }
+        .filter-btn { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(161,140,209,0.3); background: none; color: #888; font-size: 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .filter-btn.active { background: rgba(161,140,209,0.2); border-color: #a18cd1; color: #a18cd1; }
+
+        .items-list { padding: 8px 16px; }
+
+        .base-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(161,140,209,0.15); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+        .base-item:hover { border-color: rgba(161,140,209,0.3); }
+
+        .item-type { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; }
+        .type-text    { background: rgba(100,180,255,0.1); color: #64b4ff; }
+        .type-video   { background: rgba(255,80,80,0.1);   color: #ff5050; }
+        .type-audio   { background: rgba(0,208,132,0.1);   color: #00d084; }
+        .type-image   { background: rgba(255,180,50,0.1);  color: #ffb432; }
+        .type-presentation { background: rgba(255,100,200,0.1); color: #ff64c8; }
+        .type-link    { background: rgba(161,140,209,0.15); color: #a18cd1; }
+
+        .item-title { font-size: 16px; font-weight: 700; color: #e0e6ed; margin-bottom: 6px; }
+        .item-desc  { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 10px; white-space: pre-wrap; }
+
+        .item-content-text { font-size: 14px; color: #c8d0db; line-height: 1.7; white-space: pre-wrap; }
+
+        .item-video-wrap { position: relative; padding-bottom: 56.25%; height: 0; border-radius: 10px; overflow: hidden; }
+        .item-video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        .item-image img { width: 100%; border-radius: 10px; display: block; }
+
+        .item-link a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(161,140,209,0.1); border: 1px solid rgba(161,140,209,0.3); border-radius: 10px; color: #a18cd1; text-decoration: none; font-size: 14px; font-weight: 600; word-break: break-all; }
+        .item-link a:hover { background: rgba(161,140,209,0.2); }
+
+        .item-audio audio { width: 100%; border-radius: 8px; }
+
+        .empty { text-align: center; color: #555; padding: 60px 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>📚 База знаний</h1>
+        <p>Материалы, видео, подкасты и ресурсы марафона</p>
+    </div>
+
+    <div class="filters">
+        <button class="filter-btn active" onclick="filterItems('all', this)">Все</button>
+        <button class="filter-btn" onclick="filterItems('text', this)">📝 Текст</button>
+        <button class="filter-btn" onclick="filterItems('video', this)">🎬 Видео</button>
+        <button class="filter-btn" onclick="filterItems('audio', this)">🎧 Подкасты</button>
+        <button class="filter-btn" onclick="filterItems('image', this)">🖼 Картинки</button>
+        <button class="filter-btn" onclick="filterItems('presentation', this)">📊 Презентации</button>
+        <button class="filter-btn" onclick="filterItems('link', this)">🔗 Ссылки</button>
+    </div>
+
+    <div class="items-list" id="itemsList">
+        <div class="empty">Загрузка...</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="mobile-nav.js"></script>
+    <script>
+        const TYPE_LABELS = {
+            text: '📝 Текст', video: '🎬 Видео', audio: '🎧 Подкаст',
+            image: '🖼 Картинка', presentation: '📊 Презентация', link: '🔗 Ссылка'
+        };
+
+        let allItems = [];
+        let currentFilter = 'all';
+
+        async function loadItems() {
+            const snap = await db.collection('base_items').orderBy('order').get();
+            allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderItems();
+        }
+
+        function filterItems(type, btn) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderItems();
+        }
+
+        function renderItems() {
+            const list = document.getElementById('itemsList');
+            const filtered = currentFilter === 'all' ? allItems : allItems.filter(i => i.type === currentFilter);
+
+            if (!filtered.length) {
+                list.innerHTML = '<div class="empty">Нет материалов в этой категории</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(item => {
+                const typeLabel = TYPE_LABELS[item.type] || item.type;
+                const typeClass = 'type-' + item.type;
+                let contentHtml = '';
+
+                if (item.type === 'text') {
+                    contentHtml = `<div class="item-content-text">${item.content || ''}</div>`;
+                } else if (item.type === 'video') {
+                    const videoId = extractVideoId(item.content || '');
+                    contentHtml = videoId
+                        ? `<div class="item-video-wrap"><iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe></div>`
+                        : `<div class="item-link"><a href="${item.content}" target="_blank">🎬 Открыть видео</a></div>`;
+                } else if (item.type === 'audio') {
+                    contentHtml = `<div class="item-audio"><audio controls src="${item.content}"></audio></div>`;
+                } else if (item.type === 'image') {
+                    contentHtml = `<div class="item-image"><img src="${item.content}" alt="${item.title}" loading="lazy"></div>`;
+                } else if (item.type === 'presentation' || item.type === 'link') {
+                    contentHtml = `<div class="item-link"><a href="${item.content}" target="_blank">🔗 ${item.linkTitle || item.content}</a></div>`;
+                }
+
+                return `
+                    <div class="base-item">
+                        <div class="item-type ${typeClass}">${typeLabel}</div>
+                        <div class="item-title">${item.title}</div>
+                        ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+                        ${contentHtml}
+                    </div>`;
+            }).join('');
+        }
+
+        function extractVideoId(url) {
+            const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            return m ? m[1] : null;
+        }
+
+        loadItems();
+    </script>
+</body>
+</html>

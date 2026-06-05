@@ -331,6 +331,7 @@
             <button class="tab-btn" onclick="switchTab('book', this)">📖 Книга</button>
             <button class="tab-btn" onclick="switchTab('zhiznetron', this)">⚡ Жизнетрон</button>
             <button class="tab-btn" onclick="switchTab('ai', this)">🤖 ИИ</button>
+            <button class="tab-btn" onclick="switchTab('base', this)">📚 База</button>
             <button class="tab-btn" onclick="switchTab('hd', this)">🔮 HD База</button>
             <button class="tab-btn" onclick="switchTab('raffle', this); loadRaffleAdmin()">🎲 Розыгрыш</button>
         </div>
@@ -792,6 +793,68 @@
                     🗑️ Очистить старые картинки снов
                 </button>
                 <div id="cleanImagesStatus" style="font-size: 13px; margin-top: 10px; display: none;"></div>
+            </div>
+        </div>
+
+        <!-- ===== БАЗА ЗНАНИЙ ===== -->
+        <div id="base-tab" class="tab-content">
+            <div class="admin-section">
+                <div class="section-title">📚 Добавить материал</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Тип</label>
+                        <select id="baseType" onchange="toggleBaseFields()" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;">
+                            <option value="text">📝 Текст</option>
+                            <option value="video">🎬 Видео</option>
+                            <option value="audio">🎧 Аудиоподкаст</option>
+                            <option value="image">🖼 Картинка</option>
+                            <option value="presentation">📊 Презентация</option>
+                            <option value="link">🔗 Ссылка</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Название</label>
+                        <input type="text" id="baseTitle" placeholder="Название материала" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Описание (необязательно)</label>
+                        <textarea id="baseDescription" placeholder="Краткое описание..." rows="2" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;resize:vertical;font-family:inherit;"></textarea>
+                    </div>
+
+                    <!-- Поле для текста -->
+                    <div class="form-group" id="baseFieldText">
+                        <label>Текст</label>
+                        <textarea id="baseContentText" placeholder="Текст материала..." rows="6" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;resize:vertical;font-family:inherit;"></textarea>
+                    </div>
+
+                    <!-- Поле для ссылки (видео/аудио/картинка/презентация/ссылка) -->
+                    <div class="form-group" id="baseFieldUrl" style="display:none;">
+                        <label id="baseUrlLabel">URL</label>
+                        <input type="url" id="baseContentUrl" placeholder="https://..." style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;">
+                    </div>
+
+                    <!-- Название ссылки (для link и presentation) -->
+                    <div class="form-group" id="baseFieldLinkTitle" style="display:none;">
+                        <label>Текст ссылки</label>
+                        <input type="text" id="baseLinkTitle" placeholder="Например: Открыть презентацию" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Порядок (число, меньше = выше)</label>
+                        <input type="number" id="baseOrder" value="100" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;">
+                    </div>
+                </div>
+                <input type="hidden" id="baseEditId">
+                <div style="display:flex;gap:10px;margin-top:10px;">
+                    <button onclick="saveBaseItem()" class="btn">💾 Сохранить</button>
+                    <button onclick="resetBaseForm()" class="btn" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:#888;">Отмена</button>
+                </div>
+                <div id="baseStatus" style="font-size:13px;margin-top:8px;display:none;"></div>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📋 Материалы базы</div>
+                <div id="baseItemsList"><div style="color:#555;font-size:13px;">Загрузка...</div></div>
             </div>
         </div>
 
@@ -1703,6 +1766,110 @@
         }
 
         // Проверить и исключить пользователей которые не написали отчёт за день
+        // ===== БАЗА ЗНАНИЙ =====
+        const BASE_URL_LABELS = { video: 'URL видео (YouTube или прямая ссылка)', audio: 'URL аудиофайла или подкаста', image: 'URL картинки', presentation: 'URL презентации', link: 'URL ссылки' };
+
+        function toggleBaseFields() {
+            const type = document.getElementById('baseType').value;
+            document.getElementById('baseFieldText').style.display  = type === 'text' ? '' : 'none';
+            document.getElementById('baseFieldUrl').style.display   = type !== 'text' ? '' : 'none';
+            document.getElementById('baseFieldLinkTitle').style.display = (type === 'link' || type === 'presentation') ? '' : 'none';
+            document.getElementById('baseUrlLabel').textContent = BASE_URL_LABELS[type] || 'URL';
+        }
+
+        async function loadBaseItems() {
+            const snap = await db.collection('base_items').orderBy('order').get();
+            const list = document.getElementById('baseItemsList');
+            if (snap.empty) { list.innerHTML = '<div style="color:#555;font-size:13px;">Нет материалов</div>'; return; }
+
+            const TYPE_ICONS = { text:'📝', video:'🎬', audio:'🎧', image:'🖼', presentation:'📊', link:'🔗' };
+            list.innerHTML = snap.docs.map(doc => {
+                const d = doc.data();
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(161,140,209,0.1);">
+                    <div>
+                        <span style="font-size:12px;color:#666;">${TYPE_ICONS[d.type]||'📄'} ${d.type}</span>
+                        <div style="font-size:14px;color:#e0e6ed;font-weight:600;">${d.title}</div>
+                        ${d.description ? `<div style="font-size:12px;color:#666;">${d.description.slice(0,60)}${d.description.length>60?'...':''}</div>` : ''}
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <button onclick="editBaseItem('${doc.id}')" style="background:rgba(100,180,255,0.15);border:none;color:#64b4ff;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">✏️</button>
+                        <button onclick="deleteBaseItem('${doc.id}')" style="background:rgba(255,100,100,0.15);border:none;color:#ff6464;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;">🗑️</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function saveBaseItem() {
+            const type  = document.getElementById('baseType').value;
+            const title = document.getElementById('baseTitle').value.trim();
+            const desc  = document.getElementById('baseDescription').value.trim();
+            const order = parseInt(document.getElementById('baseOrder').value) || 100;
+            const editId = document.getElementById('baseEditId').value;
+            const statusEl = document.getElementById('baseStatus');
+
+            if (!title) { alert('Укажи название'); return; }
+
+            const content = type === 'text'
+                ? document.getElementById('baseContentText').value.trim()
+                : document.getElementById('baseContentUrl').value.trim();
+            if (!content) { alert('Заполни содержимое'); return; }
+
+            const linkTitle = document.getElementById('baseLinkTitle').value.trim();
+            const data = { type, title, content, order, updatedAt: new Date() };
+            if (desc) data.description = desc;
+            if (linkTitle) data.linkTitle = linkTitle;
+
+            try {
+                if (editId) {
+                    await db.collection('base_items').doc(editId).update(data);
+                } else {
+                    data.createdAt = new Date();
+                    await db.collection('base_items').add(data);
+                }
+                statusEl.textContent = '✅ Сохранено';
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                setTimeout(() => statusEl.style.display = 'none', 2000);
+                resetBaseForm();
+                loadBaseItems();
+            } catch(e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        async function editBaseItem(id) {
+            const doc = await db.collection('base_items').doc(id).get();
+            const d = doc.data();
+            document.getElementById('baseEditId').value = id;
+            document.getElementById('baseType').value = d.type;
+            document.getElementById('baseTitle').value = d.title;
+            document.getElementById('baseDescription').value = d.description || '';
+            document.getElementById('baseOrder').value = d.order || 100;
+            if (d.type === 'text') document.getElementById('baseContentText').value = d.content || '';
+            else document.getElementById('baseContentUrl').value = d.content || '';
+            document.getElementById('baseLinkTitle').value = d.linkTitle || '';
+            toggleBaseFields();
+            document.getElementById('baseType').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function deleteBaseItem(id) {
+            if (!confirm('Удалить этот материал?')) return;
+            await db.collection('base_items').doc(id).delete();
+            loadBaseItems();
+        }
+
+        function resetBaseForm() {
+            document.getElementById('baseEditId').value = '';
+            document.getElementById('baseTitle').value = '';
+            document.getElementById('baseDescription').value = '';
+            document.getElementById('baseContentText').value = '';
+            document.getElementById('baseContentUrl').value = '';
+            document.getElementById('baseLinkTitle').value = '';
+            document.getElementById('baseOrder').value = 100;
+            document.getElementById('baseType').value = 'text';
+            toggleBaseFields();
+        }
+
         async function cleanOldDreamImages() {
             const statusEl = document.getElementById('cleanImagesStatus');
             statusEl.style.display = 'block';
@@ -2410,6 +2577,7 @@
 
         // Загрузить AI настройки при открытии вкладки
         document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', loadAISettingsAdmin);
+        document.querySelector('[onclick="switchTab(\'base\', this)"]').addEventListener('click', loadBaseItems);
 
         // ===== РОЗЫГРЫШИ (ADMIN) =====
         const ADMIN_DICE_FACE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
