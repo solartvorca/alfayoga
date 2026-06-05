@@ -1280,23 +1280,25 @@
                 .where("dayNumber", "==", currentDayNum)
                 .get();
 
-            // Вычисляем календарную дату, соответствующую текущему дню марафона
-            const targetDate = new Date(_cycleStart.getTime() + (currentDayNum - 1) * 86400000);
-            const targetDateStr = targetDate.toISOString().slice(0, 10);
+            // Сегодняшняя UTC-дата — совпадает с тем, что сохраняет profile.html
+            const todayStr = new Date().toISOString().slice(0, 10);
 
-            // Запрашиваем по date (новые) и по dayNumber (старые без поля date)
-            const [dreamsByDate, dreamsByDay] = await Promise.all([
-                db.collection("dreams").where("isPublic", "==", true).where("date", "==", targetDateStr).get(),
-                db.collection("dreams").where("isPublic", "==", true).where("dayNumber", "==", currentDayNum).get()
-            ]);
+            // Запрашиваем по date (новые записи) и по dayNumber (старые без поля date)
+            let dreamsSnapshot = { docs: [] };
+            try {
+                const [dreamsByDate, dreamsByDay] = await Promise.all([
+                    db.collection("dreams").where("isPublic", "==", true).where("date", "==", todayStr).get(),
+                    db.collection("dreams").where("isPublic", "==", true).where("dayNumber", "==", currentDayNum).get()
+                ]);
+                const dreamMap = new Map();
+                dreamsByDate.docs.forEach(d => dreamMap.set(d.id, d));
+                dreamsByDay.docs.forEach(d => { if (!dreamMap.has(d.id)) dreamMap.set(d.id, d); });
+                dreamsSnapshot = { docs: [...dreamMap.values()] };
+            } catch(e) {
+                console.error("Ошибка загрузки снов (возможно нужен индекс Firestore):", e);
+            }
 
-            // Объединяем без дублей
-            const dreamMap = new Map();
-            dreamsByDate.docs.forEach(d => dreamMap.set(d.id, d));
-            dreamsByDay.docs.forEach(d => { if (!dreamMap.has(d.id)) dreamMap.set(d.id, d); });
-            const dreamsSnapshot = { docs: [...dreamMap.values()] };
-
-            console.log("Найдено снов:", dreamsSnapshot.docs.length);
+            console.log("Найдено снов:", dreamsSnapshot.docs.length, "todayStr:", todayStr, "dayNum:", currentDayNum);
 
             const list = document.getElementById("reportsList");
             const onlyReports = document.getElementById("onlyReportsFilter").checked;
