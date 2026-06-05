@@ -782,6 +782,17 @@
                     <p style="margin-top: 12px; color: #a18cd1;">Получить ключ: <a href="https://openrouter.ai/keys" target="_blank" style="color: #a18cd1;">openrouter.ai/keys</a></p>
                 </div>
             </div>
+
+            <div class="admin-section">
+                <div class="section-title">🖼️ Очистка изображений сновидений</div>
+                <div style="font-size: 13px; color: #888; margin-bottom: 12px; line-height: 1.6;">
+                    Удаляет поле <code>imageBase64</code> из всех сновидений где дата картинки не сегодня. Запускай раз в несколько дней чтобы не засорять базу.
+                </div>
+                <button onclick="cleanOldDreamImages()" class="btn" style="background: rgba(255, 150, 50, 0.2); border-color: rgba(255, 150, 50, 0.4); color: #ffa030;">
+                    🗑️ Очистить старые картинки снов
+                </button>
+                <div id="cleanImagesStatus" style="font-size: 13px; margin-top: 10px; display: none;"></div>
+            </div>
         </div>
 
         <div id="hd-tab" class="tab-content">
@@ -1692,6 +1703,40 @@
         }
 
         // Проверить и исключить пользователей которые не написали отчёт за день
+        async function cleanOldDreamImages() {
+            const statusEl = document.getElementById('cleanImagesStatus');
+            statusEl.style.display = 'block';
+            statusEl.style.color = '#a18cd1';
+            statusEl.textContent = '⏳ Проверяю сновидения...';
+
+            try {
+                const today = new Date().toISOString().slice(0, 10);
+                const snapshot = await db.collection('dreams').get();
+                let cleaned = 0;
+
+                const updates = [];
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (data.imageBase64 && data.imageDate !== today) {
+                        updates.push(
+                            doc.ref.update({
+                                imageBase64: firebase.firestore.FieldValue.delete(),
+                                imageDate: firebase.firestore.FieldValue.delete()
+                            })
+                        );
+                        cleaned++;
+                    }
+                });
+
+                await Promise.all(updates);
+                statusEl.style.color = '#00d084';
+                statusEl.textContent = `✅ Готово. Очищено картинок: ${cleaned}`;
+            } catch(e) {
+                statusEl.style.color = '#ff6464';
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+            }
+        }
+
         async function checkAndRemoveUsersWithoutReport() {
             const statusDiv = document.getElementById("adminCheckStatus");
             if (!statusDiv) {
