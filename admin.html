@@ -2624,11 +2624,23 @@
             document.getElementById('dictFileName').textContent = file.name;
             const reader = new FileReader();
             reader.onload = (e) => {
-                const text = e.target.result;
-                const words = text.split(/[\n,\s]+/).map(w => w.trim().toLowerCase()).filter(w => w.length >= 2);
-                const unique = [...new Set(words)];
-                document.getElementById('dictionaryWords').value = unique.join('\n');
-                document.getElementById('dictWordCount').textContent = `${unique.length} слов из файла`;
+                let words = [];
+                const text = e.target.result.trim();
+                try {
+                    const parsed = JSON.parse(text);
+                    if (Array.isArray(parsed)) {
+                        words = parsed.map(w => typeof w === 'string' ? w : String(w));
+                    } else if (typeof parsed === 'object' && parsed !== null) {
+                        words = Object.keys(parsed);
+                    }
+                } catch (_) {
+                    words = text.split(/[\n,\s]+/);
+                }
+                const clean = [...new Set(
+                    words.map(w => w.trim().toLowerCase().replace(/[^а-яёa-z]/g, '')).filter(w => w.length >= 2)
+                )];
+                document.getElementById('dictionaryWords').value = clean.join('\n');
+                document.getElementById('dictWordCount').textContent = `${clean.length} слов из файла`;
             };
             reader.readAsText(file, 'UTF-8');
             event.target.value = '';
