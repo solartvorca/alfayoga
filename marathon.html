@@ -1345,7 +1345,8 @@
                 });
 
                 if (item.type === "dream") {
-                    const hasImg = !!data.imageBase64;
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    const hasImg = !!data.imageBase64 && data.imageDate === todayStr;
                     return `
                         <div class="report-item" style="border-left: 3px solid rgba(200, 150, 255, 0.5);">
                             <div class="report-header">
@@ -2236,7 +2237,7 @@
             const container = document.getElementById(`dream-img-${dreamId}`);
             const img = container.querySelector('img');
             const dreamText = btn.closest('.report-item').querySelector('.report-text').textContent.trim();
-            const prompt = `dreamlike surreal painting, ethereal mystical scene: ${dreamText.slice(0, 200)}, soft glowing colors, fantasy art, high quality`;
+            const prompt = dreamText.slice(0, 500);
 
             btn.disabled = true;
             btn.textContent = '⏳ Генерирую...';
@@ -2266,8 +2267,9 @@
                 container.style.display = 'block';
                 btn.style.display = 'none';
 
-                // Сохраняем в Firestore (фоново)
-                db.collection('dreams').doc(dreamId).update({ imageBase64: base64 }).catch(() => {});
+                // Сохраняем в Firestore с датой (фоново)
+                const today = new Date().toISOString().slice(0, 10);
+                db.collection('dreams').doc(dreamId).update({ imageBase64: base64, imageDate: today }).catch(() => {});
 
             } catch(e) {
                 btn.disabled = false;
