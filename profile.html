@@ -510,8 +510,9 @@
             <div style="margin-top:14px;">
                 <button id="yupikUrlToggle" onclick="toggleYupikUrlForm()" style="background:none;border:1px solid rgba(161,140,209,0.3);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 12px;cursor:pointer;">🖼 Своё фото юпика</button>
                 <div id="yupikUrlForm" style="display:none;margin-top:10px;">
-                    <input id="yupikUrlInput" type="url" placeholder="Вставь ссылку с postimages.org"
-                        style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid rgba(161,140,209,0.3);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;margin-bottom:8px;">
+                    <input id="yupikUrlInput" type="url" placeholder="https://i.postimg.cc/xxx/photo.jpg"
+                        style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid rgba(161,140,209,0.3);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;margin-bottom:4px;">
+                    <div style="font-size:11px;color:#666;margin-bottom:8px;">На postimage.org выбери «Direct link» — ссылка должна начинаться с i.postimg.cc</div>
                     <div style="display:flex;gap:8px;justify-content:center;">
                         <button onclick="saveYupikUrl()" style="padding:8px 16px;background:linear-gradient(135deg,#a18cd1,#7b5ea7);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Сохранить</button>
                         <button onclick="clearYupikUrl()" style="padding:8px 16px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:#888;font-size:13px;cursor:pointer;">Сбросить</button>
@@ -1693,18 +1694,35 @@ The dragon must stay teal/turquoise, chibi Pixar 3D render style, white backgrou
             const url = document.getElementById('yupikUrlInput').value.trim();
             const statusEl = document.getElementById('yupikUrlStatus');
             if (!url) return;
+
+            statusEl.textContent = '⏳ Проверяю ссылку...';
+            statusEl.style.color = '#a18cd1';
+            statusEl.style.display = 'block';
+
+            // Проверяем что картинка реально загружается перед сохранением
+            const loaded = await new Promise(resolve => {
+                const test = new Image();
+                test.onload = () => resolve(true);
+                test.onerror = () => resolve(false);
+                test.src = url;
+            });
+
+            if (!loaded) {
+                statusEl.innerHTML = '❌ Картинка не открылась. Нужна <b>прямая ссылка на файл</b> (Direct link), а не ссылка на страницу.<br>На postimage.org: скопируй «Direct link» — она должна заканчиваться на .jpg / .png / .webp';
+                statusEl.style.color = '#ff6b6b';
+                return;
+            }
+
             try {
                 await db.collection('users').doc(window.currentUser.uid).update({ yupikCustomUrl: url });
                 window.currentUser.yupikCustomUrl = url;
                 document.getElementById('yupikImg').src = url;
                 statusEl.textContent = '✅ Сохранено';
                 statusEl.style.color = '#00d084';
-                statusEl.style.display = 'block';
                 setTimeout(() => { statusEl.style.display = 'none'; document.getElementById('yupikUrlForm').style.display = 'none'; }, 2000);
             } catch (e) {
                 statusEl.textContent = '❌ Ошибка: ' + e.message;
                 statusEl.style.color = '#ff6b6b';
-                statusEl.style.display = 'block';
             }
         }
 
