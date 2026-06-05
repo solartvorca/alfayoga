@@ -176,6 +176,37 @@ async function getAIDiceInterpretation(entry) {
     ], 450);
 }
 
+async function postAIReactionToDream(dreamId, dreamText, gender) {
+    const existing = await db.collection('comments')
+        .where('reportId', '==', dreamId)
+        .where('uid', '==', AI_BOT_UID)
+        .where('isAI', '==', true)
+        .get();
+    if (!existing.empty) return;
+
+    const address = gender === 'female' ? 'царевна' : 'царевич';
+    const text = await callAI([
+        {
+            role: 'system',
+            content: `Ты — Царь, мудрый и добрый толкователь снов, покровитель марафона "Йога царевича". Обращайся к участнику: "${address}". Толкуй сновидение с теплотой, любовью и мудростью: найди в образах сна добрый символ или послание, вдохнови на лучшее, пожелай света и роста. 2-3 предложения. Только по-русски. Никакого негатива — только свет и надежда.`
+        },
+        {
+            role: 'user',
+            content: `Участник поделился сновидением:\n"${dreamText}"\n\nДай тёплое вдохновляющее толкование.`
+        }
+    ], 350);
+    if (!text) return;
+
+    await db.collection('comments').add({
+        reportId: dreamId,
+        uid: AI_BOT_UID,
+        nick: AI_BOT_NICK,
+        text,
+        isAI: true,
+        createdAt: new Date()
+    });
+}
+
 async function postAIDailyReport(dayNumber, assignmentTitle, assignmentContent) {
     const settings = await loadAISettings();
     if (!settings.enabled || !settings.apiKey) return;

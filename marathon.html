@@ -1351,7 +1351,18 @@
                                 <a href="view-profile.html?uid=${data.uid}" class="report-nick">🌙 ${data.nick}</a>
                                 <span class="report-time">${timeStr}</span>
                             </div>
+                            <div style="font-size:11px;color:#a18cd1;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🌙 Сновидение</div>
                             <div class="report-text">${data.text}</div>
+                            <div class="report-comments">
+                                <div class="comments-list" id="comments-${item.id}">
+                                    <div style="font-size:12px;color:#666;">Загрузка...</div>
+                                </div>
+                                <div class="comment-form">
+                                    <input type="text" class="comment-input"
+                                        placeholder="Добавить комментарий..."
+                                        onkeypress="if(event.key==='Enter') addComment('${item.id}', this.value, event)">
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
@@ -1402,6 +1413,12 @@
 
             reportsSnapshot.docs.forEach(doc => {
                 loadComments(doc.id);
+            });
+
+            dreamsSnapshot.docs.forEach(doc => {
+                const data = doc.data();
+                loadComments(doc.id);
+                postAIReactionToDream(doc.id, data.text, data.gender).then(() => loadComments(doc.id)).catch(() => {});
             });
         }
 
