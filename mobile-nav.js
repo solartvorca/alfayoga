@@ -13,7 +13,8 @@
         { icon: '🌿', label: 'Образ жизни', path: 'lifestyle.html' },
         { icon: '📅', label: 'Задачи', path: 'planner.html' },
         { icon: '🎲', label: 'И Цзин', path: 'dice.html' },
-        { icon: '🌙', label: 'Сновидения', path: 'profile.html?tab=dreams' }
+        { icon: '🌙', label: 'Сновидения', path: 'profile.html?tab=dreams' },
+        { icon: '🔮', label: 'Предназначение', path: 'profile.html?tab=destiny' }
     ];
 
     function getCurrentPage() {
