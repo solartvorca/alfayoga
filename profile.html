@@ -1034,8 +1034,8 @@
                 renderPartnerLinks();
                 renderReferralLink();
                 checkProfileCompletion();
-                updateDestinySection();
                 renderExistingDestiny(userData.destinyReading);
+                updateDestinySection();
                 loadHDData(userData);
             } catch (error) {
                 console.error("Ошибка загрузки профиля:", error);
@@ -1264,6 +1264,7 @@
 
         function renderExistingDestiny(reading) {
             if (!reading || !reading.text) return;
+            document.getElementById("destinySection").style.display = "block";
             const existingEl = document.getElementById("destinyExisting");
             document.getElementById("destinyExistingText").textContent = stripMd(reading.text);
             if (reading.generatedAt) {
@@ -1281,7 +1282,8 @@
             const firstName = document.getElementById("firstNameField").value.trim();
             const patronymic = document.getElementById("patronymicField").value.trim();
             const hasName = lastName || firstName || patronymic;
-            document.getElementById("destinySection").style.display = hasName ? "block" : "none";
+            const hasReading = document.getElementById("destinyExisting").style.display !== "none";
+            document.getElementById("destinySection").style.display = (hasName || hasReading) ? "block" : "none";
         }
 
         function normalizeRu(str) {
