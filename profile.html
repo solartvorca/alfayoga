@@ -546,6 +546,18 @@
                         <input type="text" id="nickField" placeholder="Введите ваше имя" required>
                     </div>
                     <div class="form-group">
+                        <label>Фамилия</label>
+                        <input type="text" id="lastNameField" placeholder="Фамилия">
+                    </div>
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="firstNameField" placeholder="Имя">
+                    </div>
+                    <div class="form-group">
+                        <label>Отчество</label>
+                        <input type="text" id="patronymicField" placeholder="Отчество">
+                    </div>
+                    <div class="form-group">
                         <label>Пол</label>
                         <div style="display: flex; gap: 12px; margin-top: 4px;">
                             <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #c8d0db; text-transform: none; cursor: pointer;">
@@ -568,6 +580,19 @@
                     <button type="submit" class="btn" style="margin-top: 15px;">Сохранить профиль</button>
                 </form>
                 <div id="profileCompletionStatus"></div>
+            </div>
+
+            <!-- Послание о предназначении -->
+            <div class="section" id="destinySection" style="display: none; border-left: 3px solid #a18cd1; background: rgba(161, 140, 209, 0.06);">
+                <div class="section-title" style="color: #a18cd1;">✨ Послание о предназначении</div>
+                <p style="font-size: 13px; color: #888; margin-bottom: 16px; line-height: 1.6;">Царь прочтёт слова, сокрытые в буквах твоего имени, и составит личное послание о твоём предназначении.</p>
+                <button type="button" class="btn" id="destinyBtn" onclick="requestNameDestiny()" style="margin-bottom: 16px;">
+                    🔮 Получить послание
+                </button>
+                <div id="destinyLoading" style="display: none; color: #a18cd1; font-size: 13px; margin-bottom: 12px;">Царь читает знаки...</div>
+                <div id="destinyWords" style="display: none; margin-bottom: 12px;"></div>
+                <div id="destinyResult" style="display: none; background: rgba(161, 140, 209, 0.08); border: 1px solid rgba(161, 140, 209, 0.3); border-radius: 8px; padding: 16px; font-size: 14px; color: #e0e6ed; line-height: 1.7;"></div>
+                <div id="destinyError" style="display: none; color: #ff6b6b; font-size: 13px;"></div>
             </div>
 
             <!-- Администраторская панель -->
@@ -737,6 +762,7 @@
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
     <script src="auth.js"></script>
+    <script src="ai.js"></script>
     <script>
         let creativeProfileLinks = [];
         let partnerLinks = [];
@@ -876,6 +902,9 @@
                 }
 
                 document.getElementById("nickField").value = user.nick || "";
+                document.getElementById("lastNameField").value = userData.lastName || "";
+                document.getElementById("firstNameField").value = userData.firstName || "";
+                document.getElementById("patronymicField").value = userData.patronymic || "";
                 if (user.gender) {
                     const genderRadio = document.querySelector(`input[name="genderField"][value="${user.gender}"]`);
                     if (genderRadio) genderRadio.checked = true;
@@ -890,6 +919,7 @@
                 renderPartnerLinks();
                 renderReferralLink();
                 checkProfileCompletion();
+                updateDestinySection();
             } catch (error) {
                 console.error("Ошибка загрузки профиля:", error);
             }
@@ -1045,6 +1075,9 @@
             if (!user) return;
 
             const nick = document.getElementById("nickField").value.trim();
+            const lastName = document.getElementById("lastNameField").value.trim();
+            const firstName = document.getElementById("firstNameField").value.trim();
+            const patronymic = document.getElementById("patronymicField").value.trim();
             const genderRadio = document.querySelector('input[name="genderField"]:checked');
             const gender = genderRadio ? genderRadio.value : null;
             const bio = document.getElementById("bioField").value.trim();
@@ -1063,7 +1096,10 @@
 
                 const profileData = {
                     nick,
-                    ...(gender && { gender })
+                    ...(gender && { gender }),
+                    lastName,
+                    firstName,
+                    patronymic
                 };
 
                 // Обновить творческий профиль только если есть поля для сохранения
@@ -1092,6 +1128,7 @@
                     alert("Имя изменено!");
                 }
                 checkProfileCompletion();
+                updateDestinySection();
 
                 // Обновить отображение
                 const updatedUser = await db.collection("users").doc(user.uid).get();
@@ -1101,6 +1138,99 @@
                 document.getElementById("raysCount").textContent = Math.round(window.currentUser.rays || 0);
             } catch (error) {
                 alert("Ошибка: " + error.message);
+            }
+        }
+
+        function updateDestinySection() {
+            const lastName = document.getElementById("lastNameField").value.trim();
+            const firstName = document.getElementById("firstNameField").value.trim();
+            const patronymic = document.getElementById("patronymicField").value.trim();
+            const hasName = lastName || firstName || patronymic;
+            document.getElementById("destinySection").style.display = hasName ? "block" : "none";
+        }
+
+        function normalizeRu(str) {
+            return str.toLowerCase().replace(/ё/g, 'е').replace(/[^а-яa-z]/g, '');
+        }
+
+        function findWordsFromName(lastName, firstName, patronymic, dictionary) {
+            const fullName = normalizeRu(lastName + firstName + patronymic);
+            if (!fullName) return [];
+            const nameLetters = {};
+            for (const ch of fullName) nameLetters[ch] = (nameLetters[ch] || 0) + 1;
+
+            return dictionary.filter(word => {
+                const w = normalizeRu(word);
+                if (w.length < 2) return false;
+                const needed = {};
+                for (const ch of w) needed[ch] = (needed[ch] || 0) + 1;
+                return Object.entries(needed).every(([ch, cnt]) => (nameLetters[ch] || 0) >= cnt);
+            });
+        }
+
+        async function requestNameDestiny() {
+            const lastName = document.getElementById("lastNameField").value.trim();
+            const firstName = document.getElementById("firstNameField").value.trim();
+            const patronymic = document.getElementById("patronymicField").value.trim();
+            if (!lastName && !firstName && !patronymic) {
+                alert("Сначала сохраните фамилию, имя или отчество в профиле.");
+                return;
+            }
+
+            const btn = document.getElementById("destinyBtn");
+            const loading = document.getElementById("destinyLoading");
+            const wordsEl = document.getElementById("destinyWords");
+            const resultEl = document.getElementById("destinyResult");
+            const errorEl = document.getElementById("destinyError");
+
+            btn.disabled = true;
+            loading.style.display = "block";
+            wordsEl.style.display = "none";
+            resultEl.style.display = "none";
+            errorEl.style.display = "none";
+
+            try {
+                const dictDoc = await db.collection("settings").doc("dictionary").get();
+                const dictionary = dictDoc.exists ? (dictDoc.data().words || []) : [];
+
+                if (dictionary.length === 0) {
+                    errorEl.textContent = "Словарь ещё не загружен. Обратитесь к администратору.";
+                    errorEl.style.display = "block";
+                    return;
+                }
+
+                const words = findWordsFromName(lastName, firstName, patronymic, dictionary);
+
+                if (words.length === 0) {
+                    errorEl.textContent = "В словаре не нашлось слов из букв вашего имени. Словарь может быть слишком мал.";
+                    errorEl.style.display = "block";
+                    return;
+                }
+
+                wordsEl.innerHTML = `<div style="font-size:12px;color:#888;margin-bottom:8px;">Слова в вашем имени (${words.length}):</div><div style="font-size:13px;color:#a18cd1;line-height:1.8;">${words.join(' · ')}</div>`;
+                wordsEl.style.display = "block";
+
+                const gender = window.currentUser?.gender || 'male';
+                const text = await generateNameDestiny(lastName, firstName, patronymic, words, gender);
+
+                if (!text) {
+                    errorEl.textContent = "ИИ Царь недоступен. Проверьте настройки в панели администратора.";
+                    errorEl.style.display = "block";
+                    return;
+                }
+
+                resultEl.textContent = text;
+                resultEl.style.display = "block";
+
+                await db.collection("users").doc(window.currentUser.uid).update({
+                    destinyReading: { text, words, generatedAt: new Date() }
+                });
+            } catch (e) {
+                errorEl.textContent = "Ошибка: " + e.message;
+                errorEl.style.display = "block";
+            } finally {
+                btn.disabled = false;
+                loading.style.display = "none";
             }
         }
 

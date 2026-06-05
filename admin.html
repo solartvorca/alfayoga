@@ -794,6 +794,24 @@
                 </button>
                 <div id="cleanImagesStatus" style="font-size: 13px; margin-top: 10px; display: none;"></div>
             </div>
+
+            <div class="admin-section" style="border-left: 3px solid #a18cd1; background: rgba(161, 140, 209, 0.05);">
+                <div class="section-title" style="color: #a18cd1;">📖 Словарь предназначений</div>
+                <p style="font-size: 13px; color: #888; margin-bottom: 12px; line-height: 1.6;">
+                    Словарь используется для поиска слов, скрытых в буквах ФИО участника. ИИ Царь строит послание о предназначении из найденных слов.<br>
+                    Введи слова через запятую, пробел или по одному на строке. Регистр не важен.
+                </p>
+                <div class="form-group">
+                    <label>Текущий словарь</label>
+                    <textarea id="dictionaryWords" rows="10" placeholder="солнце, луна, свет, путь, мир..." style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;resize:vertical;font-family:inherit;font-size:13px;line-height:1.6;"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+                    <button onclick="saveDictionary()" class="btn" style="background:rgba(161,140,209,0.2);border-color:rgba(161,140,209,0.4);color:#a18cd1;">💾 Сохранить словарь</button>
+                    <button onclick="loadDictionaryAdmin()" class="btn" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:#888;">🔄 Загрузить</button>
+                    <span id="dictWordCount" style="font-size: 12px; color: #666;"></span>
+                </div>
+                <div id="dictSaveStatus" style="margin-top: 10px; font-size: 13px; display: none;"></div>
+            </div>
         </div>
 
         <!-- ===== БАЗА ЗНАНИЙ ===== -->
@@ -2575,8 +2593,42 @@
             }
         }
 
+        async function loadDictionaryAdmin() {
+            try {
+                const doc = await db.collection('settings').doc('dictionary').get();
+                const words = doc.exists ? (doc.data().words || []) : [];
+                document.getElementById('dictionaryWords').value = words.join('\n');
+                document.getElementById('dictWordCount').textContent = words.length ? `${words.length} слов в словаре` : 'Словарь пуст';
+            } catch (e) {
+                alert('Ошибка загрузки: ' + e.message);
+            }
+        }
+
+        async function saveDictionary() {
+            const raw = document.getElementById('dictionaryWords').value;
+            const words = raw.split(/[\n,]+/).map(w => w.trim().toLowerCase()).filter(w => w.length >= 2);
+            const unique = [...new Set(words)];
+            const statusEl = document.getElementById('dictSaveStatus');
+            try {
+                await db.collection('settings').doc('dictionary').set({
+                    words: unique,
+                    wordCount: unique.length,
+                    updatedAt: new Date()
+                });
+                document.getElementById('dictWordCount').textContent = `${unique.length} слов сохранено`;
+                statusEl.textContent = `✅ Словарь сохранён: ${unique.length} слов`;
+                statusEl.style.color = '#00d084';
+                statusEl.style.display = 'block';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            } catch (e) {
+                statusEl.textContent = '❌ Ошибка: ' + e.message;
+                statusEl.style.color = '#ff6b6b';
+                statusEl.style.display = 'block';
+            }
+        }
+
         // Загрузить AI настройки при открытии вкладки
-        document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', loadAISettingsAdmin);
+        document.querySelector('[onclick="switchTab(\'ai\', this)"]').addEventListener('click', () => { loadAISettingsAdmin(); loadDictionaryAdmin(); });
         document.querySelector('[onclick="switchTab(\'base\', this)"]').addEventListener('click', loadBaseItems);
 
         // ===== РОЗЫГРЫШИ (ADMIN) =====

@@ -220,6 +220,23 @@ async function postAIReactionToDream(dreamId, dreamText, gender) {
     });
 }
 
+async function generateNameDestiny(lastName, firstName, patronymic, wordList, gender) {
+    const address = gender === 'female' ? 'царевна' : 'царевич';
+    const fullName = [lastName, firstName, patronymic].filter(Boolean).join(' ');
+    const words = wordList.slice(0, 40).join(', ');
+
+    return await callAI([
+        {
+            role: 'system',
+            content: `Ты — Царь, мудрый провидец марафона "Йога царевича". Обращайся к участнику: "${address}". Создай поэтическое послание о предназначении этого человека, опираясь на слова, скрытые в буквах его имени. Пиши образно, вдохновляюще, с теплотой и мудростью. 5-7 предложений. Только по-русски.`
+        },
+        {
+            role: 'user',
+            content: `Полное имя участника: ${fullName}\n\nСлова, сокрытые в буквах этого имени:\n${words}\n\nСоздай послание о предназначении, используя эти слова как символы судьбы.`
+        }
+    ], 700);
+}
+
 async function postAIDailyReport(dayNumber, assignmentTitle, assignmentContent) {
     const settings = await loadAISettings();
     if (!settings.enabled || !settings.apiKey) return;
