@@ -1320,7 +1320,8 @@
 
             try {
                 const dayNum = getLunarDay();
-                console.log("Добавляю сновидение с dayNumber:", dayNum);
+                const dateStr = new Date().toISOString().slice(0, 10);
+                console.log("Добавляю сновидение с dayNumber:", dayNum, "date:", dateStr);
                 await db.collection("dreams").add({
                     uid: user.uid,
                     nick: user.nick,
@@ -1328,6 +1329,7 @@
                     text,
                     isPublic,
                     dayNumber: dayNum,
+                    date: dateStr,
                     createdAt: new Date()
                 });
 
