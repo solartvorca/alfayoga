@@ -32,6 +32,9 @@ function checkAuth() {
                 // Проверить статус марафона на всех страницах
                 checkMarathonStatus();
 
+                // Ежедневная манна активным участникам
+                claimDailyManna();
+
                 // Если пользователь удалён - перенаправить на removed.html
                 const currentPath = window.location.pathname.split('/').pop();
                 const allowedForRemoved = ['removed.html', 'login.html'];
@@ -118,6 +121,27 @@ async function checkMarathonStatus() {
         });
         user.status = "removed";
         showRemovalNotice();
+    }
+}
+
+// Ежедневная манна: 1 в день для активных участников
+async function claimDailyManna() {
+    const user = window.currentUser;
+    if (!user) return;
+    if (user.status === 'removed') return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    if (user.lastMannaDate === today) return;
+
+    try {
+        await db.collection('users').doc(user.uid).update({
+            manna: firebase.firestore.FieldValue.increment(1),
+            lastMannaDate: today
+        });
+        user.manna = (user.manna || 0) + 1;
+        user.lastMannaDate = today;
+    } catch (e) {
+        console.warn('[Daily Manna] Ошибка:', e);
     }
 }
 
