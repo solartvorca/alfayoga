@@ -1691,7 +1691,13 @@
                 return;
             }
 
-            tbody.innerHTML = snapshot.docs.map(doc => {
+            const sortedDocs = [...snapshot.docs].sort((a, b) => {
+                const ta = a.data().joinedAt?.toDate?.() || a.data().joinedAt || new Date(0);
+                const tb = b.data().joinedAt?.toDate?.() || b.data().joinedAt || new Date(0);
+                return new Date(tb) - new Date(ta);
+            });
+
+            tbody.innerHTML = sortedDocs.map(doc => {
                 const user = doc.data();
                 const subscription = user.subscription || "free";
                 const subscriptionClass = `subscription-${subscription}`;
