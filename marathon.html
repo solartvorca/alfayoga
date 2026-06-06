@@ -1085,9 +1085,10 @@
                 return;
             }
 
-            // Не исключать премиум-участников
+            // Не исключать премиум-участников (проверяем оба поля)
             const subscription = window.currentUser.subscription || "free";
-            if (subscription === "premium" || subscription === "vip") {
+            const status = window.currentUser.status || "active";
+            if (subscription === "premium" || subscription === "vip" || status === "premium") {
                 console.log(`[Auto-removal check] Skipping premium user`);
                 return;
             }
