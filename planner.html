@@ -586,6 +586,10 @@
             }).join("");
         }
 
+        const TASK_COOLDOWN_SEC = 60;  // пауза между начислениями
+        const TASK_DAILY_MAX = 50;      // максимум лучиков из задач в день
+        let _taskRaysLocked = false;    // мгновенная блокировка от кликеров
+
         async function toggleTask(taskId, completed) {
             const user = window.currentUser;
             if (!user) return;
@@ -596,29 +600,55 @@
                     completedAt: completed ? new Date() : null
                 });
 
-                // Если задача отмечена как выполненная, начислить лучики
                 if (completed) {
+                    // Мгновенная блокировка — ставится синхронно до любого await
+                    if (_taskRaysLocked) {
+                        showNotification("⏳ Подожди — предыдущее начисление ещё обрабатывается", "info");
+                        loadTasks();
+                        return;
+                    }
+                    _taskRaysLocked = true;
+
                     try {
-                        const COOLDOWN_SEC = 60;
+                        // Кулдаун 60 сек
                         const lastTs = window.currentUser.lastTaskCompletedAt;
                         const lastDate = lastTs ? (lastTs.toDate ? lastTs.toDate() : new Date(lastTs)) : null;
                         const secSinceLast = lastDate ? (Date.now() - lastDate.getTime()) / 1000 : Infinity;
 
-                        if (secSinceLast < COOLDOWN_SEC) {
-                            const wait = Math.ceil(COOLDOWN_SEC - secSinceLast);
-                            showNotification(`⏳ Подожди ещё ${wait} сек. перед следующим начислением`, "info");
-                        } else {
-                            const now = new Date();
-                            await db.collection("users").doc(user.uid).update({
-                                rays: firebase.firestore.FieldValue.increment(5),
-                                lastTaskCompletedAt: now
-                            });
-                            window.currentUser.rays = (window.currentUser.rays || 0) + 5;
-                            window.currentUser.lastTaskCompletedAt = now;
-                            showNotification("✨ +5 лучиков за выполненную задачу!", "success");
+                        if (secSinceLast < TASK_COOLDOWN_SEC) {
+                            const wait = Math.ceil(TASK_COOLDOWN_SEC - secSinceLast);
+                            showNotification(`⏳ Подожди ещё ${wait} сек.`, "info");
+                            return;
                         }
+
+                        // Дневной лимит
+                        const today = new Date().toISOString().slice(0, 10);
+                        const todayRays = window.currentUser.taskRaysToday?.date === today
+                            ? (window.currentUser.taskRaysToday.amount || 0) : 0;
+
+                        if (todayRays >= TASK_DAILY_MAX) {
+                            showNotification(`🚫 Дневной лимит ${TASK_DAILY_MAX} лучиков из задач достигнут`, "info");
+                            return;
+                        }
+
+                        // Ставим время сразу до записи в Firestore
+                        const now = new Date();
+                        window.currentUser.lastTaskCompletedAt = now;
+                        window.currentUser.taskRaysToday = { date: today, amount: todayRays + 5 };
+
+                        await db.collection("users").doc(user.uid).update({
+                            rays: firebase.firestore.FieldValue.increment(5),
+                            lastTaskCompletedAt: now,
+                            taskRaysToday: { date: today, amount: todayRays + 5 }
+                        });
+                        window.currentUser.rays = (window.currentUser.rays || 0) + 5;
+
+                        const left = TASK_DAILY_MAX - (todayRays + 5);
+                        showNotification(`✨ +5 лучиков! Осталось сегодня: ${left}`, "success");
                     } catch (error) {
                         console.error("Ошибка при начислении лучиков:", error);
+                    } finally {
+                        _taskRaysLocked = false;
                     }
                 }
 
