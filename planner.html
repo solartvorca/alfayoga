@@ -599,15 +599,24 @@
                 // Если задача отмечена как выполненная, начислить лучики
                 if (completed) {
                     try {
-                        await db.collection("users").doc(user.uid).update({
-                            rays: firebase.firestore.FieldValue.increment(5)
-                        });
+                        const COOLDOWN_SEC = 60;
+                        const lastTs = window.currentUser.lastTaskCompletedAt;
+                        const lastDate = lastTs ? (lastTs.toDate ? lastTs.toDate() : new Date(lastTs)) : null;
+                        const secSinceLast = lastDate ? (Date.now() - lastDate.getTime()) / 1000 : Infinity;
 
-                        // Обновить локальное значение
-                        window.currentUser.rays = (window.currentUser.rays || 0) + 5;
-
-                        // Показать уведомление
-                        showNotification("✨ +5 лучиков за выполненную задачу!", "success");
+                        if (secSinceLast < COOLDOWN_SEC) {
+                            const wait = Math.ceil(COOLDOWN_SEC - secSinceLast);
+                            showNotification(`⏳ Подожди ещё ${wait} сек. перед следующим начислением`, "info");
+                        } else {
+                            const now = new Date();
+                            await db.collection("users").doc(user.uid).update({
+                                rays: firebase.firestore.FieldValue.increment(5),
+                                lastTaskCompletedAt: now
+                            });
+                            window.currentUser.rays = (window.currentUser.rays || 0) + 5;
+                            window.currentUser.lastTaskCompletedAt = now;
+                            showNotification("✨ +5 лучиков за выполненную задачу!", "success");
+                        }
                     } catch (error) {
                         console.error("Ошибка при начислении лучиков:", error);
                     }
