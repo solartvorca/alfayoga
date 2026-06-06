@@ -1718,7 +1718,10 @@
 
                 return `
                     <tr>
-                        <td><a href="view-profile.html?uid=${doc.id}" class="user-nick-link">${user.nick}</a></td>
+                        <td>
+                            <a href="view-profile.html?uid=${doc.id}" class="user-nick-link">${user.nick}</a>
+                            <a href="https://console.firebase.google.com/project/yog-ava-tho/firestore/data/users/${doc.id}" target="_blank" title="Открыть в Firestore" style="margin-left:6px;font-size:11px;color:#666;text-decoration:none;" onmouseover="this.style.color='#ffd700'" onmouseout="this.style.color='#666'">🔗</a>
+                        </td>
                         <td>${user.email}</td>
                         <td>🔥 ${user.rays || 0}</td>
                         <td>${lastReportText}</td>
