@@ -1724,12 +1724,14 @@
                         </td>
                         <td>${user.email}</td>
                         <td>
-                            <div style="display:flex;align-items:center;gap:4px;">
-                                <input type="number" value="${Math.round(user.rays || 0)}" min="0"
-                                    style="width:80px;background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:4px;padding:3px 6px;color:#e0e6ed;font-size:13px;"
-                                    onkeydown="if(event.key==='Enter') saveUserRays('${doc.id}', this)"
-                                    onblur="saveUserRays('${doc.id}', this)">
-                                <span style="font-size:13px;">🔥</span>
+                            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                                <input type="number" id="rays_${doc.id}" value="${Math.round(user.rays || 0)}" min="0"
+                                    style="width:75px;background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:4px;padding:3px 6px;color:#e0e6ed;font-size:13px;">
+                                <button onclick="saveUserRays('${doc.id}')"
+                                    style="padding:3px 7px;background:rgba(0,208,132,0.15);border:1px solid rgba(0,208,132,0.4);border-radius:4px;color:#00d084;font-size:12px;cursor:pointer;">
+                                    💾
+                                </button>
+                                <span id="rays_status_${doc.id}" style="font-size:11px;display:none;"></span>
                             </div>
                         </td>
                         <td>${lastReportText}</td>
@@ -1753,15 +1755,20 @@
             }).join("");
         }
 
-        async function saveUserRays(uid, input) {
+        async function saveUserRays(uid) {
+            const input = document.getElementById('rays_' + uid);
+            const statusEl = document.getElementById('rays_status_' + uid);
             const val = parseFloat(input.value);
-            if (isNaN(val) || val < 0) return;
+            if (isNaN(val) || val < 0) { statusEl.textContent = '❌ некорректно'; statusEl.style.color = '#ff6b6b'; statusEl.style.display = 'inline'; return; }
+            statusEl.textContent = '⏳'; statusEl.style.color = '#888'; statusEl.style.display = 'inline';
             try {
                 await db.collection("users").doc(uid).update({ rays: val });
-                input.style.borderColor = 'rgba(0,208,132,0.6)';
-                setTimeout(() => { input.style.borderColor = 'rgba(180,100,255,0.3)'; }, 1200);
+                statusEl.textContent = '✅ сохранено';
+                statusEl.style.color = '#00d084';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
             } catch (e) {
-                alert("Ошибка: " + e.message);
+                statusEl.textContent = '❌ ' + e.message;
+                statusEl.style.color = '#ff6b6b';
             }
         }
 
