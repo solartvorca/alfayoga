@@ -419,17 +419,45 @@
             document.getElementById('mannaDisplay').textContent = '💧 ' + (user.manna || 0);
         }
 
+        const DICE_DAILY_LIMIT = 10;
+        let _diceRollLocked = false;
+
+        function showDiceLimit(msg) {
+            let el = document.getElementById('diceLimitNotice');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'diceLimitNotice';
+                el.style.cssText = 'text-align:center;font-size:13px;color:#ff9944;margin-top:8px;';
+                document.getElementById('rollBtn').insertAdjacentElement('afterend', el);
+            }
+            el.textContent = msg;
+        }
+
         async function rollDice() {
             const user = window.currentUser;
             if (!user) return;
 
+            if (_diceRollLocked) return;
+            _diceRollLocked = true;
+
             if ((user.rays || 0) < 10) {
                 alert('Недостаточно лучиков! Нужно минимум 10.');
+                _diceRollLocked = false;
+                return;
+            }
+
+            // Дневной лимит бросков
+            const today = new Date().toISOString().slice(0, 10);
+            const rollsToday = (user.diceRollsToday?.date === today) ? (user.diceRollsToday.count || 0) : 0;
+            if (rollsToday >= DICE_DAILY_LIMIT) {
+                alert(`🚫 Дневной лимит: не более ${DICE_DAILY_LIMIT} бросков в день. Возвращайся завтра!`);
+                _diceRollLocked = false;
                 return;
             }
 
             if (!ichingData || ichingData.length === 0) {
                 alert('Данные загружаются, попробуй через секунду.');
+                _diceRollLocked = false;
                 return;
             }
 
@@ -446,19 +474,28 @@
             const idx = Math.floor(Math.random() * ichingData.length);
             const entry = ichingData[idx];
 
-            // Списать 10 лучиков, начислить 20 пыльцы
+            // Списать 10 лучиков, начислить 20 пыльцы, обновить счётчик бросков
             try {
+                const today = new Date().toISOString().slice(0, 10);
+                const rollsToday = (user.diceRollsToday?.date === today) ? (user.diceRollsToday.count || 0) : 0;
+                const newCount = rollsToday + 1;
                 await db.collection('users').doc(user.uid).update({
                     rays: firebase.firestore.FieldValue.increment(-10),
-                    dust: firebase.firestore.FieldValue.increment(20)
+                    dust: firebase.firestore.FieldValue.increment(20),
+                    diceRollsToday: { date: today, count: newCount }
                 });
                 user.rays = (user.rays || 0) - 10;
                 user.dust = (user.dust || 0) + 20;
+                user.diceRollsToday = { date: today, count: newCount };
                 updateBalance();
+                const left = DICE_DAILY_LIMIT - newCount;
+                if (left <= 3 && left > 0) showDiceLimit(`Осталось бросков сегодня: ${left}`);
+                if (left === 0) showDiceLimit('Дневной лимит бросков исчерпан. Возвращайся завтра!');
             } catch (e) {
                 alert('Ошибка: ' + e.message);
                 btn.disabled = false;
                 document.getElementById('rollingAnim').style.display = 'none';
+                _diceRollLocked = false;
                 return;
             }
 
@@ -546,6 +583,7 @@
                 alert('Результат получен, но ошибка при отображении: ' + dispErr.message);
             }
             btn.disabled = false;
+            _diceRollLocked = false;
 
             // Каждый бросок обновляет гексаграмму дня
             const today = new Date().toISOString().slice(0, 10);
