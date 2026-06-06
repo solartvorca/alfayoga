@@ -1723,7 +1723,15 @@
                             <a href="https://console.firebase.google.com/project/yog-ava-tho/firestore/data/users/${doc.id}" target="_blank" title="Открыть в Firestore" style="margin-left:6px;font-size:11px;color:#666;text-decoration:none;" onmouseover="this.style.color='#ffd700'" onmouseout="this.style.color='#666'">🔗</a>
                         </td>
                         <td>${user.email}</td>
-                        <td>🔥 ${user.rays || 0}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:4px;">
+                                <input type="number" value="${Math.round(user.rays || 0)}" min="0"
+                                    style="width:80px;background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.3);border-radius:4px;padding:3px 6px;color:#e0e6ed;font-size:13px;"
+                                    onkeydown="if(event.key==='Enter') saveUserRays('${doc.id}', this)"
+                                    onblur="saveUserRays('${doc.id}', this)">
+                                <span style="font-size:13px;">🔥</span>
+                            </div>
+                        </td>
                         <td>${lastReportText}</td>
                         <td><span class="${subscriptionClass}">${subscriptionText}</span></td>
                         <td>${skipsText}</td>
@@ -1743,6 +1751,18 @@
                     </tr>
                 `;
             }).join("");
+        }
+
+        async function saveUserRays(uid, input) {
+            const val = parseFloat(input.value);
+            if (isNaN(val) || val < 0) return;
+            try {
+                await db.collection("users").doc(uid).update({ rays: val });
+                input.style.borderColor = 'rgba(0,208,132,0.6)';
+                setTimeout(() => { input.style.borderColor = 'rgba(180,100,255,0.3)'; }, 1200);
+            } catch (e) {
+                alert("Ошибка: " + e.message);
+            }
         }
 
         // Изменить подписку пользователя
