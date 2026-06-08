@@ -445,6 +445,137 @@
         .like-btn-small.liked {
             color: #ff6464;
         }
+
+        /* Comment system */
+        .report-comments {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(180, 100, 255, 0.08);
+        }
+        .comment-form {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .comment-input {
+            flex: 1;
+            background: rgba(180, 100, 255, 0.05);
+            border: 1px solid rgba(180, 100, 255, 0.15);
+            border-radius: 20px;
+            color: #c8d0db;
+            font-size: 12px;
+            padding: 7px 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .comment-input:focus { border-color: rgba(161, 140, 209, 0.4); }
+        .comment-send-btn {
+            background: rgba(161, 140, 209, 0.18);
+            border: 1px solid rgba(161, 140, 209, 0.3);
+            border-radius: 50%;
+            color: #a18cd1;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+        .comment-send-btn:hover { background: rgba(161, 140, 209, 0.35); color: #ffd700; }
+        .comment-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(180, 100, 255, 0.06);
+        }
+        .comment-item:last-child { border-bottom: none; }
+        .comment-author {
+            font-size: 12px;
+            font-weight: 700;
+            color: #a18cd1;
+            text-decoration: none;
+        }
+        .comment-author:hover { color: #ffd700; }
+        .comment-text {
+            font-size: 13px;
+            color: #c8d0db;
+            line-height: 1.5;
+            margin-top: 2px;
+        }
+        /* Блок Царя */
+        .tsar-block {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.07), rgba(200,160,0,0.03));
+            border-left: 3px solid rgba(255, 215, 0, 0.55);
+            border-radius: 0 10px 10px 0;
+            position: relative;
+        }
+        .tsar-name { font-size: 14px; font-weight: 700; color: #ffd700; }
+        .tsar-text { font-size: 13px; color: #e8d8a0; line-height: 1.65; font-style: italic; margin-top: 5px; }
+        /* Chip типа отчёта */
+        .dice-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: #a18cd1;
+            background: rgba(161, 140, 209, 0.12);
+            border: 1px solid rgba(161, 140, 209, 0.25);
+            border-radius: 10px;
+            padding: 2px 7px;
+        }
+        .dream-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: #c8a8f0;
+            background: rgba(200, 150, 255, 0.1);
+            border: 1px solid rgba(200, 150, 255, 0.25);
+            border-radius: 10px;
+            padding: 2px 7px;
+        }
+        /* Пилюли Тень/Дар/Сиддхи */
+        .tds-pills { display: flex; gap: 5px; flex-wrap: wrap; margin: 5px 0 8px; }
+        .tds-pill { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+        .tds-shadow { background: rgba(255,100,100,0.1); color: #ff9999; border: 1px solid rgba(255,100,100,0.22); }
+        .tds-gift { background: rgba(0,208,132,0.1); color: #00d084; border: 1px solid rgba(0,208,132,0.22); }
+        .tds-siddhi { background: rgba(255,215,0,0.1); color: #ffd700; border: 1px solid rgba(255,215,0,0.22); }
+        /* Ответы — вложенность */
+        .comment-replies {
+            margin-left: 16px;
+            margin-top: 8px;
+            border-left: 2px solid rgba(161, 140, 209, 0.2);
+            padding-left: 12px;
+        }
+        .reply-form { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+        .reply-input {
+            flex: 1;
+            font-size: 11px;
+            padding: 5px 10px;
+            background: rgba(180, 100, 255, 0.05);
+            border: 1px solid rgba(180, 100, 255, 0.18);
+            border-radius: 14px;
+            color: #c8d0db;
+            outline: none;
+        }
+        .reply-send-btn {
+            background: rgba(161, 140, 209, 0.18);
+            border: 1px solid rgba(161, 140, 209, 0.28);
+            border-radius: 50%;
+            color: #a18cd1;
+            font-size: 13px;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 0;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -1352,9 +1483,11 @@
                         <div class="report-item" style="border-left: 3px solid rgba(200, 150, 255, 0.5);">
                             <div class="report-header">
                                 <a href="view-profile.html?uid=${data.uid}" class="report-nick">🌙 ${data.nick}</a>
-                                <span class="report-time">${timeStr}</span>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span class="dream-chip">🌙 сновидение</span>
+                                    <span class="report-time">${timeStr}</span>
+                                </div>
                             </div>
-                            <div style="font-size:11px;color:#a18cd1;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🌙 Сновидение</div>
                             <div class="report-text">${data.text}</div>
                             <div style="margin-top:10px;">
                                 ${hasImg ? '' : `<button onclick="generateDreamImage('${item.id}', this)" style="background:linear-gradient(135deg,rgba(161,140,209,0.2),rgba(100,60,180,0.2));border:1px solid rgba(161,140,209,0.4);border-radius:8px;color:#a18cd1;font-size:12px;padding:6px 14px;cursor:pointer;">✨ Визуализировать</button>`}
@@ -1370,7 +1503,8 @@
                                 <div class="comment-form">
                                     <input type="text" class="comment-input"
                                         placeholder="Добавить комментарий..."
-                                        onkeypress="if(event.key==='Enter') addComment('${item.id}', this.value, event)">
+                                        onkeypress="if(event.key==='Enter') addCommentFromForm('${item.id}', this)">
+                                    <button class="comment-send-btn" onclick="addCommentFromForm('${item.id}', this.previousElementSibling)">➤</button>
                                 </div>
                             </div>
                         </div>
@@ -1385,7 +1519,8 @@
                         <div class="comment-form">
                             <input type="text" class="comment-input"
                                 placeholder="Добавить комментарий..."
-                                onkeypress="if(event.key==='Enter') addComment('${item.id}', this.value, event)">
+                                onkeypress="if(event.key==='Enter') addCommentFromForm('${item.id}', this)">
+                            <button class="comment-send-btn" onclick="addCommentFromForm('${item.id}', this.previousElementSibling)">➤</button>
                         </div>
                     </div>
                 `;
@@ -1397,18 +1532,25 @@
                     ? `<span class="report-nick" style="cursor:default;">👑 Царь</span>`
                     : `<a href="view-profile.html?uid=${data.uid}" class="report-nick">${data.isDiceReport ? '🎲 ' : ''}${data.nick}</a>`;
 
-                const diceLabel = data.isDiceReport
-                    ? `<div style="font-size:11px;color:#a18cd1;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">🎲 Отчёт-предсказание · кубик ${data.diceSlot || ''}/3</div>`
+                const diceChip = data.isDiceReport
+                    ? `<span class="dice-chip">🎲 кубик ${data.diceSlot || ''}/3</span>`
                     : '';
+
+                const { pills, cleanText } = data.isDiceReport
+                    ? parseTDSPills(data.text)
+                    : { pills: '', cleanText: data.text };
 
                 return `
                     <div class="report-item" ${data.isDiceReport ? 'style="border-left:3px solid rgba(161,140,209,0.5);"' : ''}>
                         <div class="report-header">
                             ${authorEl}
-                            <span class="report-time">${timeStr}</span>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                ${diceChip}
+                                <span class="report-time">${timeStr}</span>
+                            </div>
                         </div>
-                        ${diceLabel}
-                        <div class="report-text">${data.text}</div>
+                        ${pills}
+                        <div class="report-text">${cleanText}</div>
                         ${data.isAI ? '' : `<div class="report-actions">
                             <button class="like-btn ${likedByUser ? 'liked' : ''}"
                                     onclick="toggleReportLike('${item.id}', '${data.uid}')"
@@ -1455,12 +1597,12 @@
             aiComments.forEach(data => {
                 const commentId = data.id;
                 aiHtml += `
-                    <div style="margin-bottom:10px; padding:10px 14px; background:linear-gradient(135deg,rgba(161,140,209,0.1),rgba(100,60,180,0.08)); border:1px solid rgba(161,140,209,0.25); border-radius:10px; position:relative;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <span style="font-size:13px; font-weight:700; color:#a18cd1;">👑 Царь</span>
+                    <div class="tsar-block">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="tsar-name">👑 Царь</span>
                             ${isAdmin ? `<button onclick="deleteComment('${reportId}','${commentId}')" style="background:rgba(255,100,100,0.2);border:none;color:#ff6464;padding:2px 6px;border-radius:3px;font-size:10px;cursor:pointer;">✕</button>` : ''}
                         </div>
-                        <div style="font-size:13px; color:#c8b8e8; line-height:1.65; font-style:italic;">${data.text}</div>
+                        <div class="tsar-text">${data.text}</div>
                     </div>`;
             });
 
@@ -1492,31 +1634,18 @@
                                 ❤️ ${commentLikes}
                             </button>
                         </div>
-                        <div class="comment-replies" id="replies-${commentId}" style="margin-left: 20px; margin-top: 8px; border-left: 2px solid rgba(180, 100, 255, 0.2); padding-left: 12px;">
+                        <div class="comment-replies" id="replies-${commentId}">
                             <div style="font-size: 11px; color: #666;">Загрузка ответов...</div>
                         </div>
-                        <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+                        <div class="reply-form">
                             <input type="text" class="reply-input" data-report-id="${reportId}" data-comment-id="${commentId}" placeholder="Ответить..."
-                                style="font-size: 12px; padding: 6px 8px; flex: 1; background: rgba(180, 100, 255, 0.05); border: 1px solid rgba(180, 100, 255, 0.2); border-radius: 4px; color: #c8d0db;">
-                            <button type="button" class="reply-btn" data-report-id="${reportId}" data-comment-id="${commentId}"
-                                style="font-size: 11px; padding: 6px 12px; background: rgba(180, 100, 255, 0.2); border: 1px solid rgba(180, 100, 255, 0.4); border-radius: 4px; color: #a18cd1; cursor: pointer; font-weight: 600; white-space: nowrap;">
-                                Отправить
-                            </button>
+                                onkeypress="if(event.key==='Enter') addReplyFromForm('${reportId}','${commentId}',this)">
+                            <button type="button" class="reply-send-btn" onclick="addReplyFromForm('${reportId}','${commentId}',this.previousElementSibling)">➤</button>
                         </div>
                     </div>
                 `;
             }).join("");
 
-            // Добавить обработчик для кнопок отправки ответа
-            document.querySelectorAll('.reply-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const reportId = this.dataset.reportId;
-                    const commentId = this.dataset.commentId;
-                    const input = this.previousElementSibling;
-                    const text = input.value;
-                    addReply(reportId, commentId, text, input);
-                });
-            });
 
             // Загрузить ответы для пользовательских комментариев
             userComments.forEach(comment => {
@@ -1546,15 +1675,15 @@
             list.innerHTML = replies.map(data => {
                 if (data.isAI) {
                     return `
-                        <div class="reply-item" style="margin-bottom:8px; padding:8px 10px; background:linear-gradient(135deg,rgba(161,140,209,0.1),rgba(100,60,180,0.07)); border:1px solid rgba(161,140,209,0.2); border-radius:8px;">
-                            <span class="comment-author" style="font-size:11px; color:#a18cd1; cursor:default;">👑 Царь</span>
-                            <div class="comment-text" style="font-size:12px; font-style:italic; color:#c8b8e8; margin-top:4px;">${data.text}</div>
+                        <div class="tsar-block" style="border-radius:0 8px 8px 0; margin-bottom:6px;">
+                            <span class="tsar-name" style="font-size:12px;">👑 Царь</span>
+                            <div class="tsar-text" style="font-size:12px;">${data.text}</div>
                         </div>`;
                 }
                 return `
-                    <div class="reply-item" style="margin-bottom: 8px;">
-                        <a href="view-profile.html?uid=${data.uid}" class="comment-author" style="font-size: 11px;">${data.nick}</a>
-                        <div class="comment-text" style="font-size: 12px;">${data.text}</div>
+                    <div class="reply-item" style="margin-bottom: 6px;">
+                        <a href="view-profile.html?uid=${data.uid}" class="comment-author">${data.nick}</a>
+                        <div class="comment-text">${data.text}</div>
                     </div>`;
             }).join("");
         }
@@ -1582,6 +1711,30 @@
             } catch (error) {
                 alert("Ошибка при удалении: " + error.message);
             }
+        }
+
+        function parseTDSPills(text) {
+            const m = text.match(/✦\s*Тень:\s*([^·\n]+?)·\s*Дар:\s*([^·\n]+?)·\s*Сиддхи:\s*(.+?)(?:\n|$)/);
+            if (!m) return { pills: '', cleanText: text };
+            const pills = `<div class="tds-pills">
+                <span class="tds-pill tds-shadow">🌑 ${m[1].trim()}</span>
+                <span class="tds-pill tds-gift">🌿 ${m[2].trim()}</span>
+                <span class="tds-pill tds-siddhi">✨ ${m[3].trim()}</span>
+            </div>`;
+            const cleanText = text.replace(/✦\s*Тень:[^\n]+\n?/, '');
+            return { pills, cleanText };
+        }
+
+        function addCommentFromForm(reportId, inputEl) {
+            const text = inputEl.value.trim();
+            if (!text) return;
+            addComment(reportId, text, { target: inputEl, preventDefault: function(){} });
+        }
+
+        function addReplyFromForm(reportId, commentId, inputEl) {
+            const text = inputEl.value.trim();
+            if (!text) return;
+            addReply(reportId, commentId, text, inputEl);
         }
 
         let _commentSubmitting = false;
