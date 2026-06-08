@@ -457,9 +457,11 @@
             gap: 6px;
             align-items: center;
             margin-top: 8px;
+            overflow: hidden;
         }
         .comment-input {
             flex: 1;
+            min-width: 0;
             background: rgba(180, 100, 255, 0.05);
             border: 1px solid rgba(180, 100, 255, 0.15);
             border-radius: 20px;
@@ -544,14 +546,14 @@
         .tds-siddhi { background: rgba(255,215,0,0.1); color: #ffd700; border: 1px solid rgba(255,215,0,0.22); }
         /* Ответы — вложенность */
         .comment-replies {
-            margin-left: 16px;
+            margin-left: 12px;
             margin-top: 8px;
-            border-left: 2px solid rgba(161, 140, 209, 0.2);
-            padding-left: 12px;
+            padding-left: 0;
         }
-        .reply-form { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+        .reply-form { display: flex; gap: 6px; align-items: center; margin-top: 8px; overflow: hidden; }
         .reply-input {
             flex: 1;
+            min-width: 0;
             font-size: 11px;
             padding: 5px 10px;
             background: rgba(180, 100, 255, 0.05);
