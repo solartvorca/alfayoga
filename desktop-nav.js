@@ -1,22 +1,26 @@
 (function () {
-    const SIDEBAR_WIDTH = '220px';
+    // Первый ряд — основные разделы
+    const row1 = [
+        { icon: '🌙', label: 'Будильник',       path: 'index.html' },
+        { icon: '📖', label: 'Марафон',          path: 'marathon.html' },
+        { icon: '📚', label: 'База',             path: 'base.html' },
+        { icon: '🌬️', label: 'Дыхание',         path: 'marathon-breath.html' },
+        { icon: '🧬', label: 'Клетки',           path: 'marathon-cell.html' },
+        { icon: '👤', label: 'Профиль',          path: 'profile.html' },
+        { icon: '🏆', label: 'Рейтинг',          path: 'rating.html' },
+        { icon: '🎓', label: 'Курсы',            path: 'courses.html' },
+        { icon: '✨', label: 'Желания',          path: 'wishes.html' },
+    ];
 
-    const allItems = [
-        { icon: '🌙', label: 'Будильник',          path: 'index.html' },
-        { icon: '📖', label: 'Марафон',             path: 'marathon.html' },
-        { icon: '📚', label: 'База',                path: 'base.html' },
-        { icon: '🌬️', label: 'Марафон дыхания',    path: 'marathon-breath.html' },
-        { icon: '🧬', label: 'Клет. трансформация', path: 'marathon-cell.html' },
-        null,
-        { icon: '👤', label: 'Профиль',             path: 'profile.html' },
-        { icon: '🏆', label: 'Рейтинг',             path: 'rating.html' },
-        { icon: '🎓', label: 'Курсы',               path: 'courses.html' },
-        { icon: '✨', label: 'Желания',             path: 'wishes.html' },
-        { icon: '🌿', label: 'Образ жизни',         path: 'lifestyle.html' },
-        { icon: '📅', label: 'Планировщик',         path: 'planner.html' },
-        { icon: '🎲', label: 'И Цзин',              path: 'dice.html' },
-        { icon: '🌙', label: 'Сновидения',          path: 'profile.html?tab=dreams' },
-        { icon: '🔮', label: 'Предназначение',      path: 'profile.html?tab=destiny' },
+    // Второй ряд — дополнительные
+    const row2 = [
+        { icon: '🌿', label: 'Образ жизни',     path: 'lifestyle.html' },
+        { icon: '📋', label: 'Привычки',         path: 'habits.html' },
+        { icon: '📅', label: 'Планировщик',      path: 'planner.html' },
+        { icon: '🔔', label: 'Уведомления',      path: 'notifications.html' },
+        { icon: '🎲', label: 'И Цзин',           path: 'dice.html' },
+        { icon: '🌙', label: 'Сновидения',       path: 'profile.html?tab=dreams' },
+        { icon: '🔮', label: 'Предназначение',   path: 'profile.html?tab=destiny' },
     ];
 
     function getCurrentPage() {
@@ -25,170 +29,148 @@
 
     function isActive(itemPath) {
         const current = getCurrentPage();
-        const search = window.location.search;
         if (itemPath.includes('?')) {
-            return window.location.href.includes(itemPath.split('?')[1]);
+            return window.location.search && window.location.href.includes(itemPath.split('?')[1]);
         }
         return itemPath === current;
     }
 
-    function createSidebar() {
+    function makeLink(item) {
+        const a = document.createElement('a');
+        a.href = item.path;
+        a.className = 'dtn-link' + (isActive(item.path) ? ' active' : '');
+        a.innerHTML = `<span class="dtn-icon">${item.icon}</span><span class="dtn-label">${item.label}</span>`;
+        return a;
+    }
+
+    function createTopNav() {
         const style = document.createElement('style');
         style.textContent = `
             @media (min-width: 641px) {
                 #userNav { display: none !important; }
                 .mobile-bottom-nav { display: none !important; }
                 .nav-drawer, .nav-drawer-overlay { display: none !important; }
-                body { padding-left: ${SIDEBAR_WIDTH} !important; }
-                .desktop-sidebar { display: flex !important; }
+                body { padding-top: 88px !important; padding-left: 20px !important; }
+                .desktop-topnav { display: block !important; }
             }
             @media (max-width: 640px) {
-                .desktop-sidebar { display: none !important; }
+                .desktop-topnav { display: none !important; }
             }
 
-            .desktop-sidebar {
+            .desktop-topnav {
                 display: none;
-                flex-direction: column;
                 position: fixed;
-                top: 0; left: 0; bottom: 0;
-                width: ${SIDEBAR_WIDTH};
-                background: #0d0b1e;
-                border-right: 1px solid rgba(161,140,209,0.18);
+                top: 0; left: 0; right: 0;
+                background: rgba(13, 11, 30, 0.97);
+                border-bottom: 1px solid rgba(161,140,209,0.2);
+                backdrop-filter: blur(12px);
                 z-index: 900;
-                overflow-y: auto;
-                overflow-x: hidden;
-                padding: 16px 0 24px;
+                padding: 0 16px;
                 box-sizing: border-box;
             }
-            .desktop-sidebar::-webkit-scrollbar { width: 4px; }
-            .desktop-sidebar::-webkit-scrollbar-thumb { background: rgba(161,140,209,0.25); border-radius: 2px; }
 
-            .dsb-logo {
-                padding: 8px 18px 18px;
-                font-size: 13px;
-                letter-spacing: 0.14em;
-                text-transform: uppercase;
-                color: rgba(161,140,209,0.45);
-                border-bottom: 1px solid rgba(161,140,209,0.1);
-                margin-bottom: 6px;
-            }
-
-            .dsb-item {
+            .dtn-row {
                 display: flex;
                 align-items: center;
-                gap: 11px;
-                padding: 10px 18px;
-                color: #b8c2cc;
-                text-decoration: none;
-                font-size: 13.5px;
-                cursor: pointer;
-                border-left: 3px solid transparent;
-                transition: background 0.15s, color 0.15s;
-                white-space: nowrap;
+                gap: 2px;
+                height: 42px;
                 overflow: hidden;
             }
-            .dsb-item:hover {
-                background: rgba(161,140,209,0.08);
-                color: #e0e6ed;
-            }
-            .dsb-item.active {
-                color: #a18cd1;
-                border-left-color: #a18cd1;
-                background: rgba(161,140,209,0.1);
-                font-weight: 600;
-            }
-            .dsb-icon {
-                font-size: 18px;
-                width: 24px;
-                text-align: center;
-                flex-shrink: 0;
+
+            .dtn-row-1 {
+                border-bottom: 1px solid rgba(161,140,209,0.1);
             }
 
-            .dsb-divider {
-                height: 1px;
-                background: rgba(161,140,209,0.1);
-                margin: 8px 18px;
-            }
-
-            .dsb-bottom {
-                margin-top: auto;
-                padding-top: 12px;
-                border-top: 1px solid rgba(161,140,209,0.1);
-            }
-
-            .dsb-logout {
+            .dtn-link {
                 display: flex;
                 align-items: center;
-                gap: 11px;
-                padding: 10px 18px;
-                color: rgba(255,100,100,0.7);
-                font-size: 13.5px;
-                cursor: pointer;
-                border-left: 3px solid transparent;
+                gap: 5px;
+                padding: 5px 9px;
+                color: rgba(200, 208, 219, 0.75);
+                text-decoration: none;
+                font-size: 12.5px;
+                border-radius: 6px;
+                white-space: nowrap;
                 transition: background 0.15s, color 0.15s;
-                background: none;
-                border-top: none;
-                border-right: none;
-                border-bottom: none;
-                width: 100%;
-                text-align: left;
+                flex-shrink: 0;
             }
-            .dsb-logout:hover {
-                background: rgba(255,100,100,0.08);
+            .dtn-link:hover {
+                background: rgba(161,140,209,0.1);
+                color: #e0e6ed;
+            }
+            .dtn-link.active {
+                background: rgba(161,140,209,0.15);
+                color: #a18cd1;
+                font-weight: 600;
+            }
+            .dtn-icon { font-size: 15px; }
+
+            .dtn-sep {
+                flex: 1;
+            }
+
+            .dtn-admin-link {
+                display: none;
+            }
+
+            .dtn-logout {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 5px 9px;
+                background: none;
+                border: 1px solid rgba(255,100,100,0.25);
+                border-radius: 6px;
+                color: rgba(255,100,100,0.7);
+                font-size: 12px;
+                cursor: pointer;
+                white-space: nowrap;
+                flex-shrink: 0;
+                transition: all 0.15s;
+            }
+            .dtn-logout:hover {
+                background: rgba(255,100,100,0.1);
                 color: #ff6464;
             }
         `;
         document.head.appendChild(style);
 
-        const sidebar = document.createElement('nav');
-        sidebar.className = 'desktop-sidebar';
+        const nav = document.createElement('nav');
+        nav.className = 'desktop-topnav';
 
-        // Logo/title
-        const logo = document.createElement('div');
-        logo.className = 'dsb-logo';
-        logo.textContent = '🌙 Навигация';
-        sidebar.appendChild(logo);
+        // Row 1
+        const r1 = document.createElement('div');
+        r1.className = 'dtn-row dtn-row-1';
+        row1.forEach(item => r1.appendChild(makeLink(item)));
+        r1.appendChild(Object.assign(document.createElement('div'), { className: 'dtn-sep' }));
 
-        // Nav items
-        allItems.forEach(item => {
-            if (!item) {
-                const div = document.createElement('div');
-                div.className = 'dsb-divider';
-                sidebar.appendChild(div);
-                return;
-            }
-            const a = document.createElement('a');
-            a.href = item.path;
-            a.className = 'dsb-item' + (isActive(item.path) ? ' active' : '');
-            a.innerHTML = `<span class="dsb-icon">${item.icon}</span><span>${item.label}</span>`;
-            sidebar.appendChild(a);
-        });
-
-        // Admin link (hidden by default)
+        // Admin link (hidden until auth confirms admin)
         const adminLink = document.createElement('a');
         adminLink.href = 'admin.html';
-        adminLink.className = 'dsb-item' + (isActive('admin.html') ? ' active' : '');
-        adminLink.id = 'dsbAdminLink';
-        adminLink.style.display = 'none';
-        adminLink.innerHTML = `<span class="dsb-icon">⚙️</span><span>Администратор</span>`;
+        adminLink.className = 'dtn-link dtn-admin-link' + (isActive('admin.html') ? ' active' : '');
+        adminLink.id = 'dtnAdminLink';
+        adminLink.innerHTML = `<span class="dtn-icon">⚙️</span><span class="dtn-label">Администратор</span>`;
+        r1.appendChild(adminLink);
 
-        // Bottom section
-        const bottom = document.createElement('div');
-        bottom.className = 'dsb-bottom';
-        bottom.appendChild(adminLink);
-
+        // Logout button
         const logoutBtn = document.createElement('button');
-        logoutBtn.className = 'dsb-logout';
-        logoutBtn.innerHTML = `<span class="dsb-icon">🚪</span><span>Выход</span>`;
+        logoutBtn.className = 'dtn-logout';
+        logoutBtn.innerHTML = `🚪 Выход`;
         logoutBtn.onclick = () => {
             firebase.auth().signOut().then(() => { window.location.href = 'login.html'; });
         };
-        bottom.appendChild(logoutBtn);
-        sidebar.appendChild(bottom);
+        r1.appendChild(logoutBtn);
 
-        document.body.appendChild(sidebar);
+        // Row 2
+        const r2 = document.createElement('div');
+        r2.className = 'dtn-row dtn-row-2';
+        row2.forEach(item => r2.appendChild(makeLink(item)));
 
-        // Mirror admin link visibility from #adminLink
+        nav.appendChild(r1);
+        nav.appendChild(r2);
+        document.body.appendChild(nav);
+
+        // Mirror admin link visibility
         function syncAdminLink() {
             const orig = document.getElementById('adminLink');
             if (!orig) return;
@@ -196,14 +178,12 @@
             adminLink.style.display = visible ? 'flex' : 'none';
         }
 
-        // Watch for DOMContentLoaded then observe
         function startObserving() {
             const orig = document.getElementById('adminLink');
             if (orig) {
                 syncAdminLink();
                 new MutationObserver(syncAdminLink).observe(orig, { attributes: true, attributeFilter: ['style'] });
             } else {
-                // Try again shortly in case #adminLink isn't rendered yet
                 setTimeout(startObserving, 300);
             }
         }
@@ -216,8 +196,8 @@
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createSidebar);
+        document.addEventListener('DOMContentLoaded', createTopNav);
     } else {
-        createSidebar();
+        createTopNav();
     }
 })();
