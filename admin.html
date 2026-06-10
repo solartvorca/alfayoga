@@ -409,6 +409,19 @@
                         <input type="url" id="dayVideo" placeholder="https://vkvideo.ru/video-...">
                     </div>
 
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>🌟 Участник марафона «Единство» (назначить на этот день)</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" id="unityParticipantSearch" placeholder="Введи ник или email участника" style="flex:1;"
+                                oninput="searchUnityParticipants(this.value)">
+                            <button type="button" class="btn btn-small" onclick="clearUnityParticipant()">✕</button>
+                        </div>
+                        <div id="unityParticipantResults" style="margin-top:6px; max-height:150px; overflow-y:auto;"></div>
+                        <div id="unityParticipantSelected" style="margin-top:6px; font-size:13px; color:#ffd700; display:none;"></div>
+                        <input type="hidden" id="unityParticipantUid">
+                        <input type="hidden" id="unityParticipantNick">
+                    </div>
+
                     <div style="grid-column: 1 / -1; border-top: 1px solid rgba(180, 100, 255, 0.1); padding-top: 20px; margin-top: 20px;">
                         <h4 style="color: #a18cd1; margin-bottom: 15px;">📚 Дополнительные материалы</h4>
                     </div>
@@ -1701,6 +1714,52 @@
             }
         }
 
+        // Поиск участника для назначения в Единство
+        let _unitySearchTimer = null;
+        async function searchUnityParticipants(query) {
+            clearTimeout(_unitySearchTimer);
+            const res = document.getElementById("unityParticipantResults");
+            if (!query || query.length < 2) { res.innerHTML = ''; return; }
+            _unitySearchTimer = setTimeout(async () => {
+                try {
+                    const snap = await db.collection("users").get();
+                    const q = query.toLowerCase();
+                    const matches = snap.docs
+                        .map(d => ({ uid: d.id, ...d.data() }))
+                        .filter(u => (u.nick || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q))
+                        .slice(0, 8);
+                    res.innerHTML = matches.map(u => `
+                        <div onclick="selectUnityParticipant('${u.uid}','${(u.nick||u.email).replace(/'/g,"\\'")}','${(u.email||'').replace(/'/g,"\\'")}',${u.hdReading||false})"
+                            style="padding:7px 10px; cursor:pointer; border-radius:6px; font-size:13px;
+                                   background:rgba(161,140,209,0.08); margin-bottom:3px;
+                                   border:1px solid rgba(161,140,209,0.15);">
+                            <span style="font-weight:600; color:#a18cd1;">${u.nick || '—'}</span>
+                            <span style="color:#888; margin-left:8px;">${u.email || ''}</span>
+                            ${u.hdReading ? '<span style="color:#ffd700; margin-left:6px;">✦ HD</span>' : ''}
+                            ${u.unityDay ? `<span style="color:#00d084; margin-left:6px;">День ${u.unityDay}</span>` : ''}
+                        </div>`).join('') || '<div style="color:#888; font-size:12px; padding:6px;">Не найдено</div>';
+                } catch(e) { res.innerHTML = '<div style="color:#ff6464; font-size:12px;">Ошибка поиска</div>'; }
+            }, 300);
+        }
+
+        function selectUnityParticipant(uid, nick, email, hasHd) {
+            document.getElementById("unityParticipantUid").value = uid;
+            document.getElementById("unityParticipantNick").value = nick;
+            document.getElementById("unityParticipantResults").innerHTML = '';
+            document.getElementById("unityParticipantSearch").value = '';
+            const sel = document.getElementById("unityParticipantSelected");
+            sel.style.display = 'block';
+            sel.innerHTML = `✅ Назначен: <strong>${nick}</strong> (${email})${hasHd ? ' ✦ HD' : ''}`;
+        }
+
+        function clearUnityParticipant() {
+            document.getElementById("unityParticipantUid").value = '';
+            document.getElementById("unityParticipantNick").value = '';
+            document.getElementById("unityParticipantSearch").value = '';
+            document.getElementById("unityParticipantResults").innerHTML = '';
+            document.getElementById("unityParticipantSelected").style.display = 'none';
+        }
+
         // Добавить или обновить задание на день
         async function addDayAssignment(e) {
             e.preventDefault();
@@ -1719,19 +1778,33 @@
                 whitepaper: document.getElementById("dayWhitepaper").value || null
             };
 
+            const unityUid = document.getElementById("unityParticipantUid").value;
+            const unityNick = document.getElementById("unityParticipantNick").value;
+
             try {
+                const dayData = {
+                    title,
+                    content,
+                    videoUrl: videoUrl || null,
+                    dayNumber: dayNum,
+                    materials,
+                    createdAt: new Date()
+                };
+                if (unityUid) {
+                    dayData.unityUid = unityUid;
+                    dayData.unityNick = unityNick;
+                }
                 await db.collection("marathons").doc("lunar-yoga-tsarevich")
-                    .collection("days").doc(dayNum.toString()).set({
-                        title,
-                        content,
-                        videoUrl: videoUrl || null,
-                        dayNumber: dayNum,
-                        materials,
-                        createdAt: new Date()
-                    }, { merge: true });
+                    .collection("days").doc(dayNum.toString()).set(dayData, { merge: true });
+
+                // Назначить участнику день в Единстве
+                if (unityUid) {
+                    await db.collection("users").doc(unityUid).update({ unityDay: dayNum });
+                }
 
                 alert("Задание сохранено!");
                 document.querySelector("#days-tab form").reset();
+                clearUnityParticipant();
                 loadAllDays();
             } catch (error) {
                 alert("Ошибка: " + error.message);
@@ -1796,6 +1869,16 @@
                 document.getElementById("dayTitle").value = day.title;
                 document.getElementById("dayContent").value = day.content;
                 document.getElementById("dayVideo").value = day.videoUrl || "";
+                // Назначенный участник Единства
+                if (day.unityUid) {
+                    document.getElementById("unityParticipantUid").value = day.unityUid;
+                    document.getElementById("unityParticipantNick").value = day.unityNick || '';
+                    const sel = document.getElementById("unityParticipantSelected");
+                    sel.style.display = 'block';
+                    sel.innerHTML = `✅ Назначен: <strong>${day.unityNick || day.unityUid}</strong>`;
+                } else {
+                    clearUnityParticipant();
+                }
 
                 // Заполнить дополнительные материалы
                 document.getElementById("dayPresentation").value = materials.presentation || "";
@@ -1906,6 +1989,24 @@
                                 <option value="daily" ${subscription === "daily" ? "selected" : ""}>Daily</option>
                             </select>
                         </td>
+                        <td style="font-size: 12px; text-align:center;">
+                            <label title="HD-чтение проведено" style="cursor:pointer; display:block; margin-bottom:4px;">
+                                <input type="checkbox" ${user.hdReading ? 'checked' : ''} onchange="toggleHdReading('${doc.id}', this.checked)">
+                                <span style="color:#ffd700; margin-left:4px;">✦ HD</span>
+                            </label>
+                            <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
+                                <input type="number" id="unityDay_${doc.id}" value="${user.unityDay || ''}" min="1" max="29"
+                                    placeholder="—" title="День Единства"
+                                    style="width:44px; background:rgba(0,208,132,0.08); border:1px solid rgba(0,208,132,0.3);
+                                           border-radius:5px; color:#00d084; font-size:12px; padding:3px 4px; text-align:center;">
+                                <button onclick="setUnityDay('${doc.id}')"
+                                    style="background:rgba(0,208,132,0.15); border:1px solid rgba(0,208,132,0.35);
+                                           border-radius:5px; color:#00d084; font-size:11px; padding:3px 6px; cursor:pointer;">✓</button>
+                                ${user.unityDay ? `<button onclick="clearUnityDayUser('${doc.id}')" title="Снять день"
+                                    style="background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3);
+                                           border-radius:5px; color:#ff6464; font-size:11px; padding:3px 5px; cursor:pointer;">✕</button>` : ''}
+                            </div>
+                        </td>
                     </tr>
                 `;
             }).join("");
@@ -1928,7 +2029,32 @@
             }
         }
 
-        // Изменить подписку пользователя
+        async function toggleHdReading(uid, value) {
+            try {
+                await db.collection("users").doc(uid).update({ hdReading: value });
+            } catch(e) { alert("Ошибка: " + e.message); }
+        }
+
+        async function setUnityDay(uid) {
+            const input = document.getElementById('unityDay_' + uid);
+            const val = parseInt(input.value);
+            if (!val || val < 1 || val > 29) {
+                alert("Введи день от 1 до 29");
+                return;
+            }
+            try {
+                await db.collection("users").doc(uid).update({ unityDay: val });
+                loadUsers();
+            } catch(e) { alert("Ошибка: " + e.message); }
+        }
+
+        async function clearUnityDayUser(uid) {
+            try {
+                await db.collection("users").doc(uid).update({ unityDay: firebase.firestore.FieldValue.delete() });
+                loadUsers();
+            } catch(e) { alert("Ошибка: " + e.message); }
+        }
+
         async function changeUserSubscription(uid, subscription) {
             try {
                 const updateData = { subscription };
