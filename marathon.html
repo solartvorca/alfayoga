@@ -2377,14 +2377,14 @@
                             ...doc.data()
                         };
 
-                        // Восстановить премиум если был исключён
-                        checkAndRestoreIfPremium();
+                        // Восстановить премиум если был исключён (await — должно завершиться до проверки статуса)
+                        await checkAndRestoreIfPremium();
 
                         // Проверить восстановление на полнолуние
-                        checkAndRestoreIfFullMoon();
+                        await checkAndRestoreIfFullMoon();
 
                         // Проверить, не выпал ли пользователь из-за пропуска отчёта
-                        checkAndRemoveIfMissedReport();
+                        await checkAndRemoveIfMissedReport();
 
                         console.log("Вызываю loadDayAssignment...");
                         loadCycleStart().then(() => {
@@ -2410,7 +2410,11 @@
                         // Если статус = removed - скрыть весь контент марафона
                         const isAdmin = window.currentUser.email === "wuallar@gmail.com" || window.currentUser.isAdmin;
 
-                        if (window.currentUser.status === "removed" && !isAdmin) {
+                        // Двойная защита: премиум и VIP никогда не видят экран исключения
+                        const sub = window.currentUser.subscription || "free";
+                        const isPremiumProtected = sub === "premium" || sub === "vip" || window.currentUser.status === "premium";
+
+                        if (window.currentUser.status === "removed" && !isAdmin && !isPremiumProtected) {
                             document.getElementById("removalNotice").style.display = "block";
 
                             // Скрыть весь контент марафона
