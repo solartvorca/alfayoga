@@ -334,6 +334,7 @@
             <button class="tab-btn" onclick="switchTab('base', this)">📚 База</button>
             <button class="tab-btn" onclick="switchTab('hd', this)">🔮 HD База</button>
             <button class="tab-btn" onclick="switchTab('raffle', this); loadRaffleAdmin()">🎲 Розыгрыш</button>
+            <button class="tab-btn" onclick="switchTab('breathing', this); loadBreathingAdmin()">🌬️ Дыхание</button>
         </div>
 
         <!-- Марафоны -->
@@ -1000,6 +1001,84 @@
                 <div class="section-title">📊 Все розыгрыши сегодня</div>
                 <div id="adminAllRaffles">Загрузка...</div>
                 <div id="adminRaffleActionStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+            </div>
+        </div>
+
+        <!-- ===== МАРАФОН ДЫХАНИЯ ===== -->
+        <div id="breathing-tab" class="tab-content">
+
+            <!-- Описание марафона -->
+            <div class="admin-section" style="border-left:3px solid rgba(0,200,220,0.6);background:rgba(0,200,220,0.04);">
+                <div class="section-title" style="color:#00d0d0;">🌬️ Описание марафона дыхания</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">Текст отображается участникам на странице марафона.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Подзаголовок (под названием)</label>
+                        <input type="text" id="breathSubtitle" placeholder="29,5-дневный лунный цикл">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>Описание (полный текст)</label>
+                        <textarea id="breathDescription" rows="6" placeholder="Расскажи о марафоне — цели, практики, что участников ждёт..."></textarea>
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <button class="btn" onclick="saveBreathingDescription()" style="background:rgba(0,200,220,0.15);border-color:rgba(0,200,220,0.4);color:#00d0d0;">💾 Сохранить описание</button>
+                        <span id="breathDescStatus" style="margin-left:12px;font-size:13px;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Старт цикла -->
+            <div class="admin-section" style="border-left:3px solid #ffd700;background:rgba(255,215,0,0.05);">
+                <div class="section-title" style="color:#ffd700;">🌕 Новый лунный цикл дыхания</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">Устанавливай в начале каждого полнолуния. День 1 начнётся с этого момента.</p>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:160px;">
+                        <label>Дата старта</label>
+                        <input type="date" id="breathCycleDate" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-size:14px;width:100%;">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:120px;">
+                        <label>Время</label>
+                        <input type="time" id="breathCycleTime" value="00:00" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-size:14px;width:100%;">
+                    </div>
+                    <button onclick="saveBreathingCycleStart()" class="btn" style="margin-top:18px;background:rgba(255,215,0,0.2);border-color:rgba(255,215,0,0.4);color:#ffd700;">🌕 Начать новый цикл</button>
+                </div>
+                <div id="breathCycleStatus" style="margin-top:10px;font-size:13px;color:#00d084;display:none;"></div>
+                <div id="breathCycleCurrent" style="margin-top:8px;font-size:13px;color:#888;"></div>
+            </div>
+
+            <!-- Редактор дней -->
+            <div class="admin-section">
+                <div class="section-title">📅 Задание на день (Марафон дыхания)</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>День (1–29)</label>
+                        <input type="number" id="breathDayNum" min="1" max="29" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Название дня</label>
+                        <input type="text" id="breathDayTitle" placeholder="Осознанное дыхание">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>Содержание</label>
+                        <textarea id="breathDayContent" rows="5" placeholder="Описание практики дня..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>📹 Видео VK (ID или ссылка, опционально)</label>
+                        <input type="text" id="breathDayVideo" placeholder="video-123456_789 или vk.com/video-...">
+                    </div>
+                    <div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                        <button class="btn" onclick="loadBreathingDay()" style="background:rgba(180,100,255,0.15);">📥 Загрузить день</button>
+                        <button class="btn" onclick="saveBreathingDay()">💾 Сохранить день</button>
+                        <span id="breathDayStatus" style="font-size:13px;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список всех дней -->
+            <div class="admin-section">
+                <div class="section-title">📋 Все дни марафона дыхания</div>
+                <button class="btn" onclick="loadAllBreathingDays()" style="margin-bottom:15px;">🔄 Загрузить список</button>
+                <div id="breathDaysList"><p style="text-align:center;color:#888;">Нажми «Загрузить список»</p></div>
             </div>
         </div>
     </div>
@@ -2907,6 +2986,145 @@
                 document.getElementById('adminRaffleActionStatus').style.display = 'block';
                 await loadRaffleAdmin();
             } catch (e) { alert('Ошибка: ' + e.message); }
+        }
+
+        // ===== МАРАФОН ДЫХАНИЯ =====
+
+        async function loadBreathingAdmin() {
+            // Загрузить описание
+            try {
+                const doc = await db.collection('settings').doc('breathingMarathon').get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    if (d.subtitle) document.getElementById('breathSubtitle').value = d.subtitle;
+                    if (d.description) document.getElementById('breathDescription').value = d.description;
+                    const el = document.getElementById('breathCycleCurrent');
+                    if (d.cycleStart) {
+                        const dt = d.cycleStart.toDate();
+                        el.textContent = `Текущий старт: ${dt.toLocaleString('ru-RU')}`;
+                        const pad = n => String(n).padStart(2,'0');
+                        document.getElementById('breathCycleDate').value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+                        document.getElementById('breathCycleTime').value = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+                    } else {
+                        el.textContent = 'Цикл не установлен';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function saveBreathingDescription() {
+            const subtitle = document.getElementById('breathSubtitle').value.trim();
+            const description = document.getElementById('breathDescription').value.trim();
+            const status = document.getElementById('breathDescStatus');
+            status.textContent = '⏳ Сохраняю...';
+            try {
+                await db.collection('settings').doc('breathingMarathon').set({ subtitle, description }, { merge: true });
+                status.style.color = '#00d084';
+                status.textContent = '✅ Сохранено';
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function saveBreathingCycleStart() {
+            const dateVal = document.getElementById('breathCycleDate').value;
+            const timeVal = document.getElementById('breathCycleTime').value || '00:00';
+            const status = document.getElementById('breathCycleStatus');
+            if (!dateVal) { alert('Выбери дату'); return; }
+            const [y,m,d] = dateVal.split('-').map(Number);
+            const [h,min] = timeVal.split(':').map(Number);
+            const dt = new Date(y, m-1, d, h, min, 0);
+            status.textContent = '⏳ Сохраняю...';
+            status.style.display = 'block';
+            try {
+                await db.collection('settings').doc('breathingMarathon').set(
+                    { cycleStart: firebase.firestore.Timestamp.fromDate(dt) }, { merge: true }
+                );
+                status.style.color = '#00d084';
+                status.textContent = `✅ Новый цикл начат с ${dt.toLocaleString('ru-RU')}`;
+                document.getElementById('breathCycleCurrent').textContent = `Текущий старт: ${dt.toLocaleString('ru-RU')}`;
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function loadBreathingDay() {
+            const dayNum = document.getElementById('breathDayNum').value;
+            if (!dayNum) { alert('Введи номер дня'); return; }
+            const status = document.getElementById('breathDayStatus');
+            status.textContent = '⏳ Загружаю...';
+            try {
+                const doc = await db.collection('marathons').doc('lunar-breathing')
+                    .collection('days').doc(String(dayNum)).get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('breathDayTitle').value = d.title || '';
+                    document.getElementById('breathDayContent').value = d.content || '';
+                    document.getElementById('breathDayVideo').value = d.videoUrl || '';
+                    status.style.color = '#00d084';
+                    status.textContent = `✅ День ${dayNum} загружен`;
+                } else {
+                    document.getElementById('breathDayTitle').value = '';
+                    document.getElementById('breathDayContent').value = '';
+                    document.getElementById('breathDayVideo').value = '';
+                    status.style.color = '#888';
+                    status.textContent = `День ${dayNum} пустой`;
+                }
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function saveBreathingDay() {
+            const dayNum = document.getElementById('breathDayNum').value;
+            const title = document.getElementById('breathDayTitle').value.trim();
+            const content = document.getElementById('breathDayContent').value.trim();
+            const videoUrl = document.getElementById('breathDayVideo').value.trim();
+            if (!dayNum || !title) { alert('Укажи день и название'); return; }
+            const status = document.getElementById('breathDayStatus');
+            status.textContent = '⏳ Сохраняю...';
+            try {
+                await db.collection('marathons').doc('lunar-breathing')
+                    .collection('days').doc(String(dayNum)).set({
+                        dayNumber: Number(dayNum), title, content, videoUrl,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                status.style.color = '#00d084';
+                status.textContent = `✅ День ${dayNum} сохранён`;
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function loadAllBreathingDays() {
+            const container = document.getElementById('breathDaysList');
+            container.innerHTML = '<p style="color:#888;">Загрузка...</p>';
+            try {
+                const snap = await db.collection('marathons').doc('lunar-breathing')
+                    .collection('days').orderBy('dayNumber').get();
+                if (snap.empty) { container.innerHTML = '<p style="color:#888;">Дней пока нет</p>'; return; }
+                container.innerHTML = snap.docs.map(doc => {
+                    const d = doc.data();
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(180,100,255,0.08);">
+                        <div>
+                            <span style="color:#a18cd1;font-weight:600;">День ${d.dayNumber}</span>
+                            <span style="color:#c8d0db;margin-left:10px;">${d.title}</span>
+                            ${d.videoUrl ? '<span style="margin-left:8px;font-size:11px;color:#888;">📹</span>' : ''}
+                        </div>
+                        <button class="btn btn-small" onclick="editBreathDay(${d.dayNumber})" style="padding:4px 10px;font-size:12px;">✏️</button>
+                    </div>`;
+                }).join('');
+            } catch(e) { container.innerHTML = `<p style="color:#ff6464;">Ошибка: ${e.message}</p>`; }
+        }
+
+        function editBreathDay(num) {
+            document.getElementById('breathDayNum').value = num;
+            loadBreathingDay();
+            document.getElementById('breathDayNum').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
     </script>

@@ -14,7 +14,8 @@
         { icon: '📅', label: 'Задачи', path: 'planner.html' },
         { icon: '🎲', label: 'И Цзин', path: 'dice.html' },
         { icon: '🌙', label: 'Сновидения', path: 'profile.html?tab=dreams' },
-        { icon: '🔮', label: 'Предназначение', path: 'profile.html?tab=destiny' }
+        { icon: '🔮', label: 'Предназначение', path: 'profile.html?tab=destiny' },
+        { icon: '🌬️', label: 'Марафон дыхания', path: 'marathon-breath.html' }
     ];
 
     function getCurrentPage() {
