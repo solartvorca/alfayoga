@@ -387,10 +387,18 @@ function playAlarmSound() {
 
 function _dispatchAlarmSound(ctx) {
     if (alarmState.soundType === 'cuckoo') {
-        playCuckooSoundInternal(ctx);
+        playCuckooMp3();
     } else {
         playAlarmSoundInternal(ctx);
     }
+}
+
+function playCuckooMp3() {
+    const duration = alarmState.soundDuration * 1000; // мс
+    const audio = new Audio('kukuet-kukushka.mp3');
+    audio.play().catch(e => console.warn('Cuckoo MP3 error:', e));
+    // Остановить по истечении длительности будильника
+    setTimeout(() => { audio.pause(); audio.currentTime = 0; }, duration);
 }
 
 // Поющая чаша (оригинальный звук)
@@ -418,56 +426,6 @@ function playAlarmSoundInternal(audioContext) {
     gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
     osc2.start(now + halfDuration + 0.1);
     osc2.stop(now + duration);
-}
-
-// Кукушка
-function playCuckooSoundInternal(ctx) {
-    const duration = alarmState.soundDuration;
-    const cuckooLen = 1.1; // один «ку-ку» с паузой
-    const count = Math.max(1, Math.round(duration / cuckooLen));
-
-    for (let i = 0; i < count; i++) {
-        const t = ctx.currentTime + i * cuckooLen;
-        _cuckooNote(ctx, 554, t,        0.32); // «ку»  — C#5
-        _cuckooNote(ctx, 440, t + 0.38, 0.32); // «ку»  — A4 (малая терция вниз)
-    }
-}
-
-function _cuckooNote(ctx, freq, startTime, dur) {
-    // Полый флейтовый тембр: треугольник (основа) + чуть синуса на 2-й гармонике
-    const masterGain = ctx.createGain();
-    masterGain.connect(ctx.destination);
-
-    function addPartial(f, type, amp) {
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(f, startTime);
-        // лёгкое вибрато — LFO на ±3 Гц
-        const lfo = ctx.createOscillator();
-        const lfoGain = ctx.createGain();
-        lfo.frequency.value = 5.5;
-        lfoGain.gain.value = 3;
-        lfo.connect(lfoGain);
-        lfoGain.connect(osc.frequency);
-        lfo.start(startTime);
-        lfo.stop(startTime + dur + 0.05);
-
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(amp, startTime + 0.04);   // мягкая атака
-        gain.gain.setValueAtTime(amp, startTime + dur * 0.55);
-        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + dur); // плавный спад
-
-        osc.connect(gain);
-        gain.connect(masterGain);
-        osc.start(startTime);
-        osc.stop(startTime + dur + 0.05);
-    }
-
-    masterGain.gain.value = 1;
-    addPartial(freq,      'triangle', 0.38); // основной тон — тёплый, полый
-    addPartial(freq * 2,  'sine',     0.06); // 2-я гармоника — чуть яркости
-    addPartial(freq * 0.5,'sine',     0.04); // суб-октава — чуть глубины
 }
 
 // Показ сообщения будильника
