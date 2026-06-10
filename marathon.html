@@ -596,6 +596,8 @@
                 <a href="notifications.html">🔔 Уведомления</a>
                 <a href="rating.html">🏆 Рейтинг</a>
                 <a href="dice.html">🎲 Кости И Цзин</a>
+                <a href="marathon-breath.html">🌬️ Марафон дыхания</a>
+                <a href="marathon-cell.html">🧬 Клет. трансформация</a>
                 <a href="shop.html" id="shopLink" style="display: none;">🛍️ Товары</a>
                 <a href="admin.html" id="adminLink" style="display: none;">⚙️ Администратор</a>
             </div>
@@ -1132,15 +1134,24 @@
             const currentStatus = window.currentUser.status || "active";
             if (currentStatus !== "removed") return;
             const subscription = window.currentUser.subscription || "free";
-            if (subscription !== "premium" && subscription !== "vip") return;
+            const previousStatus = window.currentUser.previousStatus || "";
+            // Check subscription field OR previousStatus (admin may have set status:"premium" before removal)
+            if (subscription !== "premium" && subscription !== "vip" && previousStatus !== "premium") return;
 
             try {
+                const marathonDay = getMarathonDay();
+                // Restore to previousStatus if it was "premium", else "active"
+                const restoreStatus = previousStatus === "premium" ? "premium" : "active";
                 await db.collection("users").doc(window.currentUser.uid).update({
-                    status: "active", removedAt: null, removedReason: null,
-                    restoredAt: new Date(), restoredReason: "premium_subscription"
+                    status: restoreStatus,
+                    previousStatus: null,
+                    removedAt: null, removedReason: null,
+                    restoredAt: new Date(), restoredReason: "premium_subscription",
+                    lastReportDay: marathonDay
                 });
-                window.currentUser.status = "active";
-                console.log("[Premium Restore] Restored premium user");
+                window.currentUser.status = restoreStatus;
+                window.currentUser.lastReportDay = marathonDay;
+                console.log("[Premium Restore] Restored premium user to", restoreStatus);
                 location.reload();
             } catch(e) { console.error("[Premium Restore] Error:", e); }
         }
@@ -1232,9 +1243,10 @@
                 try {
                     console.log(`[Auto-removal] Removing user because missed report. Current day: ${currentDay}, Last report: ${lastReportDay}`);
 
-                    // Обновить статус в Firestore
+                    // Обновить статус в Firestore, сохранив предыдущий статус для восстановления премиума
                     await db.collection("users").doc(window.currentUser.uid).update({
                         status: "removed",
+                        previousStatus: window.currentUser.status || "active",
                         removedAt: new Date(),
                         removedReason: "missed_daily_report"
                     });
@@ -1696,7 +1708,7 @@
             try {
                 // Найти автора отчета для возврата пыльцы
                 const reportDoc = await db.collection("reports").doc(reportId).get();
-                const reportAuthorId = reportDoc.data().uid;
+                const reportAuthorId = reportDoc.exists ? reportDoc.data().uid : null;
 
                 // Удалить комментарий
                 await db.collection("comments").doc(commentId).delete();
@@ -1755,7 +1767,7 @@
             try {
                 // Найти автора отчета
                 const reportDoc = await db.collection("reports").doc(reportId).get();
-                const reportAuthorId = reportDoc.data().uid;
+                const reportAuthorId = reportDoc.exists ? reportDoc.data().uid : null;
 
                 // Добавить комментарий
                 const commentRef = await db.collection("comments").add({

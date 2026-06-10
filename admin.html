@@ -315,6 +315,8 @@
                 <a href="notifications.html">🔔 Уведомления</a>
                 <a href="rating.html">🏆 Рейтинг</a>
                 <a href="dice.html">🎲 Кости И Цзин</a>
+                <a href="marathon-breath.html">🌬️ Марафон дыхания</a>
+                <a href="marathon-cell.html">🧬 Клет. трансформация</a>
             </div>
             <button class="logout-btn" onclick="logout()">Выход</button>
         </div>
@@ -1942,9 +1944,17 @@
             }
         }
 
-        function currentMarathonDay() {
-            const day = typeof getLunarDay === "function" ? getLunarDay() : 1;
-            return Math.min(day, 29);
+        async function getActualMarathonDay() {
+            try {
+                const doc = await db.collection("settings").doc("marathon").get();
+                if (doc.exists && doc.data().cycleStart) {
+                    const cycleStart = doc.data().cycleStart.toDate();
+                    const daysSince = (new Date() - cycleStart) / (1000 * 60 * 60 * 24);
+                    if (daysSince < 0) return 1;
+                    return Math.min(Math.floor(daysSince) + 1, 29);
+                }
+            } catch(e) {}
+            return 1;
         }
 
         // Изменить статус пользователя
@@ -1958,7 +1968,8 @@
                 const updateData = { status };
                 if (status === "active") {
                     updateData.restoredAt = new Date();
-                    updateData.lastReportDay = currentMarathonDay();
+                    updateData.lastReportDay = await getActualMarathonDay();
+                    updateData.previousStatus = null;
                 }
                 await db.collection("users").doc(uid).update(updateData);
                 loadUsers();
@@ -1983,11 +1994,12 @@
                     return;
                 }
 
-                const today = currentMarathonDay();
+                const today = await getActualMarathonDay();
                 const batch = db.batch();
                 snapshot.docs.forEach(doc => {
                     batch.update(doc.ref, {
                         status: "active",
+                        previousStatus: null,
                         restoredAt: new Date(),
                         lastReportDay: today
                     });
