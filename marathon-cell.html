@@ -251,6 +251,15 @@
         const el = document.getElementById('dayVideo');
         el.innerHTML = '';
         if (!raw) return;
+
+        // Rutube
+        const rt = raw.match(/rutube\.ru\/(?:video|play\/embed)\/([a-zA-Z0-9]+)/);
+        if (rt) {
+            el.innerHTML = `<div class="video-wrapper"><iframe src="https://rutube.ru/play/embed/${rt[1]}" allow="clipboard-write; autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
+            return;
+        }
+
+        // VK
         let oid, id;
         const m1 = raw.match(/oid=-?(\d+)&id=(\d+)/);
         const m2 = raw.match(/video-(\d+)_(\d+)/);
