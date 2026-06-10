@@ -375,18 +375,46 @@
             document.getElementById('nextFullMoonDate').textContent = dateStr;
         });
 
-        // Проверка аутентификации — если не removed, перенаправить обратно
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                db.collection("users").doc(user.uid).get().then(doc => {
-                    if (doc.exists && doc.data().status !== 'removed') {
-                        window.location.href = 'index.html';
-                    } else if (!doc.exists) {
-                        window.location.href = 'login.html';
+        auth.onAuthStateChanged(async user => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            const doc = await db.collection("users").doc(user.uid).get();
+            if (!doc.exists) { window.location.href = 'login.html'; return; }
+            const data = doc.data();
+
+            // Администратор — всегда пропускаем обратно
+            if (data.isAdmin || user.email === 'wuallar@gmail.com') {
+                window.location.href = 'marathon.html';
+                return;
+            }
+
+            // Премиум-подписчик — восстанавливаем статус и возвращаем на марафон
+            const sub = data.subscription || 'free';
+            if (sub === 'premium' || sub === 'vip' || data.status === 'premium') {
+                try {
+                    let cycleStart = new Date(2026, 5, 1);
+                    const cycleDoc = await db.collection('settings').doc('marathon').get();
+                    if (cycleDoc.exists && cycleDoc.data().cycleStart) {
+                        cycleStart = cycleDoc.data().cycleStart.toDate();
                     }
-                });
-            } else {
-                window.location.href = 'login.html';
+                    const diff = (Date.now() - cycleStart.getTime()) / 86400000;
+                    const marathonDay = Math.min(Math.floor(diff < 0 ? 0 : diff) + 1, 29);
+                    await db.collection("users").doc(user.uid).update({
+                        status: 'active',
+                        previousStatus: null,
+                        removedAt: null,
+                        removedReason: null,
+                        restoredAt: new Date(),
+                        restoredReason: 'premium_subscription',
+                        lastReportDay: marathonDay
+                    });
+                } catch(e) { console.error('[Removed] Restore error:', e); }
+                window.location.href = 'marathon.html';
+                return;
+            }
+
+            // Обычный пользователь со статусом не-removed — перенаправить
+            if (data.status !== 'removed') {
+                window.location.href = 'index.html';
             }
         });
     </script>
