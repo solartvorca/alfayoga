@@ -2321,8 +2321,9 @@
                     document.getElementById("dayNumber").textContent = currentDayNum;
                 });
 
+                let _initialCheckDone = false;
                 const userRef = db.collection("users").doc(user.uid);
-                userRef.onSnapshot(doc => {
+                userRef.onSnapshot(async doc => {
                     console.log("onSnapshot сработал, doc.exists:", doc.exists);
                     if (!doc.exists && !doc.metadata.fromCache) {
                         console.log("Документа пользователя нет, создаю его...");
@@ -2377,14 +2378,13 @@
                             ...doc.data()
                         };
 
-                        // Восстановить премиум если был исключён (await — должно завершиться до проверки статуса)
-                        await checkAndRestoreIfPremium();
-
-                        // Проверить восстановление на полнолуние
-                        await checkAndRestoreIfFullMoon();
-
-                        // Проверить, не выпал ли пользователь из-за пропуска отчёта
-                        await checkAndRemoveIfMissedReport();
+                        // Проверки статуса — только один раз при первой загрузке, не при каждом обновлении документа
+                        if (!_initialCheckDone) {
+                            _initialCheckDone = true;
+                            await checkAndRestoreIfPremium();
+                            await checkAndRestoreIfFullMoon();
+                            await checkAndRemoveIfMissedReport();
+                        }
 
                         console.log("Вызываю loadDayAssignment...");
                         loadCycleStart().then(() => {
