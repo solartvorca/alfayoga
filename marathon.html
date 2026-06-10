@@ -1077,13 +1077,18 @@
                 const docId = currentDayNum + "_" + user.uid;
 
                 // Добавить отчет (merge чтобы не затереть другие поля)
+                const now = new Date();
+                const localDate = now.getFullYear() + '-' +
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(now.getDate()).padStart(2, '0');
                 await db.collection("reports").doc(docId).set({
                     uid: user.uid,
                     nick: user.nick,
                     email: user.email,
                     dayNumber: currentDayNum,
+                    date: localDate,
                     text,
-                    createdAt: new Date()
+                    createdAt: now
                 }, { merge: true });
 
                 // Добавить лучик
@@ -1434,8 +1439,28 @@
                 .where("dayNumber", "==", currentDayNum)
                 .get();
 
-            // Сегодняшняя UTC-дата — совпадает с тем, что сохраняет profile.html
-            const todayStr = new Date().toISOString().slice(0, 10);
+            // Сегодняшняя локальная дата
+            const nowDate = new Date();
+            const todayStr = nowDate.getFullYear() + '-' +
+                String(nowDate.getMonth() + 1).padStart(2, '0') + '-' +
+                String(nowDate.getDate()).padStart(2, '0');
+
+            // Если смотрим текущий день (не навигация) — показываем только сегодняшние отчёты.
+            // Это решает проблему накопления отчётов когда день марафона не меняется (конец цикла).
+            const isCurrentDay = currentDayNum === getMarathonDay();
+            const filteredReportDocs = reportsSnapshot.docs.filter(doc => {
+                if (!isCurrentDay) return true; // при навигации назад показываем все
+                const data = doc.data();
+                if (data.date) return data.date === todayStr; // новые отчёты с полем date
+                if (data.createdAt) {
+                    const d = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                    const repDate = d.getFullYear() + '-' +
+                        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(d.getDate()).padStart(2, '0');
+                    return repDate === todayStr;
+                }
+                return true; // старые отчёты без даты — показываем
+            });
 
             // Один запрос без составного индекса, фильтрация на клиенте
             let dreamsSnapshot = { docs: [] };
@@ -1461,7 +1486,7 @@
 
             const items = [];
 
-            reportsSnapshot.docs.forEach(doc => {
+            filteredReportDocs.forEach(doc => {
                 items.push({
                     type: "report",
                     id: doc.id,
