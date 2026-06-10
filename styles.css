@@ -573,3 +573,31 @@ body {
         min-height: 200px;
     }
 }
+
+/* Desktop nav — 2-row wrap */
+@media (min-width: 641px) {
+    .nav-bar {
+        align-items: flex-start !important;
+        flex-wrap: nowrap !important;
+        padding: 10px 20px 6px !important;
+        gap: 12px !important;
+    }
+    .nav-links {
+        flex-wrap: wrap !important;
+        gap: 3px 4px !important;
+        flex: 1 1 0 !important;
+    }
+    .nav-links a {
+        padding: 5px 9px !important;
+        border-radius: 5px !important;
+        white-space: nowrap !important;
+        transition: background 0.15s !important;
+    }
+    .nav-links a:hover {
+        background: rgba(161,140,209,0.12) !important;
+    }
+    .logout-btn {
+        flex-shrink: 0 !important;
+        margin-top: 1px !important;
+    }
+}
