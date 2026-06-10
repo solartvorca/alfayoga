@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0e27">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Радуга Луна">
+    <link rel="apple-touch-icon" href="icon.png">
+    <title>Клеточная трансформация — Лунный Будильник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .cell-container { max-width: 800px; margin: 0 auto; padding: 20px 15px 100px; }
+
+        .cell-header { text-align: center; margin-bottom: 24px; }
+        .cell-header h1 { font-size: 22px; color: #00d084; margin-bottom: 4px; }
+        .cell-header .sub { font-size: 13px; color: #888; }
+        .cell-header p { font-size: 13px; color: #888; margin-top: 4px; }
+
+        .balance-bar {
+            display: flex; gap: 16px; justify-content: center;
+            padding: 10px 16px; margin-bottom: 20px;
+            background: rgba(10,14,39,0.6); border: 1px solid rgba(0,208,132,0.2);
+            border-radius: 12px;
+        }
+        .bal-item { text-align: center; }
+        .bal-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bal-value { font-size: 18px; font-weight: 700; color: #ffd700; }
+        .bal-value.dust { color: #a18cd1; }
+
+        .desc-block {
+            background: rgba(0,208,132,0.05); border: 1px solid rgba(0,208,132,0.2);
+            border-radius: 12px; padding: 16px; margin-bottom: 20px; display: none;
+        }
+        .desc-block h3 { color: #00d084; font-size: 15px; margin-bottom: 8px; }
+        .desc-block p { font-size: 13px; color: #a0c8b0; line-height: 1.7; white-space: pre-wrap; }
+
+        .day-card {
+            background: rgba(10,14,39,0.8); border: 1px solid rgba(0,208,132,0.3);
+            border-radius: 16px; padding: 22px; margin-bottom: 20px;
+        }
+        .day-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .day-number { font-size: 42px; font-weight: 800; color: #00d084; line-height: 1; }
+        .day-of { font-size: 13px; color: #888; margin-bottom: 14px; }
+        .day-title { font-size: 20px; font-weight: 700; color: #ffd700; margin-bottom: 10px; }
+        .day-content { font-size: 14px; color: #c8d0db; line-height: 1.7; white-space: pre-wrap; }
+
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; margin: 14px 0; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        .section-card {
+            background: rgba(0,208,132,0.05); border: 1px solid rgba(0,208,132,0.12);
+            border-radius: 14px; padding: 20px; margin-bottom: 20px;
+        }
+        .section-card h3 { font-size: 16px; color: #00d084; margin-bottom: 14px; }
+
+        .report-textarea {
+            width: 100%; min-height: 80px; background: rgba(0,208,132,0.04);
+            border: 1px solid rgba(0,208,132,0.2); border-radius: 10px;
+            color: #e0e6ed; font-size: 14px; padding: 12px; resize: vertical;
+            font-family: inherit; box-sizing: border-box; outline: none;
+            transition: border-color 0.2s;
+        }
+        .report-textarea:focus { border-color: rgba(0,208,132,0.5); }
+
+        .report-btn {
+            width: 100%; margin-top: 10px; padding: 14px;
+            background: linear-gradient(135deg, rgba(0,208,132,0.2), rgba(0,150,100,0.2));
+            border: 1px solid rgba(0,208,132,0.35); border-radius: 10px;
+            color: #00d084; font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .report-btn:hover { background: rgba(0,208,132,0.35); color: #ffd700; }
+        .report-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .report-item {
+            border-bottom: 1px solid rgba(0,208,132,0.1);
+            padding: 0 0 14px 12px;
+            margin-bottom: 14px;
+        }
+        .report-item:last-child { border-bottom: none; margin-bottom: 0; }
+
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .report-nick { font-weight: 700; color: #00d084; text-decoration: none; font-size: 14px; }
+        .report-nick:hover { color: #ffd700; }
+        .report-time { font-size: 11px; color: #888; }
+        .report-text { font-size: 13px; color: #c8d0db; line-height: 1.6; white-space: pre-wrap; }
+
+        .report-actions { display: flex; gap: 10px; margin: 8px 0; }
+        .like-btn {
+            background: none; border: 1px solid rgba(255,100,100,0.2);
+            color: rgba(255,100,100,0.6); padding: 5px 10px; border-radius: 20px;
+            cursor: pointer; transition: all 0.2s; font-weight: 600; font-size: 12px;
+        }
+        .like-btn:hover { background: rgba(255,100,100,0.1); }
+        .like-btn.liked { background: rgba(255,100,100,0.2); border-color: rgba(255,100,100,0.6); color: #ff6464; }
+
+        .report-comments { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,208,132,0.08); }
+        .comment-form { display: flex; gap: 6px; align-items: center; margin-top: 8px; overflow: hidden; }
+        .comment-input {
+            flex: 1; min-width: 0; background: rgba(0,208,132,0.04);
+            border: 1px solid rgba(0,208,132,0.15); border-radius: 20px;
+            color: #c8d0db; font-size: 12px; padding: 7px 12px; outline: none;
+        }
+        .comment-send-btn {
+            background: rgba(0,208,132,0.15); border: 1px solid rgba(0,208,132,0.3);
+            border-radius: 50%; color: #00d084; font-size: 16px; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0; padding: 0; transition: all 0.2s;
+        }
+        .comment-send-btn:hover { background: rgba(0,208,132,0.3); color: #ffd700; }
+
+        .comment-item { padding: 7px 0; border-bottom: 1px solid rgba(0,208,132,0.06); }
+        .comment-item:last-child { border-bottom: none; }
+        .comment-author { font-size: 12px; font-weight: 700; color: #00d084; text-decoration: none; }
+        .comment-author:hover { color: #ffd700; }
+        .comment-text { font-size: 13px; color: #c8d0db; line-height: 1.5; margin-top: 2px; }
+
+        .tsar-block {
+            margin-bottom: 10px; padding: 10px 14px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.07), rgba(200,160,0,0.03));
+            border-left: 3px solid rgba(255,215,0,0.55); border-radius: 0 10px 10px 0;
+        }
+        .tsar-name { font-size: 14px; font-weight: 700; color: #ffd700; }
+        .tsar-text { font-size: 13px; color: #e8d8a0; line-height: 1.65; font-style: italic; margin-top: 5px; }
+
+        .like-btn-small { background: none; border: none; color: rgba(255,100,100,0.5); cursor: pointer; font-size: 12px; padding: 0; }
+        .like-btn-small.liked { color: #ff6464; }
+
+        .comment-replies { margin-left: 12px; margin-top: 8px; }
+        .reply-form { display: flex; gap: 6px; align-items: center; margin-top: 8px; overflow: hidden; }
+        .reply-input {
+            flex: 1; min-width: 0; font-size: 11px; padding: 5px 10px;
+            background: rgba(0,208,132,0.04); border: 1px solid rgba(0,208,132,0.18);
+            border-radius: 14px; color: #c8d0db; outline: none;
+        }
+        .reply-send-btn {
+            background: rgba(0,208,132,0.15); border: 1px solid rgba(0,208,132,0.28);
+            border-radius: 50%; color: #00d084; font-size: 13px; width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0; padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="cell-container">
+    <div class="cell-header">
+        <h1>🧬 Клеточная трансформация</h1>
+        <div class="sub">Годовой календарь медитаций</div>
+        <p id="marathonSubtitle"></p>
+    </div>
+
+    <div class="balance-bar" id="balanceBar" style="display:none;">
+        <div class="bal-item"><div class="bal-label">Лучики</div><div class="bal-value" id="raysVal">0</div></div>
+        <div class="bal-item"><div class="bal-label">Пыльца</div><div class="bal-value dust" id="dustVal">0</div></div>
+    </div>
+
+    <div class="desc-block" id="descBlock">
+        <h3>О программе</h3>
+        <p id="descText"></p>
+    </div>
+
+    <div class="day-card">
+        <div class="day-label">Текущий день</div>
+        <div class="day-number" id="dayNumber">—</div>
+        <div class="day-of">из 365</div>
+        <div class="day-title" id="dayTitle">Загрузка...</div>
+        <div class="day-content" id="dayContent"></div>
+        <div id="dayVideo"></div>
+    </div>
+
+    <div class="section-card" id="reportSection" style="display:none;">
+        <h3>Твоя медитация сегодня</h3>
+        <textarea class="report-textarea" id="reportText" placeholder="Поделись своим опытом медитации..."></textarea>
+        <button class="report-btn" id="submitBtn" onclick="submitReport()">Отправить (+1 лучик)</button>
+    </div>
+
+    <div class="section-card" id="reportsSection" style="display:none;">
+        <h3>Отчёты участников</h3>
+        <div id="reportsList"><p style="text-align:center;color:#888;">Загрузка...</p></div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+<script src="auth.js"></script>
+<script src="ai.js"></script>
+<script src="mobile-nav.js"></script>
+<script>
+    const CELL_MARATHON_ID = 'cellular-transformation';
+    const CELL_COLLECTION  = 'cellularReports';
+    const CYCLE_DAYS = 365;
+
+    let _cycleStart = new Date(2026, 0, 1);
+    let currentDay = 1;
+
+    async function loadCycleStart() {
+        try {
+            const doc = await db.collection('settings').doc('cellularMarathon').get();
+            if (doc.exists && doc.data().cycleStart) {
+                _cycleStart = doc.data().cycleStart.toDate();
+            }
+        } catch(e) {}
+    }
+
+    function getCurrentDay() {
+        const diff = (new Date() - _cycleStart) / 86400000;
+        if (diff < 0) return 1;
+        return Math.min(Math.floor(diff) + 1, CYCLE_DAYS);
+    }
+
+    async function loadDescription() {
+        try {
+            const doc = await db.collection('settings').doc('cellularMarathon').get();
+            if (!doc.exists) return;
+            const d = doc.data();
+            if (d.subtitle) document.getElementById('marathonSubtitle').textContent = d.subtitle;
+            if (d.description) {
+                document.getElementById('descText').textContent = d.description;
+                document.getElementById('descBlock').style.display = 'block';
+            }
+        } catch(e) {}
+    }
+
+    async function loadDayContent() {
+        document.getElementById('dayNumber').textContent = currentDay;
+        try {
+            const doc = await db.collection('marathons').doc(CELL_MARATHON_ID)
+                .collection('days').doc(String(currentDay)).get();
+            if (doc.exists) {
+                const d = doc.data();
+                document.getElementById('dayTitle').textContent = d.title || ('День ' + currentDay);
+                document.getElementById('dayContent').textContent = d.content || '';
+                renderVideo(d.videoUrl || '');
+            } else {
+                document.getElementById('dayTitle').textContent = 'День ' + currentDay;
+                document.getElementById('dayContent').textContent = '';
+            }
+        } catch(e) {
+            document.getElementById('dayTitle').textContent = 'День ' + currentDay;
+        }
+    }
+
+    function renderVideo(raw) {
+        const el = document.getElementById('dayVideo');
+        el.innerHTML = '';
+        if (!raw) return;
+        let oid, id;
+        const m1 = raw.match(/oid=-?(\d+)&id=(\d+)/);
+        const m2 = raw.match(/video-(\d+)_(\d+)/);
+        const m3 = raw.match(/^(\d+)_(\d+)$/);
+        if (m1) { oid = m1[1]; id = m1[2]; }
+        else if (m2) { oid = m2[1]; id = m2[2]; }
+        else if (m3) { oid = m3[1]; id = m3[2]; }
+        if (oid && id) {
+            el.innerHTML = `<div class="video-wrapper"><iframe src="https://vk.com/video_ext.php?oid=-${oid}&id=${id}" allow="autoplay; encrypted-media; fullscreen"></iframe></div>`;
+        }
+    }
+
+    async function checkUserReport() {
+        if (!window.currentUser) return;
+        const snap = await db.collection(CELL_COLLECTION)
+            .where('uid', '==', window.currentUser.uid)
+            .where('dayNumber', '==', currentDay)
+            .limit(1).get();
+        const btn = document.getElementById('submitBtn');
+        if (!snap.empty && !window.currentUser.isAdmin && window.currentUser.email !== 'wuallar@gmail.com') {
+            btn.disabled = true;
+            btn.textContent = '✅ Отчёт за сегодня отправлен';
+        }
+    }
+
+    async function submitReport() {
+        const user = window.currentUser;
+        if (!user) { alert('Нужно войти'); return; }
+        const text = document.getElementById('reportText').value.trim();
+        if (!text) { alert('Напиши что-нибудь'); return; }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Отправляю...';
+
+        const today = new Date().toISOString().slice(0, 10);
+        const docId = `${today}_cell_${user.uid}`;
+
+        try {
+            await db.collection(CELL_COLLECTION).doc(docId).set({
+                uid: user.uid,
+                nick: user.nick || user.email,
+                text,
+                dayNumber: currentDay,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            await db.collection('users').doc(user.uid).update({
+                rays: firebase.firestore.FieldValue.increment(1),
+                lastCellReportDay: currentDay
+            });
+
+            window.currentUser.rays = (user.rays || 0) + 1;
+            updateBalance();
+            document.getElementById('reportText').value = '';
+            btn.textContent = '✅ Отправлено';
+
+            loadReports();
+            postAIReactionToCellReport(docId, text, user.gender).then(() => loadComments(docId)).catch(() => {});
+        } catch(e) {
+            alert('Ошибка: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = 'Отправить (+1 лучик)';
+        }
+    }
+
+    async function postAIReactionToCellReport(reportId, reportText, gender) {
+        const existing = await db.collection('comments')
+            .where('reportId', '==', reportId)
+            .where('uid', '==', AI_BOT_UID)
+            .where('isAI', '==', true).get();
+        if (!existing.empty) return;
+
+        const text = await callAI([
+            { role: 'system', content: TSAR_PERSONA(gender) },
+            { role: 'user', content: `Участник написал о медитации из годовой программы «Клеточная трансформация»: "${reportText}"\n\nОтветь как Царь — поддержи, 1-2 предложения.` }
+        ]);
+        if (!text) return;
+
+        await db.collection('comments').add({
+            reportId, uid: AI_BOT_UID, nick: AI_BOT_NICK,
+            text, isAI: true, createdAt: new Date()
+        });
+    }
+
+    async function loadReports() {
+        const snap = await db.collection(CELL_COLLECTION)
+            .orderBy('createdAt', 'desc').limit(30).get();
+        const list = document.getElementById('reportsList');
+        if (snap.empty) { list.innerHTML = '<p style="text-align:center;color:#888;">Пока нет отчётов</p>'; return; }
+
+        list.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            const time = d.createdAt ? new Date(d.createdAt.seconds * 1000)
+                .toLocaleString('ru-RU', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            const liked = d.likedBy && d.likedBy[window.currentUser?.uid];
+            return `
+                <div class="report-item">
+                    <div class="report-header">
+                        <a href="view-profile.html?uid=${d.uid}" class="report-nick">${d.nick || d.uid}</a>
+                        <span class="report-time">${time}</span>
+                    </div>
+                    <div class="report-text">${d.text}</div>
+                    <div class="report-actions">
+                        <button class="like-btn ${liked ? 'liked' : ''}" onclick="toggleLike('${doc.id}','${d.uid}')">❤️ ${d.likes || 0}</button>
+                    </div>
+                    <div class="report-comments">
+                        <div class="comments-list" id="comments-${doc.id}"><div style="font-size:12px;color:#666;">Загрузка...</div></div>
+                        <div class="comment-form">
+                            <input type="text" class="comment-input" placeholder="Добавить комментарий..."
+                                onkeypress="if(event.key==='Enter') addCommentFromForm('${doc.id}',this)">
+                            <button class="comment-send-btn" onclick="addCommentFromForm('${doc.id}',this.previousElementSibling)">➤</button>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        snap.docs.forEach(doc => loadComments(doc.id));
+    }
+
+    async function loadComments(reportId) {
+        const snap = await db.collection('comments').where('reportId', '==', reportId).get();
+        const list = document.getElementById(`comments-${reportId}`);
+        if (!list) return;
+        if (snap.empty) { list.innerHTML = ''; return; }
+
+        const all = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const ai = all.filter(d => d.isAI);
+        const users = all.filter(d => !d.isAI).sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+        const isAdmin = window.currentUser && (window.currentUser.isAdmin || window.currentUser.email === 'wuallar@gmail.com');
+
+        let html = ai.map(d => `
+            <div class="tsar-block">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="tsar-name">👑 Царь</span>
+                    ${isAdmin ? `<button onclick="deleteComment('${reportId}','${d.id}')" style="background:rgba(255,100,100,0.2);border:none;color:#ff6464;padding:2px 6px;border-radius:3px;font-size:10px;cursor:pointer;">✕</button>` : ''}
+                </div>
+                <div class="tsar-text">${d.text}</div>
+            </div>`).join('');
+
+        if (ai.length && users.length) html += `<div style="font-size:11px;color:#555;margin:4px 0 8px;">💬 Комментарии участников</div>`;
+
+        html += users.map(d => {
+            const liked = d.likedBy && d.likedBy[window.currentUser?.uid];
+            const canDel = isAdmin || (window.currentUser && window.currentUser.uid === d.uid);
+            return `
+                <div class="comment-item">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <a href="view-profile.html?uid=${d.uid}" class="comment-author">${d.nick}</a>
+                        ${canDel ? `<button onclick="deleteComment('${reportId}','${d.id}')" style="background:rgba(255,100,100,0.2);border:none;color:#ff6464;padding:2px 6px;border-radius:3px;font-size:11px;cursor:pointer;">✕</button>` : ''}
+                    </div>
+                    <div class="comment-text">${d.text}</div>
+                    <div style="margin-top:5px;">
+                        <button class="like-btn-small ${liked ? 'liked' : ''}" onclick="toggleCommentLike('${reportId}','${d.id}','${d.uid}')">❤️ ${d.likes || 0}</button>
+                    </div>
+                    <div class="comment-replies" id="replies-${d.id}"></div>
+                    <div class="reply-form">
+                        <input type="text" class="reply-input" placeholder="Ответить..."
+                            onkeypress="if(event.key==='Enter') addReplyFromForm('${reportId}','${d.id}',this)">
+                        <button class="reply-send-btn" onclick="addReplyFromForm('${reportId}','${d.id}',this.previousElementSibling)">➤</button>
+                    </div>
+                </div>`;
+        }).join('');
+
+        list.innerHTML = html;
+        users.forEach(c => loadReplies(c.id));
+    }
+
+    async function loadReplies(commentId) {
+        const snap = await db.collection('replies').where('commentId', '==', commentId).get();
+        const list = document.getElementById(`replies-${commentId}`);
+        if (!list) return;
+        if (snap.empty) { list.innerHTML = ''; return; }
+        const replies = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+            .sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+        list.innerHTML = replies.map(d => d.isAI
+            ? `<div class="tsar-block" style="border-radius:0 8px 8px 0;margin-bottom:6px;"><span class="tsar-name" style="font-size:12px;">👑 Царь</span><div class="tsar-text" style="font-size:12px;">${d.text}</div></div>`
+            : `<div style="margin-bottom:6px;"><a href="view-profile.html?uid=${d.uid}" class="comment-author">${d.nick}</a><div class="comment-text">${d.text}</div></div>`
+        ).join('');
+    }
+
+    function addCommentFromForm(reportId, inputEl) {
+        const text = inputEl.value.trim();
+        if (!text) return;
+        addComment(reportId, text, { target: inputEl, preventDefault: function(){} });
+    }
+
+    function addReplyFromForm(reportId, commentId, inputEl) {
+        const text = inputEl.value.trim();
+        if (!text) return;
+        addReply(reportId, commentId, text, inputEl);
+    }
+
+    let _commentLock = false;
+    async function addComment(reportId, text, event) {
+        if (!text.trim() || _commentLock) return;
+        _commentLock = true;
+        const user = window.currentUser;
+        if (!user) { alert('Нужно войти'); _commentLock = false; return; }
+        try {
+            const ref = await db.collection('comments').add({
+                reportId, uid: user.uid, nick: user.nick, text, createdAt: new Date()
+            });
+            event.target.value = '';
+            loadComments(reportId);
+            postAIReactionToComment(reportId, ref.id, text, user.gender).then(() => loadComments(reportId)).catch(() => {});
+        } catch(e) { alert('Ошибка: ' + e.message); }
+        finally { _commentLock = false; }
+    }
+
+    async function addReply(reportId, commentId, text, inputEl) {
+        const user = window.currentUser;
+        if (!user) { alert('Нужно войти'); return; }
+        try {
+            const ref = await db.collection('replies').add({
+                reportId, commentId, uid: user.uid, nick: user.nick,
+                text: text.trim(), createdAt: new Date()
+            });
+            inputEl.value = '';
+            await loadReplies(commentId);
+            postAIReactionToReply(reportId, commentId, ref.id, text.trim(), user.gender).then(() => loadReplies(commentId)).catch(() => {});
+        } catch(e) { alert('Ошибка: ' + e.message); }
+    }
+
+    async function deleteComment(reportId, commentId) {
+        if (!confirm('Удалить комментарий?')) return;
+        try {
+            await db.collection('comments').doc(commentId).delete();
+            loadComments(reportId);
+        } catch(e) { alert('Ошибка: ' + e.message); }
+    }
+
+    async function toggleLike(reportId, authorId) {
+        const user = window.currentUser;
+        if (!user || user.uid === authorId) return;
+        const ref = db.collection(CELL_COLLECTION).doc(reportId);
+        const doc = await ref.get();
+        if (!doc.exists) return;
+        const likedBy = doc.data().likedBy || {};
+        const isLiked = likedBy[user.uid];
+        likedBy[user.uid] = isLiked ? null : true;
+        const delta = isLiked ? -1 : 1;
+        await ref.update({ likes: firebase.firestore.FieldValue.increment(delta), likedBy });
+        await db.collection('users').doc(user.uid).update({ dust: firebase.firestore.FieldValue.increment(delta) });
+        if (!isLiked) await db.collection('users').doc(authorId).update({ rays: firebase.firestore.FieldValue.increment(1) });
+        loadReports();
+    }
+
+    async function toggleCommentLike(reportId, commentId, authorId) {
+        const user = window.currentUser;
+        if (!user || user.uid === authorId) return;
+        const ref = db.collection('comments').doc(commentId);
+        const doc = await ref.get();
+        if (!doc.exists) return;
+        const likedBy = doc.data().likedBy || {};
+        const isLiked = likedBy[user.uid];
+        likedBy[user.uid] = isLiked ? null : true;
+        await ref.update({ likes: firebase.firestore.FieldValue.increment(isLiked ? -1 : 1), likedBy });
+        loadComments(reportId);
+    }
+
+    function updateBalance() {
+        const u = window.currentUser;
+        if (!u) return;
+        document.getElementById('raysVal').textContent = Math.round(u.rays || 0);
+        document.getElementById('dustVal').textContent = u.dust || 0;
+        document.getElementById('balanceBar').style.display = 'flex';
+    }
+
+    auth.onAuthStateChanged(async user => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+            window.currentUser = { uid: user.uid, email: user.email, ...doc.data() };
+            updateBalance();
+        }
+        await loadCycleStart();
+        currentDay = getCurrentDay();
+        await loadDescription();
+        await loadDayContent();
+        checkUserReport();
+        document.getElementById('reportSection').style.display = 'block';
+        document.getElementById('reportsSection').style.display = 'block';
+        loadReports();
+    });
+</script>
+</body>
+</html>

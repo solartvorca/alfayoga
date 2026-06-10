@@ -335,6 +335,7 @@
             <button class="tab-btn" onclick="switchTab('hd', this)">🔮 HD База</button>
             <button class="tab-btn" onclick="switchTab('raffle', this); loadRaffleAdmin()">🎲 Розыгрыш</button>
             <button class="tab-btn" onclick="switchTab('breathing', this); loadBreathingAdmin()">🌬️ Дыхание</button>
+            <button class="tab-btn" onclick="switchTab('cellular', this); loadCellularAdmin()">🧬 Клетки</button>
         </div>
 
         <!-- Марафоны -->
@@ -1001,6 +1002,80 @@
                 <div class="section-title">📊 Все розыгрыши сегодня</div>
                 <div id="adminAllRaffles">Загрузка...</div>
                 <div id="adminRaffleActionStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+            </div>
+        </div>
+
+        <!-- ===== КЛЕТОЧНАЯ ТРАНСФОРМАЦИЯ ===== -->
+        <div id="cellular-tab" class="tab-content">
+
+            <div class="admin-section" style="border-left:3px solid rgba(0,208,132,0.6);background:rgba(0,208,132,0.04);">
+                <div class="section-title" style="color:#00d084;">🧬 Описание программы</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">Годовой календарь медитаций — текст для участников.</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Подзаголовок</label>
+                        <input type="text" id="cellSubtitle" placeholder="Годовой календарь медитаций">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>Описание программы</label>
+                        <textarea id="cellDescription" rows="6" placeholder="Расскажи о программе — цели, методы, ожидаемые результаты..."></textarea>
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <button class="btn" onclick="saveCellularDescription()" style="background:rgba(0,208,132,0.15);border-color:rgba(0,208,132,0.4);color:#00d084;">💾 Сохранить описание</button>
+                        <span id="cellDescStatus" style="margin-left:12px;font-size:13px;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section" style="border-left:3px solid #ffd700;background:rgba(255,215,0,0.05);">
+                <div class="section-title" style="color:#ffd700;">🗓️ Начало годового цикла</div>
+                <p style="font-size:13px;color:#888;margin-bottom:15px;">День 1 начнётся с этой даты. Цикл 365 дней.</p>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:160px;">
+                        <label>Дата старта</label>
+                        <input type="date" id="cellCycleDate" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-size:14px;width:100%;">
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:120px;">
+                        <label>Время</label>
+                        <input type="time" id="cellCycleTime" value="00:00" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;padding:10px;color:#e0e6ed;font-size:14px;width:100%;">
+                    </div>
+                    <button onclick="saveCellularCycleStart()" class="btn" style="margin-top:18px;background:rgba(255,215,0,0.2);border-color:rgba(255,215,0,0.4);color:#ffd700;">🗓️ Начать годовой цикл</button>
+                </div>
+                <div id="cellCycleStatus" style="margin-top:10px;font-size:13px;color:#00d084;display:none;"></div>
+                <div id="cellCycleCurrent" style="margin-top:8px;font-size:13px;color:#888;"></div>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📅 Медитация на день (1–365)</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>День (1–365)</label>
+                        <input type="number" id="cellDayNum" min="1" max="365" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Название</label>
+                        <input type="text" id="cellDayTitle" placeholder="Медитация на осознанность">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>Содержание</label>
+                        <textarea id="cellDayContent" rows="5" placeholder="Описание медитации, инструкции..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>📹 Видео VK (опционально)</label>
+                        <input type="text" id="cellDayVideo" placeholder="video-123456_789 или vk.com/video-...">
+                    </div>
+                    <div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                        <button class="btn" onclick="loadCellularDay()" style="background:rgba(0,208,132,0.12);">📥 Загрузить день</button>
+                        <button class="btn" onclick="saveCellularDay()" style="background:rgba(0,208,132,0.2);border-color:rgba(0,208,132,0.4);color:#00d084;">💾 Сохранить день</button>
+                        <span id="cellDayStatus" style="font-size:13px;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📋 Все дни программы</div>
+                <button class="btn" onclick="loadAllCellularDays()" style="margin-bottom:15px;">🔄 Загрузить список</button>
+                <div id="cellDaysList"><p style="text-align:center;color:#888;">Нажми «Загрузить список»</p></div>
             </div>
         </div>
 
@@ -3125,6 +3200,144 @@
             document.getElementById('breathDayNum').value = num;
             loadBreathingDay();
             document.getElementById('breathDayNum').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ===== КЛЕТОЧНАЯ ТРАНСФОРМАЦИЯ =====
+
+        async function loadCellularAdmin() {
+            try {
+                const doc = await db.collection('settings').doc('cellularMarathon').get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    if (d.subtitle) document.getElementById('cellSubtitle').value = d.subtitle;
+                    if (d.description) document.getElementById('cellDescription').value = d.description;
+                    const el = document.getElementById('cellCycleCurrent');
+                    if (d.cycleStart) {
+                        const dt = d.cycleStart.toDate();
+                        el.textContent = `Текущий старт: ${dt.toLocaleString('ru-RU')}`;
+                        const pad = n => String(n).padStart(2,'0');
+                        document.getElementById('cellCycleDate').value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+                        document.getElementById('cellCycleTime').value = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+                    } else {
+                        el.textContent = 'Цикл не установлен';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function saveCellularDescription() {
+            const subtitle = document.getElementById('cellSubtitle').value.trim();
+            const description = document.getElementById('cellDescription').value.trim();
+            const status = document.getElementById('cellDescStatus');
+            status.textContent = '⏳ Сохраняю...';
+            try {
+                await db.collection('settings').doc('cellularMarathon').set({ subtitle, description }, { merge: true });
+                status.style.color = '#00d084';
+                status.textContent = '✅ Сохранено';
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function saveCellularCycleStart() {
+            const dateVal = document.getElementById('cellCycleDate').value;
+            const timeVal = document.getElementById('cellCycleTime').value || '00:00';
+            const status = document.getElementById('cellCycleStatus');
+            if (!dateVal) { alert('Выбери дату'); return; }
+            const [y,m,d] = dateVal.split('-').map(Number);
+            const [h,min] = timeVal.split(':').map(Number);
+            const dt = new Date(y, m-1, d, h, min, 0);
+            status.textContent = '⏳ Сохраняю...';
+            status.style.display = 'block';
+            try {
+                await db.collection('settings').doc('cellularMarathon').set(
+                    { cycleStart: firebase.firestore.Timestamp.fromDate(dt) }, { merge: true }
+                );
+                status.style.color = '#00d084';
+                status.textContent = `✅ Годовой цикл начат с ${dt.toLocaleString('ru-RU')}`;
+                document.getElementById('cellCycleCurrent').textContent = `Текущий старт: ${dt.toLocaleString('ru-RU')}`;
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function loadCellularDay() {
+            const dayNum = document.getElementById('cellDayNum').value;
+            if (!dayNum) { alert('Введи номер дня'); return; }
+            const status = document.getElementById('cellDayStatus');
+            status.textContent = '⏳ Загружаю...';
+            try {
+                const doc = await db.collection('marathons').doc('cellular-transformation')
+                    .collection('days').doc(String(dayNum)).get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('cellDayTitle').value = d.title || '';
+                    document.getElementById('cellDayContent').value = d.content || '';
+                    document.getElementById('cellDayVideo').value = d.videoUrl || '';
+                    status.style.color = '#00d084';
+                    status.textContent = `✅ День ${dayNum} загружен`;
+                } else {
+                    document.getElementById('cellDayTitle').value = '';
+                    document.getElementById('cellDayContent').value = '';
+                    document.getElementById('cellDayVideo').value = '';
+                    status.style.color = '#888';
+                    status.textContent = `День ${dayNum} пустой`;
+                }
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function saveCellularDay() {
+            const dayNum = document.getElementById('cellDayNum').value;
+            const title = document.getElementById('cellDayTitle').value.trim();
+            const content = document.getElementById('cellDayContent').value.trim();
+            const videoUrl = document.getElementById('cellDayVideo').value.trim();
+            if (!dayNum || !title) { alert('Укажи день и название'); return; }
+            const status = document.getElementById('cellDayStatus');
+            status.textContent = '⏳ Сохраняю...';
+            try {
+                await db.collection('marathons').doc('cellular-transformation')
+                    .collection('days').doc(String(dayNum)).set({
+                        dayNumber: Number(dayNum), title, content, videoUrl,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                status.style.color = '#00d084';
+                status.textContent = `✅ День ${dayNum} сохранён`;
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function loadAllCellularDays() {
+            const container = document.getElementById('cellDaysList');
+            container.innerHTML = '<p style="color:#888;">Загрузка...</p>';
+            try {
+                const snap = await db.collection('marathons').doc('cellular-transformation')
+                    .collection('days').orderBy('dayNumber').get();
+                if (snap.empty) { container.innerHTML = '<p style="color:#888;">Дней пока нет</p>'; return; }
+                container.innerHTML = snap.docs.map(doc => {
+                    const d = doc.data();
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,208,132,0.08);">
+                        <div>
+                            <span style="color:#00d084;font-weight:600;">День ${d.dayNumber}</span>
+                            <span style="color:#c8d0db;margin-left:10px;">${d.title}</span>
+                            ${d.videoUrl ? '<span style="margin-left:8px;font-size:11px;color:#888;">📹</span>' : ''}
+                        </div>
+                        <button class="btn btn-small" onclick="editCellDay(${d.dayNumber})" style="padding:4px 10px;font-size:12px;">✏️</button>
+                    </div>`;
+                }).join('');
+            } catch(e) { container.innerHTML = `<p style="color:#ff6464;">Ошибка: ${e.message}</p>`; }
+        }
+
+        function editCellDay(num) {
+            document.getElementById('cellDayNum').value = num;
+            loadCellularDay();
+            document.getElementById('cellDayNum').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
     </script>
