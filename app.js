@@ -19,6 +19,7 @@ let alarmState = {
     alarmInterval: (parseInt(localStorage.getItem('alarmIntervalSeconds')) || 600) * 1000,
     soundDuration: parseFloat(localStorage.getItem('alarmSoundDuration')) || 3,
     mode: localStorage.getItem('alarmMode') || (isMobileDevice() ? 'vibration' : 'sound'),
+    soundType: localStorage.getItem('alarmSoundType') || 'bowl',
     isSoundPlaying: false,
 };
 
@@ -48,6 +49,7 @@ const alarmIntervalInput = document.getElementById('alarmInterval');
 const alarmIntervalDisplay = document.getElementById('alarmIntervalDisplay');
 const alarmDurationInput = document.getElementById('alarmDuration');
 const alarmModeSelect = document.getElementById('alarmMode');
+const alarmSoundSelect = document.getElementById('alarmSound');
 const lunarDaySpan = document.getElementById('lunarDay');
 const lunarPhaseSpan = document.getElementById('lunarPhase');
 const alarmNotification = document.getElementById('alarmNotification');
@@ -88,7 +90,13 @@ function updateAlarmMode() {
     const mode = alarmModeSelect.value;
     alarmState.mode = mode;
     localStorage.setItem('alarmMode', mode);
-    console.log(`[Alarm] Режим будильника обновлен: ${mode}`);
+}
+
+// Обновление типа звука будильника
+function updateAlarmSound() {
+    if (!alarmSoundSelect) return;
+    alarmState.soundType = alarmSoundSelect.value;
+    localStorage.setItem('alarmSoundType', alarmSoundSelect.value);
 }
 
 if (inhalInput) inhalInput.addEventListener('change', updateBreathingParams);
@@ -100,6 +108,7 @@ if (alarmIntervalInput) alarmIntervalInput.addEventListener('input', updateAlarm
 if (alarmDurationInput) alarmDurationInput.addEventListener('change', updateAlarmDuration);
 if (alarmDurationInput) alarmDurationInput.addEventListener('input', updateAlarmDuration);
 if (alarmModeSelect) alarmModeSelect.addEventListener('change', updateAlarmMode);
+if (alarmSoundSelect) alarmSoundSelect.addEventListener('change', updateAlarmSound);
 
 // Загрузить сохраненные настройки будильника из localStorage
 if (alarmIntervalInput) {
@@ -120,6 +129,11 @@ if (alarmModeSelect) {
     const savedMode = localStorage.getItem('alarmMode') || (isMobileDevice() ? 'vibration' : 'sound');
     alarmModeSelect.value = savedMode;
     alarmState.mode = savedMode;
+}
+if (alarmSoundSelect) {
+    const savedSound = localStorage.getItem('alarmSoundType') || 'bowl';
+    alarmSoundSelect.value = savedSound;
+    alarmState.soundType = savedSound;
 }
 
 // Будильник
@@ -360,21 +374,26 @@ window.addEventListener('focus', resumeAudioContext);
 // Звук будильника (Web Audio API)
 function playAlarmSound() {
     try {
-        const audioContext = getAudioContext();
-
-        // Возобновить если был suspended (на мобильных)
-        if (audioContext.state === 'suspended') {
-            audioContext.resume().then(() => {
-                playAlarmSoundInternal(audioContext);
-            });
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') {
+            ctx.resume().then(() => _dispatchAlarmSound(ctx));
         } else {
-            playAlarmSoundInternal(audioContext);
+            _dispatchAlarmSound(ctx);
         }
     } catch (err) {
         console.error('Audio error:', err);
     }
 }
 
+function _dispatchAlarmSound(ctx) {
+    if (alarmState.soundType === 'cuckoo') {
+        playCuckooSoundInternal(ctx);
+    } else {
+        playAlarmSoundInternal(ctx);
+    }
+}
+
+// Поющая чаша (оригинальный звук)
 function playAlarmSoundInternal(audioContext) {
     const now = audioContext.currentTime;
     const duration = alarmState.soundDuration;
@@ -387,15 +406,11 @@ function playAlarmSoundInternal(audioContext) {
     gain.connect(audioContext.destination);
 
     osc.frequency.setValueAtTime(528, now);
-    osc.frequency.setValueAtTime(528, now + 0.1);
-
     gain.gain.setValueAtTime(0.3, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + halfDuration);
-
     osc.start(now);
     osc.stop(now + halfDuration);
 
-    // Вторая волна (вторая половина)
     const osc2 = audioContext.createOscillator();
     osc2.connect(gain);
     osc2.frequency.setValueAtTime(432, now + halfDuration + 0.1);
@@ -403,6 +418,35 @@ function playAlarmSoundInternal(audioContext) {
     gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
     osc2.start(now + halfDuration + 0.1);
     osc2.stop(now + duration);
+}
+
+// Кукушка
+function playCuckooSoundInternal(ctx) {
+    const duration = alarmState.soundDuration;
+    // Один «ку-ку» занимает ~0.7с, считаем сколько раз влезет
+    const cuckooLen = 0.7;
+    const count = Math.max(1, Math.round(duration / cuckooLen));
+
+    for (let i = 0; i < count; i++) {
+        const t = ctx.currentTime + i * cuckooLen;
+        _cuckooNote(ctx, 587, t, 0.25);          // «ку» — ре5
+        _cuckooNote(ctx, 494, t + 0.28, 0.25);   // «ку» — си4 (малая терция ниже)
+    }
+}
+
+function _cuckooNote(ctx, freq, startTime, noteDuration) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.35, startTime + 0.02);
+    gain.gain.setValueAtTime(0.35, startTime + noteDuration * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + noteDuration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + noteDuration);
 }
 
 // Показ сообщения будильника
