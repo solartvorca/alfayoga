@@ -387,18 +387,35 @@ function playAlarmSound() {
 
 function _dispatchAlarmSound(ctx) {
     if (alarmState.soundType === 'cuckoo') {
-        playCuckooMp3();
+        playCuckooMp3(ctx);
     } else {
         playAlarmSoundInternal(ctx);
     }
 }
 
-function playCuckooMp3() {
-    const duration = alarmState.soundDuration * 1000; // мс
-    const audio = new Audio('kukuet-kukushka.mp3');
-    audio.play().catch(e => console.warn('Cuckoo MP3 error:', e));
-    // Остановить по истечении длительности будильника
-    setTimeout(() => { audio.pause(); audio.currentTime = 0; }, duration);
+let _cuckooBuffer = null;
+
+async function _loadCuckooBuffer(ctx) {
+    if (_cuckooBuffer) return _cuckooBuffer;
+    try {
+        const resp = await fetch('kukuet-kukushka.mp3');
+        const arr  = await resp.arrayBuffer();
+        _cuckooBuffer = await ctx.decodeAudioData(arr);
+    } catch(e) { console.warn('Cuckoo load error:', e); }
+    return _cuckooBuffer;
+}
+
+async function playCuckooMp3(ctx) {
+    const buffer = await _loadCuckooBuffer(ctx);
+    if (!buffer) return;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+    const stopAt = alarmState.soundDuration;
+    if (stopAt < buffer.duration) {
+        source.stop(ctx.currentTime + stopAt);
+    }
 }
 
 // Поющая чаша (оригинальный звук)
