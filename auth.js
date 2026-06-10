@@ -38,7 +38,9 @@ function checkAuth() {
                 // Если пользователь удалён - перенаправить на removed.html
                 const currentPath = window.location.pathname.split('/').pop();
                 const allowedForRemoved = ['removed.html', 'login.html'];
-                if (window.currentUser.status === 'removed' && !allowedForRemoved.includes(currentPath)) {
+                const _isAdmin = window.currentUser.isAdmin || window.currentUser.email === 'wuallar@gmail.com';
+                const _isPremium = window.currentUser.subscription === 'premium' || window.currentUser.subscription === 'vip';
+                if (window.currentUser.status === 'removed' && !allowedForRemoved.includes(currentPath) && !_isAdmin && !_isPremium) {
                     window.location.href = 'removed.html';
                     return;
                 }
@@ -66,7 +68,7 @@ async function checkMarathonStatus() {
     if (user.status === "removed") return;
 
     // Премиум-участники не исключаются автоматически
-    if (user.status === "premium") return;
+    if (user.status === "premium" || user.subscription === "premium" || user.subscription === "vip") return;
 
     // Недавно восстановлен администратором — даём 48 часов на отчёт
     if (user.restoredAt) {
