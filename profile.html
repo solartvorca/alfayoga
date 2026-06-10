@@ -536,6 +536,7 @@
             <button class="tab-btn" onclick="switchTab('destiny')">🔮 Предназначение</button>
             <button class="tab-btn" onclick="switchTab('services')">🛍️ Услуги и товары</button>
             <button class="tab-btn" onclick="switchTab('dreams')">🌙 Сновидения</button>
+            <button class="tab-btn" id="unityTabBtn" style="display:none;" onclick="switchTab('unity')">🌟 Единство</button>
             <button class="tab-btn" onclick="switchTab('other')">📊 Остальное</button>
         </div>
 
@@ -846,6 +847,37 @@
             </div>
         </div>
 
+        <!-- Вкладка "Единство" — видна только участникам с назначенным днём -->
+        <div id="unity-tab" class="tab-content">
+            <div class="section" style="border-left:3px solid #ffd700; background:rgba(255,215,0,0.04);">
+                <div class="section-title" style="color:#ffd700;">🌟 Марафон «Единство» — мой день</div>
+                <p id="unityDayLabel" style="font-size:14px; color:#c8d0db; margin-bottom:20px;"></p>
+
+                <form onsubmit="saveUnityDay(event)">
+                    <div class="form-group">
+                        <label style="color:#ffd700;">📝 Текст практики для моего дня</label>
+                        <textarea id="unityText" rows="6" placeholder="Опиши практику, которую ты передаёшь участникам в этот день..."
+                            style="width:100%; background:rgba(255,215,0,0.04); border:1px solid rgba(255,215,0,0.25);
+                                   border-radius:10px; color:#e0e6ed; font-size:14px; padding:12px; resize:vertical;
+                                   font-family:inherit; box-sizing:border-box; outline:none;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-top:12px;">
+                        <label style="color:#ffd700;">🔗 Ссылка (видео, статья или другой материал)</label>
+                        <input type="url" id="unityLink" placeholder="https://..."
+                            style="width:100%; background:rgba(255,215,0,0.04); border:1px solid rgba(255,215,0,0.25);
+                                   border-radius:8px; color:#e0e6ed; font-size:14px; padding:10px 12px;
+                                   box-sizing:border-box; outline:none;">
+                    </div>
+                    <button type="submit" class="btn"
+                        style="margin-top:16px; background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(200,160,0,0.15));
+                               border-color:rgba(255,215,0,0.4); color:#ffd700; width:100%;">
+                        💾 Сохранить мой день
+                    </button>
+                </form>
+                <div id="unityDaySaveStatus" style="margin-top:10px; font-size:13px; display:none;"></div>
+            </div>
+        </div>
+
         <!-- Вкладка "Остальное" -->
         <div id="other-tab" class="tab-content">
             <!-- Передача лучиков -->
@@ -1049,6 +1081,63 @@
             loadMyReports();
             loadMyDreams();
             loadUserPublicWishes(user.uid);
+            loadUnityTab(user);
+        }
+
+        async function loadUnityTab(user) {
+            const btn = document.getElementById('unityTabBtn');
+            if (!user.unityDay) {
+                btn.style.display = 'none';
+                return;
+            }
+            btn.style.display = '';
+            document.getElementById('unityDayLabel').textContent =
+                `Тебе назначен день ${user.unityDay} — наполни его своей практикой.`;
+
+            try {
+                const dayDoc = await db.collection('marathons')
+                    .doc('lunar-yoga-tsarevich')
+                    .collection('days')
+                    .doc(String(user.unityDay))
+                    .get();
+                if (dayDoc.exists) {
+                    const d = dayDoc.data();
+                    document.getElementById('unityText').value = d.unityText || '';
+                    document.getElementById('unityLink').value = d.unityLink || '';
+                }
+            } catch (e) {
+                console.error('[Unity] Ошибка загрузки дня:', e);
+            }
+        }
+
+        async function saveUnityDay(e) {
+            e.preventDefault();
+            const user = window.currentUser;
+            if (!user || !user.unityDay) return;
+
+            const status = document.getElementById('unityDaySaveStatus');
+            const text = document.getElementById('unityText').value.trim();
+            const link = document.getElementById('unityLink').value.trim();
+
+            status.style.display = 'block';
+            status.style.color = '#ffd700';
+            status.textContent = 'Сохраняю...';
+
+            try {
+                await db.collection('marathons')
+                    .doc('lunar-yoga-tsarevich')
+                    .collection('days')
+                    .doc(String(user.unityDay))
+                    .set({ unityText: text, unityLink: link }, { merge: true });
+
+                status.style.color = '#4caf50';
+                status.textContent = '✓ Сохранено!';
+                setTimeout(() => { status.style.display = 'none'; }, 3000);
+            } catch (err) {
+                console.error('[Unity] Ошибка сохранения:', err);
+                status.style.color = '#ff6b6b';
+                status.textContent = 'Ошибка: ' + err.message;
+            }
         }
 
         async function loadCreativeProfile() {
