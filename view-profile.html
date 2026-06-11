@@ -199,6 +199,7 @@
         <!-- Навигация вкладок -->
         <div class="tabs-nav">
             <button class="tab-btn active" onclick="switchTab('about')">👤 Об авторе</button>
+            <button class="tab-btn" onclick="switchTab('products')">🎨 Творчество</button>
             <button class="tab-btn" onclick="switchTab('services')">🛍️ Услуги и товары</button>
             <button class="tab-btn" onclick="switchTab('dreams')">🌙 Сновидения</button>
         </div>
@@ -206,6 +207,11 @@
         <!-- Вкладка "Об авторе" -->
         <div id="about-tab" class="tab-content active">
             <div id="profileAboutSection"></div>
+        </div>
+
+        <!-- Вкладка "Моё творчество" -->
+        <div id="products-tab" class="tab-content">
+            <div id="profileProductsSection"></div>
         </div>
 
         <!-- Вкладка "Услуги и товары" -->
@@ -440,6 +446,27 @@
                     document.getElementById("profileServicesSection").innerHTML = servicesHtml;
                 } else {
                     document.getElementById("profileServicesSection").innerHTML = '<div class="empty-state">Услуги, подарки и партнёрские программы не указаны</div>';
+                }
+
+                // Продукты и творчество
+                const CATEGORY_LABELS = { app:'📱 Приложение', game:'🎮 Игра', site:'🌐 Сайт', tool:'🔧 Инструмент', other:'✨ Другое' };
+                const products = user.creativeProducts || [];
+                if (products.length > 0) {
+                    document.getElementById('profileProductsSection').innerHTML = products.map(p => `
+                        <div style="background:rgba(161,140,209,0.07); border:1px solid rgba(161,140,209,0.2);
+                                    border-radius:12px; padding:16px; margin-bottom:12px;">
+                            <div style="font-size:12px; color:#a18cd1; margin-bottom:4px;">${CATEGORY_LABELS[p.category] || '✨ Другое'}</div>
+                            <div style="font-size:17px; font-weight:700; color:#ffd700; margin-bottom:6px;">${p.name || '—'}</div>
+                            ${p.desc ? `<div style="font-size:14px; color:#c8d0db; line-height:1.6; margin-bottom:10px;">${p.desc}</div>` : ''}
+                            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener"
+                                style="display:inline-block; padding:8px 16px; background:rgba(161,140,209,0.15);
+                                       border:1px solid rgba(161,140,209,0.35); border-radius:8px;
+                                       color:#a18cd1; text-decoration:none; font-size:13px; transition:background 0.2s;"
+                                onmouseover="this.style.background='rgba(161,140,209,0.28)'"
+                                onmouseout="this.style.background='rgba(161,140,209,0.15)'">🔗 Открыть</a>` : ''}
+                        </div>`).join('');
+                } else {
+                    document.getElementById('profileProductsSection').innerHTML = '<div class="empty-state">Продукты не добавлены</div>';
                 }
 
                 // Загрузить публичные желания, сны и привычки
