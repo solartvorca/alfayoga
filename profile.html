@@ -536,6 +536,7 @@
             <button class="tab-btn active" onclick="switchTab('about')">👤 Об авторе</button>
             <button class="tab-btn" onclick="switchTab('destiny')">🔮 Предназначение</button>
             <button class="tab-btn" onclick="switchTab('services')">🛍️ Услуги и товары</button>
+            <button class="tab-btn" onclick="switchTab('products')">🎨 Моё творчество</button>
             <button class="tab-btn" onclick="switchTab('dreams')">🌙 Сновидения</button>
             <button class="tab-btn" id="unityTabBtn" style="display:none;" onclick="switchTab('unity')">🌟 Единство</button>
             <button class="tab-btn" onclick="switchTab('other')">📊 Остальное</button>
@@ -848,6 +849,60 @@
             </div>
         </div>
 
+        <!-- Вкладка "Моё творчество" -->
+        <div id="products-tab" class="tab-content">
+            <div class="section">
+                <div class="section-title">🎨 Мои приложения и продукты</div>
+                <p style="font-size:13px; color:#888; margin-bottom:20px; line-height:1.6;">
+                    Публикуй свои игры, приложения и другие проекты — они будут видны в твоём публичном профиле.
+                </p>
+
+                <!-- Список продуктов -->
+                <div id="productsList" style="margin-bottom:20px;"></div>
+
+                <!-- Форма добавления -->
+                <div id="productForm" style="display:none; background:rgba(161,140,209,0.06); border:1px solid rgba(161,140,209,0.2); border-radius:12px; padding:18px; margin-bottom:16px;">
+                    <div class="section-title" id="productFormTitle" style="font-size:15px; margin-bottom:14px;">Новый продукт</div>
+                    <input type="hidden" id="editProductIndex" value="-1">
+                    <div class="form-group">
+                        <label>Название</label>
+                        <input type="text" id="productName" placeholder="Название игры или приложения">
+                    </div>
+                    <div class="form-group" style="margin-top:10px;">
+                        <label>Описание</label>
+                        <textarea id="productDesc" rows="3" placeholder="Расскажи что делает этот продукт..."
+                            style="width:100%; background:rgba(161,140,209,0.06); border:1px solid rgba(161,140,209,0.2);
+                                   border-radius:8px; color:#e0e6ed; font-size:14px; padding:10px 12px;
+                                   resize:vertical; font-family:inherit; box-sizing:border-box; outline:none;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-top:10px;">
+                        <label>Ссылка</label>
+                        <input type="url" id="productUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group" style="margin-top:10px;">
+                        <label>Категория</label>
+                        <select id="productCategory"
+                            style="width:100%; background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.25);
+                                   border-radius:8px; color:#e0e6ed; font-size:14px; padding:9px 12px; outline:none;">
+                            <option value="app">📱 Приложение</option>
+                            <option value="game">🎮 Игра</option>
+                            <option value="site">🌐 Сайт</option>
+                            <option value="tool">🔧 Инструмент</option>
+                            <option value="other">✨ Другое</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button onclick="saveProduct()" class="btn" style="flex:1;">💾 Сохранить</button>
+                        <button onclick="closeProductForm()" class="btn"
+                            style="flex:1; background:rgba(255,100,100,0.1); border-color:rgba(255,100,100,0.3); color:#ff6464;">Отмена</button>
+                    </div>
+                </div>
+
+                <button onclick="openProductForm()" class="btn" style="width:100%;">+ Добавить продукт</button>
+                <div id="productsSaveStatus" style="margin-top:10px; font-size:13px; display:none;"></div>
+            </div>
+        </div>
+
         <!-- Вкладка "Единство" — видна только участникам с назначенным днём -->
         <div id="unity-tab" class="tab-content">
             <div class="section" style="border-left:3px solid #ffd700; background:rgba(255,215,0,0.04);">
@@ -1082,7 +1137,123 @@
             loadMyReports();
             loadMyDreams();
             loadUserPublicWishes(user.uid);
+            loadProducts();
             loadUnityTab(user);
+        }
+
+        // ===== МОЁ ТВОРЧЕСТВО =====
+        let _products = [];
+        const CATEGORY_LABELS = { app:'📱 Приложение', game:'🎮 Игра', site:'🌐 Сайт', tool:'🔧 Инструмент', other:'✨ Другое' };
+
+        async function loadProducts() {
+            const user = window.currentUser;
+            if (!user) return;
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                _products = (doc.data() && doc.data().creativeProducts) || [];
+            } catch(e) { _products = []; }
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const list = document.getElementById('productsList');
+            if (!list) return;
+            if (_products.length === 0) {
+                list.innerHTML = '<p style="color:#666; font-size:13px; text-align:center; padding:20px 0;">Нет продуктов — добавь первый!</p>';
+                return;
+            }
+            list.innerHTML = _products.map((p, i) => `
+                <div style="background:rgba(161,140,209,0.07); border:1px solid rgba(161,140,209,0.2);
+                            border-radius:12px; padding:16px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:12px; color:#a18cd1; margin-bottom:4px;">${CATEGORY_LABELS[p.category] || '✨ Другое'}</div>
+                            <div style="font-size:16px; font-weight:700; color:#ffd700; margin-bottom:6px;">${p.name || '—'}</div>
+                            ${p.desc ? `<div style="font-size:13px; color:#c8d0db; line-height:1.6; margin-bottom:8px;">${p.desc}</div>` : ''}
+                            ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener"
+                                style="font-size:12px; color:#a18cd1; text-decoration:none; word-break:break-all;">🔗 ${p.url}</a>` : ''}
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+                            <button onclick="editProduct(${i})"
+                                style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3);
+                                       border-radius:6px; color:#a18cd1; font-size:12px; padding:5px 10px; cursor:pointer;">✏️</button>
+                            <button onclick="deleteProduct(${i})"
+                                style="background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3);
+                                       border-radius:6px; color:#ff6464; font-size:12px; padding:5px 10px; cursor:pointer;">✕</button>
+                        </div>
+                    </div>
+                </div>`).join('');
+        }
+
+        function openProductForm() {
+            document.getElementById('editProductIndex').value = -1;
+            document.getElementById('productFormTitle').textContent = 'Новый продукт';
+            document.getElementById('productName').value = '';
+            document.getElementById('productDesc').value = '';
+            document.getElementById('productUrl').value = '';
+            document.getElementById('productCategory').value = 'app';
+            document.getElementById('productForm').style.display = 'block';
+            document.getElementById('productName').focus();
+        }
+
+        function editProduct(i) {
+            const p = _products[i];
+            document.getElementById('editProductIndex').value = i;
+            document.getElementById('productFormTitle').textContent = 'Редактировать продукт';
+            document.getElementById('productName').value = p.name || '';
+            document.getElementById('productDesc').value = p.desc || '';
+            document.getElementById('productUrl').value = p.url || '';
+            document.getElementById('productCategory').value = p.category || 'app';
+            document.getElementById('productForm').style.display = 'block';
+            document.getElementById('productName').focus();
+        }
+
+        function closeProductForm() {
+            document.getElementById('productForm').style.display = 'none';
+        }
+
+        async function saveProduct() {
+            const name = document.getElementById('productName').value.trim();
+            if (!name) { alert('Введи название'); return; }
+            const product = {
+                name,
+                desc: document.getElementById('productDesc').value.trim(),
+                url:  document.getElementById('productUrl').value.trim(),
+                category: document.getElementById('productCategory').value
+            };
+            const idx = parseInt(document.getElementById('editProductIndex').value);
+            if (idx >= 0) {
+                _products[idx] = product;
+            } else {
+                _products.push(product);
+            }
+            closeProductForm();
+            renderProducts();
+            await _persistProducts();
+        }
+
+        async function deleteProduct(i) {
+            if (!confirm('Удалить продукт?')) return;
+            _products.splice(i, 1);
+            renderProducts();
+            await _persistProducts();
+        }
+
+        async function _persistProducts() {
+            const status = document.getElementById('productsSaveStatus');
+            status.style.display = 'block';
+            status.style.color = '#a18cd1';
+            status.textContent = 'Сохраняю...';
+            try {
+                await db.collection('users').doc(window.currentUser.uid)
+                    .update({ creativeProducts: _products });
+                status.style.color = '#4caf50';
+                status.textContent = '✓ Сохранено';
+                setTimeout(() => { status.style.display = 'none'; }, 2000);
+            } catch(e) {
+                status.style.color = '#ff6b6b';
+                status.textContent = 'Ошибка: ' + e.message;
+            }
         }
 
         async function loadUnityTab(user) {
