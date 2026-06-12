@@ -339,6 +339,7 @@
             <button class="tab-btn" onclick="switchTab('raffle', this); loadRaffleAdmin()">🎲 Розыгрыш</button>
             <button class="tab-btn" onclick="switchTab('breathing', this); loadBreathingAdmin()">🌬️ Дыхание</button>
             <button class="tab-btn" onclick="switchTab('cellular', this); loadCellularAdmin()">🧬 Клетки</button>
+            <button class="tab-btn" onclick="switchTab('games', this); loadGamesAdmin()">🎮 Игры</button>
         </div>
 
         <!-- Марафоны -->
@@ -1172,6 +1173,58 @@
                 <div id="breathDaysList"><p style="text-align:center;color:#888;">Нажми «Загрузить список»</p></div>
             </div>
         </div>
+
+        <!-- ===== ИГРЫ ===== -->
+        <div id="games-tab" class="tab-content">
+            <div class="admin-section" style="border-left:3px solid rgba(161,140,209,0.6);background:rgba(161,140,209,0.04);">
+                <div class="section-title">🎮 Добавить / редактировать игру</div>
+                <input type="hidden" id="gameEditId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Название *</label>
+                        <input type="text" id="gameTitle" placeholder="Название игры или приложения">
+                    </div>
+                    <div class="form-group">
+                        <label>Иконка (эмодзи)</label>
+                        <input type="text" id="gameIcon" placeholder="🎮" maxlength="4">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>URL *</label>
+                        <input type="url" id="gameUrl" placeholder="https://example.com/game">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label>Описание</label>
+                        <input type="text" id="gameDescription" placeholder="Краткое описание">
+                    </div>
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select id="gameCategory" style="background:rgba(161,140,209,0.1);border:1px solid rgba(161,140,209,0.3);border-radius:6px;padding:10px;color:#e0e6ed;width:100%;">
+                            <option value="game">🎮 Игра</option>
+                            <option value="app">📱 Приложение</option>
+                            <option value="tool">🔧 Инструмент</option>
+                            <option value="test">📝 Тест</option>
+                            <option value="meditation">🧘 Медитация</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Порядок (число)</label>
+                        <input type="number" id="gameOrder" placeholder="1" min="1" max="99" value="10">
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                    <button class="btn" onclick="saveGame()">💾 Сохранить</button>
+                    <button class="btn" onclick="clearGameForm()" style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);">✕ Очистить</button>
+                </div>
+                <div id="gameFormStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+            </div>
+
+            <div class="admin-section">
+                <div class="section-title">📋 Список игр</div>
+                <button class="btn" onclick="loadGamesAdmin()" style="margin-bottom:15px;">🔄 Обновить</button>
+                <div id="gamesAdminList"><p style="text-align:center;color:#888;">Загрузка...</p></div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -3477,6 +3530,119 @@
             document.getElementById('cellDayNum').value = num;
             loadCellularDay();
             document.getElementById('cellDayNum').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ===== ИГРЫ =====
+        async function loadGamesAdmin() {
+            const container = document.getElementById('gamesAdminList');
+            container.innerHTML = '<p style="text-align:center;color:#888;">Загрузка...</p>';
+            try {
+                const snap = await db.collection('games').orderBy('order').get();
+                if (snap.empty) {
+                    container.innerHTML = '<p style="text-align:center;color:#888;">Игр пока нет</p>';
+                    return;
+                }
+                const CATS = { game:'🎮 Игра', app:'📱 Приложение', tool:'🔧 Инструмент', test:'📝 Тест', meditation:'🧘 Медитация' };
+                container.innerHTML = snap.docs.map(doc => {
+                    const g = doc.data();
+                    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(161,140,209,0.1);">
+                        <span style="font-size:24px;">${g.icon || '🎮'}</span>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;color:#e0e6ed;font-size:14px;">${g.title}</div>
+                            <div style="font-size:11px;color:#888;">${CATS[g.category]||g.category||''} · Порядок: ${g.order||'?'} · ${g.isActive?'✅ Активна':'⏸ Скрыта'}</div>
+                            <div style="font-size:11px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${g.url||''}</div>
+                        </div>
+                        <div style="display:flex;gap:6px;flex-shrink:0;">
+                            <button onclick="editGame('${doc.id}')" style="background:rgba(161,140,209,0.2);border:1px solid rgba(161,140,209,0.4);border-radius:6px;color:#a18cd1;padding:4px 10px;font-size:12px;cursor:pointer;">✏️</button>
+                            <button onclick="toggleGameActive('${doc.id}',${!g.isActive})" style="background:rgba(0,208,132,0.15);border:1px solid rgba(0,208,132,0.3);border-radius:6px;color:#00d084;padding:4px 10px;font-size:12px;cursor:pointer;">${g.isActive?'⏸':'▶️'}</button>
+                            <button onclick="deleteGame('${doc.id}')" style="background:rgba(255,100,100,0.15);border:1px solid rgba(255,100,100,0.3);border-radius:6px;color:#ff6464;padding:4px 10px;font-size:12px;cursor:pointer;">🗑</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                try {
+                    const snap = await db.collection('games').get();
+                    container.innerHTML = snap.empty
+                        ? '<p style="text-align:center;color:#888;">Игр пока нет</p>'
+                        : '<p style="color:#888;">Список загружен (без сортировки — создайте индекс в Firestore)</p>';
+                } catch(e2) {
+                    container.innerHTML = `<p style="color:#ff6464;">Ошибка: ${e2.message}</p>`;
+                }
+            }
+        }
+
+        async function saveGame() {
+            const status = document.getElementById('gameFormStatus');
+            const id = document.getElementById('gameEditId').value;
+            const title = document.getElementById('gameTitle').value.trim();
+            const url = document.getElementById('gameUrl').value.trim();
+            if (!title || !url) { alert('Укажи название и URL'); return; }
+
+            const data = {
+                title,
+                url,
+                icon: document.getElementById('gameIcon').value.trim() || '🎮',
+                description: document.getElementById('gameDescription').value.trim(),
+                category: document.getElementById('gameCategory').value,
+                order: parseInt(document.getElementById('gameOrder').value) || 10,
+                isActive: true,
+                updatedAt: new Date()
+            };
+
+            status.style.display = 'block';
+            status.style.color = '#888';
+            status.textContent = '⏳ Сохраняю...';
+            try {
+                if (id) {
+                    await db.collection('games').doc(id).update(data);
+                } else {
+                    data.createdAt = new Date();
+                    await db.collection('games').add(data);
+                }
+                status.style.color = '#00d084';
+                status.textContent = '✅ Сохранено';
+                clearGameForm();
+                loadGamesAdmin();
+            } catch(e) {
+                status.style.color = '#ff6464';
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function editGame(id) {
+            const doc = await db.collection('games').doc(id).get();
+            if (!doc.exists) return;
+            const g = doc.data();
+            document.getElementById('gameEditId').value = id;
+            document.getElementById('gameTitle').value = g.title || '';
+            document.getElementById('gameUrl').value = g.url || '';
+            document.getElementById('gameIcon').value = g.icon || '🎮';
+            document.getElementById('gameDescription').value = g.description || '';
+            document.getElementById('gameCategory').value = g.category || 'game';
+            document.getElementById('gameOrder').value = g.order || 10;
+            document.getElementById('gameTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function toggleGameActive(id, active) {
+            await db.collection('games').doc(id).update({ isActive: active });
+            loadGamesAdmin();
+        }
+
+        async function deleteGame(id) {
+            if (!confirm('Удалить игру?')) return;
+            await db.collection('games').doc(id).delete();
+            loadGamesAdmin();
+        }
+
+        function clearGameForm() {
+            document.getElementById('gameEditId').value = '';
+            document.getElementById('gameTitle').value = '';
+            document.getElementById('gameUrl').value = '';
+            document.getElementById('gameIcon').value = '';
+            document.getElementById('gameDescription').value = '';
+            document.getElementById('gameCategory').value = 'game';
+            document.getElementById('gameOrder').value = '10';
+            document.getElementById('gameFormStatus').style.display = 'none';
         }
 
     </script>

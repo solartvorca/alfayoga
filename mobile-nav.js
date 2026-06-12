@@ -2,7 +2,7 @@
     const bottomItems = [
         { icon: '🌙', label: 'Луна', path: 'index.html' },
         { icon: '🏃', label: 'Марафон', path: 'marathon.html' },
-        { icon: '📚', label: 'База', path: 'base.html' },
+        { icon: '🎮', label: 'Игры', path: 'games.html' },
         { icon: '🌬️', label: 'Дыхание', path: 'marathon-breath.html' },
         { icon: '👤', label: 'Профиль', path: 'profile.html' }
     ];
