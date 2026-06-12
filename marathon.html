@@ -1452,27 +1452,23 @@
                 return;
             }
 
-            // Сегодняшняя локальная дата
-            const nowDate = new Date();
-            const todayStr = nowDate.getFullYear() + '-' +
-                String(nowDate.getMonth() + 1).padStart(2, '0') + '-' +
-                String(nowDate.getDate()).padStart(2, '0');
+            // Дата этого дня марафона (cycleStart + dayNum-1 дней)
+            const dayDate = new Date(_cycleStart.getTime() + (currentDayNum - 1) * 86400000);
+            const dayDateStr = dayDate.getFullYear() + '-' +
+                String(dayDate.getMonth() + 1).padStart(2, '0') + '-' +
+                String(dayDate.getDate()).padStart(2, '0');
 
-            // Если смотрим текущий день (не навигация) — показываем только сегодняшние отчёты.
-            // Это решает проблему накопления отчётов когда день марафона не меняется (конец цикла).
-            const isCurrentDay = currentDayNum === getMarathonDay();
             const filteredReportDocs = reportsSnapshot.docs.filter(doc => {
-                if (!isCurrentDay) return true; // при навигации назад показываем все
                 const data = doc.data();
-                if (data.date) return data.date === todayStr; // новые отчёты с полем date
+                if (data.date) return data.date === dayDateStr;
                 if (data.createdAt) {
                     const d = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                     const repDate = d.getFullYear() + '-' +
                         String(d.getMonth() + 1).padStart(2, '0') + '-' +
                         String(d.getDate()).padStart(2, '0');
-                    return repDate === todayStr;
+                    return repDate === dayDateStr;
                 }
-                return true; // старые отчёты без даты — показываем
+                return false;
             });
 
             // Один запрос без составного индекса, фильтрация на клиенте
@@ -1482,17 +1478,19 @@
                 dreamsSnapshot = {
                     docs: allPublicDreams.docs.filter(d => {
                         const data = d.data();
-                        // Новые записи с полем date
-                        if (data.date) return data.date === todayStr;
-                        // Старые записи без поля date — по dayNumber
-                        return data.dayNumber === currentDayNum;
+                        if (data.date) return data.date === dayDateStr;
+                        if (data.createdAt) {
+                            const dr = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                            return dr.getFullYear() + '-' + String(dr.getMonth()+1).padStart(2,'0') + '-' + String(dr.getDate()).padStart(2,'0') === dayDateStr;
+                        }
+                        return false;
                     })
                 };
             } catch(e) {
                 console.error("Ошибка загрузки снов:", e);
             }
 
-            console.log("Найдено снов:", dreamsSnapshot.docs.length, "todayStr:", todayStr, "dayNum:", currentDayNum);
+            console.log("Найдено снов:", dreamsSnapshot.docs.length, "dayDateStr:", dayDateStr, "dayNum:", currentDayNum);
 
             const list = document.getElementById("reportsList");
             const onlyReports = document.getElementById("onlyReportsFilter").checked;

@@ -425,10 +425,14 @@
     }
 
     async function loadReports() {
+        const dayDate = new Date(_cycleStart.getTime() + (currentDay - 1) * 86400000);
+        const startOfDay = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+        const endOfDay = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 23, 59, 59, 999);
+
         const snap = await db.collection(UNITY_COLLECTION)
-            .where('dayNumber', '==', currentDay)
-            .orderBy('createdAt', 'desc')
-            .limit(30).get();
+            .where('createdAt', '>=', startOfDay)
+            .where('createdAt', '<=', endOfDay)
+            .orderBy('createdAt', 'desc').get();
 
         const list = document.getElementById('reportsList');
         if (snap.empty) { list.innerHTML = '<p style="text-align:center;color:#888;">Пока нет отчётов</p>'; return; }
