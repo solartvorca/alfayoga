@@ -857,7 +857,7 @@
     <script>
         let currentDayNum = 0;
         let hasSubmitted = false;
-        let _cycleStart = new Date(2026, 5, 1); // фолбек: 1 июня 2026 00:00 local
+        let _cycleStart = new Date(2026, 4, 31); // фолбек: 31 мая 2026 00:00 local
 
         async function loadCycleStart() {
             try {
@@ -865,7 +865,7 @@
                 if (doc.exists && doc.data().cycleStart) {
                     _cycleStart = doc.data().cycleStart.toDate();
                 }
-            } catch(e) {}
+            } catch(e) { console.warn('[loadCycleStart]', e); }
         }
 
         function getMarathonDay() {
@@ -1240,6 +1240,13 @@
                 return;
             }
 
+            // Не исключать администратора
+            const isAdminUser = window.currentUser.email === 'wuallar@gmail.com' || window.currentUser.isAdmin;
+            if (isAdminUser) {
+                console.log(`[Auto-removal check] Skipping admin user`);
+                return;
+            }
+
             // Не исключать премиум-участников (проверяем оба поля)
             const subscription = window.currentUser.subscription || "free";
             const status = window.currentUser.status || "active";
@@ -1433,9 +1440,17 @@
 
         async function loadReports() {
             console.log("Загружаю отчеты для дня:", currentDayNum);
-            const reportsSnapshot = await db.collection("reports")
-                .where("dayNumber", "==", currentDayNum)
-                .get();
+            let reportsSnapshot;
+            try {
+                reportsSnapshot = await db.collection("reports")
+                    .where("dayNumber", "==", currentDayNum)
+                    .get();
+            } catch(error) {
+                console.error("[loadReports] Ошибка:", error);
+                const list = document.getElementById("reportsList");
+                if (list) list.innerHTML = "<p style='text-align: center; color: #888;'>Нет записей</p>";
+                return;
+            }
 
             // Сегодняшняя локальная дата
             const nowDate = new Date();
@@ -2428,6 +2443,49 @@
                             document.getElementById("removalNotice").style.display = "none";
                         }
                     }
+                }, async (snapshotError) => {
+                    console.warn("[User Snapshot] Error:", snapshotError.code, "— trying get() fallback");
+                    try {
+                        const doc = await userRef.get();
+                        if (!doc.exists) return;
+                        window.currentUser = { uid: user.uid, email: user.email, ...doc.data() };
+                        if (!_initialCheckDone) {
+                            _initialCheckDone = true;
+                            await checkAndRestoreIfPremium();
+                            await checkAndRestoreIfFullMoon();
+                            await checkAndRemoveIfMissedReport();
+                        }
+                        loadCycleStart().then(() => {
+                            loadDayAssignment();
+                            loadReports();
+                            checkUserReport();
+                            handleDiceReturn();
+                        });
+                        if (window.currentUser.email === "wuallar@gmail.com") {
+                            document.getElementById("dayNavigation").style.display = "flex";
+                        }
+                        loadHexagramOfDay();
+                        loadDailyPractice();
+                        runAICatchUp();
+                        loadSocialRewardsStatus();
+                        loadAdminNotifications();
+                        updateAdminLink();
+                        checkTotalRays();
+                        const isAdmin = window.currentUser.email === "wuallar@gmail.com" || window.currentUser.isAdmin;
+                        const sub = window.currentUser.subscription || "free";
+                        const isPremiumProtected = sub === "premium" || sub === "vip" || window.currentUser.status === "premium";
+                        if (window.currentUser.status === "removed" && !isAdmin && !isPremiumProtected) {
+                            document.getElementById("removalNotice").style.display = "block";
+                            document.getElementById("marathonInfo").style.display = "none";
+                            document.getElementById("dayAssignment").style.display = "none";
+                            document.getElementById("reportSection").style.display = "none";
+                            document.getElementById("socialRewards").style.display = "none";
+                            document.getElementById("reportsSection").style.display = "none";
+                            document.getElementById("dailyPracticeSection").style.display = "none";
+                        } else {
+                            document.getElementById("removalNotice").style.display = "none";
+                        }
+                    } catch(e) { console.error("[User Get Fallback] Failed:", e); }
                 });
             }
         });
