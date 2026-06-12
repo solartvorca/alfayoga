@@ -1165,8 +1165,9 @@
                 });
                 window.currentUser.status = restoreStatus;
                 window.currentUser.lastReportDay = marathonDay;
+                window.currentUser.previousStatus = null;
                 console.log("[Premium Restore] Restored premium user to", restoreStatus);
-                location.reload();
+                // Не перезагружаем страницу — данные уже обновлены в памяти, контент загрузится дальше
             } catch(e) { console.error("[Premium Restore] Error:", e); }
         }
 
@@ -1213,11 +1214,7 @@
                     window.currentUser.status = "active";
                     window.currentUser.removedAt = null;
                     window.currentUser.removedReason = null;
-
                     console.log("[Full Moon Restore] User restored successfully");
-
-                    // Перезагрузить страницу чтобы показать контент марафона
-                    location.reload();
                 } catch (error) {
                     console.error("[Full Moon Restore] Error restoring user:", error);
                 }
