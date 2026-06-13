@@ -1248,6 +1248,12 @@
                 return;
             }
 
+            // Статус prime — полная защита от исключения
+            if (currentStatus === "prime") {
+                console.log(`[Auto-removal check] Skipping prime user`);
+                return;
+            }
+
             // Не исключать премиум-участников (проверяем оба поля)
             const subscription = window.currentUser.subscription || "free";
             const status = window.currentUser.status || "active";

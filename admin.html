@@ -2008,8 +2008,8 @@
                 const skipCount = user.premiumSkips || 0;
                 const skipsText = subscription === "daily" ? `${skipCount}/5` : "-";
 
-                const statusClass = user.status === "active" ? "status-active" : "status-removed";
-                const statusText = user.status === "active" ? "Активен" : "Исключен";
+                const statusClass = user.status === "prime" ? "status-active" : user.status === "active" ? "status-active" : "status-removed";
+                const statusText = user.status === "prime" ? "⭐ Прайм" : user.status === "active" ? "Активен" : "Исключен";
 
                 const lastReportDay = user.lastReportDay || 0;
                 const lastReportText = lastReportDay > 0 ? `День ${lastReportDay}` : "—";
@@ -2038,6 +2038,7 @@
                         <td>
                             <select onchange="changeUserStatus('${doc.id}', '${user.nick}', this.value)" style="background: rgba(180, 100, 255, 0.1); border: 1px solid rgba(180, 100, 255, 0.3); border-radius: 4px; color: #e0e6ed; padding: 4px; width: 100%;">
                                 <option value="active" ${user.status === "active" ? "selected" : ""}>✅ Активен</option>
+                                <option value="prime" ${user.status === "prime" ? "selected" : ""}>⭐ Прайм (не исключается)</option>
                                 <option value="removed" ${user.status === "removed" ? "selected" : ""}>❌ Исключён</option>
                             </select>
                         </td>
@@ -2151,7 +2152,7 @@
             }
             try {
                 const updateData = { status };
-                if (status === "active") {
+                if (status === "active" || status === "prime") {
                     updateData.restoredAt = new Date();
                     updateData.lastReportDay = await getActualMarathonDay();
                     updateData.previousStatus = null;
