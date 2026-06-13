@@ -2198,9 +2198,23 @@
                     createdAt: new Date()
                 });
 
-                await db.collection("users").doc(user.uid).update({
-                    rays: firebase.firestore.FieldValue.increment(1)
-                });
+                // Вычислить день марафона и обновить lastReportDay (чтобы сновидение считалось практикой дня)
+                let marathonDayForDream = 0;
+                try {
+                    const settingsDoc = await db.collection('settings').doc('marathon').get();
+                    if (settingsDoc.exists && settingsDoc.data().cycleStart) {
+                        const cycleStart = settingsDoc.data().cycleStart.toDate
+                            ? settingsDoc.data().cycleStart.toDate()
+                            : new Date(settingsDoc.data().cycleStart);
+                        marathonDayForDream = Math.floor((new Date() - cycleStart) / 86400000) + 1;
+                    }
+                } catch(e) { console.warn('[Dream] Could not load cycleStart:', e); }
+
+                const userUpdate = { rays: firebase.firestore.FieldValue.increment(1) };
+                if (marathonDayForDream > 0) userUpdate.lastReportDay = marathonDayForDream;
+
+                await db.collection("users").doc(user.uid).update(userUpdate);
+                if (marathonDayForDream > 0) window.currentUser.lastReportDay = marathonDayForDream;
 
                 // Пассивный доход: если пользователь приглошён, дать реферреру 10%
                 if (user.referredBy) {
