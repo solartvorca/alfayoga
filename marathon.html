@@ -1262,6 +1262,18 @@
                 return;
             }
 
+            // *** НОВАЯ ПРОВЕРКА: если пользователь недавно восстановлен администратором — даём 48 часов ***
+            if (window.currentUser.restoredAt) {
+                const restoredDate = window.currentUser.restoredAt.toDate
+                    ? window.currentUser.restoredAt.toDate()
+                    : new Date(window.currentUser.restoredAt);
+                const hoursSinceRestore = (Date.now() - restoredDate.getTime()) / (1000 * 60 * 60);
+                if (hoursSinceRestore < 48) {
+                    console.log(`[Auto-removal check] Skipping restored user (${hoursSinceRestore.toFixed(1)}h < 48h)`);
+                    return;
+                }
+            }
+
             // Если последний отчёт пропущен за вчерашний день - пользователь должен выпасть
             // (lastReportDay < currentDay - 1 означает что он пропустил день)
             if (lastReportDay < currentDay - 1) {
